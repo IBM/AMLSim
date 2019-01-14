@@ -19,8 +19,8 @@ public class SingleTransactionModel extends AbstractTransactionModel {
         return "Single";
     }
 
-    public void setParameters(float amount, long start, long end){
-        super.setParameters(amount, start, end);
+    public void setParameters(float balance, long start, long end){
+        super.setParameters(balance, start, end);
     }
 
     public void sendTransaction(long step){
@@ -38,7 +38,7 @@ public class SingleTransactionModel extends AbstractTransactionModel {
 //        System.out.println(numDests);
         if(index >= numDests)return;  // This account has already sent to all neighbors
 
-        float amount = this.receivedAmount;
+        float amount = this.balance;
         long stepRange = this.endStep - this.startStep + 1;
         int numPerStep = numDests / (int)stepRange;
 

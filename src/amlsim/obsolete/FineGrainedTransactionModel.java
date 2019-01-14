@@ -28,7 +28,7 @@ public class FineGrainedTransactionModel extends AbstractTransactionModel {
         int numDests = dests.size();
         int eachRemit = (int)AMLSim.getNumOfSteps() / numDests;
 
-        float amount = this.receivedAmount / FREQUENCY;
+        float amount = this.balance / FREQUENCY;
         for(int i=0; i<eachRemit; i++) {
             int newIndex = index + i;
             if(newIndex >= numDests * FREQUENCY)break;

@@ -22,7 +22,7 @@ public class CoarseGrainedTransactionModel extends AbstractTransactionModel {
         if(step < this.startStep || this.endStep < step || this.account.getDests().isEmpty()){
             return;
         }
-        float amount = this.receivedAmount;
+        float amount = this.balance;
 
         int numDests = this.account.getDests().size();
         int numPerStep = max(numDests / ((int)this.endStep - (int)this.startStep + 1), 1);

@@ -131,28 +131,29 @@ public class AMLSim extends ParameterizedPaySim {
 
 		// Parameters of Cash Transactions
 		Properties prop = this.getParamters();
-		int norm_in_int = Integer.parseInt(prop.getProperty("normal_cash_in_interval"));
-		int case_in_int = Integer.parseInt(prop.getProperty("case_cash_in_interval"));
-		float norm_in_min = Float.parseFloat(prop.getProperty("normal_cash_in_min"));
-		float norm_in_max = Float.parseFloat(prop.getProperty("normal_cash_in_max"));
-		float case_in_min = Float.parseFloat(prop.getProperty("case_cash_in_min"));
-		float case_in_max = Float.parseFloat(prop.getProperty("case_cash_in_max"));
-		CashInModel.setParam(norm_in_int, case_in_int, norm_in_min, norm_in_max, case_in_min, case_in_max);
+		int norm_in_int = Integer.parseInt(prop.getProperty("normal_cash_in_interval"));  // Interval of cash-in transactions for normal account
+		int fraud_in_int = Integer.parseInt(prop.getProperty("fraud_cash_in_interval"));  // Interval of cash-in transactions for suspicious account
+		float norm_in_min = Float.parseFloat(prop.getProperty("normal_cash_in_min"));  // Minimum amount of cash-in transactions for normal account
+		float norm_in_max = Float.parseFloat(prop.getProperty("normal_cash_in_max"));  // Maximum amount of cash-in transactions for normal account
+		float fraud_in_min = Float.parseFloat(prop.getProperty("fraud_cash_in_min"));  // Minimum amount of cash-in transactions for suspicious account
+		float fraud_in_max = Float.parseFloat(prop.getProperty("fraud_cash_in_max"));  // Maximum amount of cash-in transactions for suspicious account
+		CashInModel.setParam(norm_in_int, fraud_in_int, norm_in_min, norm_in_max, fraud_in_min, fraud_in_max);
 
-		int norm_out_int = Integer.parseInt(prop.getProperty("normal_cash_out_interval"));
-		int case_out_int = Integer.parseInt(prop.getProperty("case_cash_out_interval"));
-		float norm_out_min = Float.parseFloat(prop.getProperty("normal_cash_out_min"));
-		float norm_out_max = Float.parseFloat(prop.getProperty("normal_cash_out_max"));
-		float case_out_min = Float.parseFloat(prop.getProperty("case_cash_out_min"));
-		float case_out_max = Float.parseFloat(prop.getProperty("case_cash_out_max"));
-		CashOutModel.setParam(norm_out_int, case_out_int, norm_out_min, norm_out_max, case_out_min, case_out_max);
+		int norm_out_int = Integer.parseInt(prop.getProperty("normal_cash_out_interval"));  // Interval of cash-out transactions for normal account
+		int fraud_out_int = Integer.parseInt(prop.getProperty("fraud_cash_out_interval"));  // Interval of cash-out transactions for suspicious account
+		float norm_out_min = Float.parseFloat(prop.getProperty("normal_cash_out_min"));  // Minimum amount of cash-out transactions for normal account
+		float norm_out_max = Float.parseFloat(prop.getProperty("normal_cash_out_max"));  // Maximum amount of cash-out transactions for normal account
+		float fraud_out_min = Float.parseFloat(prop.getProperty("fraud_cash_out_min"));  // Minimum amount of cash-out transactions for suspicious account
+		float fraud_out_max = Float.parseFloat(prop.getProperty("fraud_cash_out_max"));  // Maximum amount of cash-out transactions for suspicious account
+		CashOutModel.setParam(norm_out_int, fraud_out_int, norm_out_min, norm_out_max, fraud_out_min, fraud_out_max);
 
 
-		int alertRatio = Integer.parseInt(this.getParamters().getProperty("alertRatio"));
-		if(alertRatio <= 0){
-			throw new IllegalStateException("The alertRatio must be positive");
-		}
+//		int alertRatio = Integer.parseInt(this.getParamters().getProperty("alertRatio"));
+//		if(alertRatio <= 0){
+//			throw new IllegalStateException("The alertRatio must be positive");
+//		}
 
+		// Create branches (for cash transactions)
 		this.numBranches = Integer.parseInt(this.getParamters().getProperty("numBranches"));
 		if(this.numBranches <= 0){
 			throw new IllegalStateException("The numBranches must be positive");
@@ -174,7 +175,7 @@ public class AMLSim extends ParameterizedPaySim {
 			e.printStackTrace();
 		}
 
-		String amountPropFile = System.getProperty("user.dir") + this.getParamters().getProperty("amountProp");
+//		String amountPropFile = System.getProperty("user.dir") + this.getParamters().getProperty("amountProp");
 //		AmountCalculator.load(amountPropFile);
 	}
 
@@ -251,8 +252,8 @@ public class AMLSim extends ParameterizedPaySim {
 			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
 			float minAmount = Float.parseFloat(elements[columnIndex.get("minAmount")]);
 			float maxAmount = Float.parseFloat(elements[columnIndex.get("maxAmount")]);
-			int minStep = Integer.parseInt(elements[columnIndex.get("minStep")]);
-			int maxStep = Integer.parseInt(elements[columnIndex.get("maxStep")]);
+			int minStep = Integer.parseInt(elements[columnIndex.get("startStep")]);
+			int maxStep = Integer.parseInt(elements[columnIndex.get("endStep")]);
 			int scheduleID = Integer.parseInt(elements[columnIndex.get("scheduleID")]);
 
 			if(minAmount > maxAmount){
@@ -260,7 +261,7 @@ public class AMLSim extends ParameterizedPaySim {
 			}
 
 			if(minStep > maxStep){
-				throw new IllegalArgumentException(String.format("minStep %d is larger than maxStep %d", minStep, maxStep));
+				throw new IllegalArgumentException(String.format("startStep %d is larger than endStep %d", minStep, maxStep));
 			}
 
 			Alert fg;

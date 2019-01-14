@@ -20,7 +20,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
     @Override
     public void sendTransaction(long step) {
 
-        float amount = this.receivedAmount;
+        float amount = this.balance;
         List<Account> dests = this.account.getDests();
         int numDests = dests.size();
         if(numDests == 0){

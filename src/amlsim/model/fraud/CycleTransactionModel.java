@@ -14,7 +14,7 @@ import java.util.*;
 public class CycleTransactionModel extends FraudTransactionModel {
 
     // Transaction schedule
-    private long[] steps;
+    private long[] steps;  // Array of simulation steps when each transaction is scheduled to be made
     public static final int FIXED_INTERVAL = 1;  // All accounts send money in order with the same interval
     public static final int RANDOM_INTERVAL = 2;  // All accounts send money in order with random intervals
     public static final int UNORDERED = 3;  // All accounts send money randomly
@@ -29,28 +29,28 @@ public class CycleTransactionModel extends FraudTransactionModel {
      */
     public void setSchedule(int modelID){
         List<Account> members = alert.getMembers();  // All fraud transaction members
-        int length = members.size();
+        int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
 
-        if(modelID == FIXED_INTERVAL){
-            long range = maxStep - minStep + 1;
+        if(modelID == FIXED_INTERVAL){  // Ordered, same interval
+            long range = endStep - startStep + 1;
             if(length < range){
-                long interval = range / length;
+                long interval = range / length; // If there is enough number of available steps, make transaction with interval
                 for(int i=0; i<length; i++){
-                    steps[i] = minStep + interval*i;
+                    steps[i] = startStep + interval*i;
                 }
             }else{
-                long batch = length / range;
+                long batch = length / range;  // Because of too many transactions, make one or more transactions per step
                 for(int i=0; i<length; i++){
-                    steps[i] = minStep + i/batch;
+                    steps[i] = startStep + i/batch;
                 }
             }
-        }else if(modelID == RANDOM_INTERVAL || modelID == UNORDERED){
+        }else if(modelID == RANDOM_INTERVAL || modelID == UNORDERED){  // Random interval
             for(int i=0; i<length; i++){
                 steps[i] = getRandomStep();
             }
             if(modelID == RANDOM_INTERVAL){
-                Arrays.sort(steps);
+                Arrays.sort(steps);  // Ordered
             }
         }
     }
@@ -83,7 +83,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
         }
 
 //        if(alert.isFraud()) {  // Fraud
-//            int interval = (maxStep - minStep) / length;
+//            int interval = (endStep - startStep) / length;
 //
 //            int subjectIndex = alert.getSubjectIndex();
 //            float amount = getAmount();
@@ -108,7 +108,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
 //                AMLClient src = alert.getMembers().get(srcIdx);
 //                AMLClient dst = alert.getMembers().get(dstIdx);
 //
-//                long st = StepCalculator.getStepRange(minStep, maxStep);
+//                long st = StepCalculator.getStepRange(startStep, endStep);
 //                float amount = (float)src.getBalance();
 //                AMLTransaction tx = sendTransaction(st, amount, src, dst);
 //                tx.setAlertID(alert.getAlertID());

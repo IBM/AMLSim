@@ -10,7 +10,7 @@ import java.util.*;
  */
 public class FanInTransactionModel extends AbstractTransactionModel {
 
-    private final int INTERVAL = 10;
+    private final int INTERVAL = 10; // TODO: Enable users to specify this value
     private int index = 0;
 
     @Override
@@ -21,7 +21,7 @@ public class FanInTransactionModel extends AbstractTransactionModel {
     @Override
     public void sendTransaction(long step) {
         List<Account> origs = this.account.getOrigs();  // Sender accounts
-        List<Account> dests = this.account.getDests();  //
+        List<Account> dests = this.account.getDests();  // Receiver accounts
         int numDests = dests.size();
         if(numDests == 0){
             return;
@@ -31,7 +31,7 @@ public class FanInTransactionModel extends AbstractTransactionModel {
         }
 
         int newIndex = index % numDests;
-        Account dest = dests.get(newIndex);
+        Account dest = dests.get(newIndex);  // Select one of the destinations
         float amount = 0;
         for (Account orig : origs) {
             amount += orig.getBalance();
@@ -40,5 +40,4 @@ public class FanInTransactionModel extends AbstractTransactionModel {
         sendTransaction(step, amount, dest);
         index++;
     }
-
 }

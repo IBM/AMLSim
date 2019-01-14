@@ -46,8 +46,8 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     Alert alert;
     protected float minAmount;
     protected float maxAmount;
-    protected int minStep;
-    protected int maxStep;
+    protected int startStep;
+    protected int endStep;
 
     public abstract void setSchedule(int modelID);
 
@@ -56,19 +56,26 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     }
 
     public boolean isValidStep(long step){
-        return minStep <= step && step <= maxStep;
+        return startStep <= step && step <= endStep;
     }
 
-    public FraudTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep){
+    /**
+     * Common constructor of fraud transaction
+     * @param minAmount Mininum transaction amount
+     * @param maxAmount Maximum transaction amount
+     * @param startStep Start simulation step (any transactions cannot be carried out before this step)
+     * @param maxStep End simulation step (any transactions cannot be carried out after this step)
+     */
+    public FraudTransactionModel(float minAmount, float maxAmount, int startStep, int maxStep){
         this.minAmount = minAmount;
         this.maxAmount = maxAmount;
-        this.minStep = minStep;
-        this.maxStep = maxStep;
+        this.startStep = startStep;
+        this.endStep = maxStep;
     }
 
     /**
      * Generate a random amount
-     * @return A random amount within minAmount and maxAmount
+     * @return A random amount within "minAmount" and "maxAmount"
      */
     protected float getAmount(){
         return alert.getSimulator().random.nextFloat() * (maxAmount - minAmount) + minAmount;
@@ -90,10 +97,10 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
 
     /**
      * Generate a random simulation step
-     * @return A simulation step within minStep and maxStep
+     * @return A simulation step within startStep and endStep
      */
     protected long getRandomStep(){
-        return alert.getSimulator().random.nextInt(maxStep - minStep + 1) + minStep;
+        return alert.getSimulator().random.nextInt(endStep - startStep + 1) + startStep;
     }
 
 

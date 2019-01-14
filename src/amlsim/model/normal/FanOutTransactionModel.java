@@ -11,7 +11,7 @@ import java.util.*;
  */
 public class FanOutTransactionModel extends AbstractTransactionModel {
 
-    private static final int INTERVAL = 10;
+    private static final int INTERVAL = 10; // TODO: Enable users to specify this value
 
     @Override
     public String getType() {
@@ -20,16 +20,16 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
 
     @Override
     public void sendTransaction(long step) {
-        List<Account> dests = this.account.getDests();
+        List<Account> dests = this.account.getDests();  // Destination accounts
         int numDests = dests.size();
-        if(numDests == 0){
+        if(numDests == 0){  // No destination accounts
             return;
         }
         if(step % INTERVAL != this.account.getStartStep() % INTERVAL){
-            return;
+            return;  // It makes transactions every "INTERVAL" simulation steps
         }
 
-        float amount = this.receivedAmount / numDests;
+        float amount = this.balance / numDests;  // Each amount is same TODO: make it flexible
         for(Account dest : dests) {
             this.sendTransaction(step, amount, dest);
         }

@@ -756,7 +756,7 @@ class TransactionGenerator:
     fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alertgroup"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
-      writer.writerow(["alertID", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "minStep", "maxStep"])
+      writer.writerow(["alertID", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep"])
       for gid, sub_g in self.fraudgroups.iteritems():
         modelID = sub_g.graph["modelID"]
         for n in sub_g.nodes():

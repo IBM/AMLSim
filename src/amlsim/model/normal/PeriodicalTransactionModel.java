@@ -35,7 +35,7 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
         List<AMLTransaction> txs = new ArrayList<>();
 
         for(int i=0; i<eachRemit; i++) {
-            float amount = this.receivedAmount;
+            float amount = this.balance;
             Account dest = this.account.getDests().get(index);
             this.sendTransaction(step, amount, dest);
             index++;

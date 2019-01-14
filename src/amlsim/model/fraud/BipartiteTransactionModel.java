@@ -30,10 +30,7 @@ public class BipartiteTransactionModel extends FraudTransactionModel {
 
     @Override
     public void sendTransactions(long step) {
-//        boolean isFraud = alert.isFraud();
-//        long alertID = alert.getAlertID();
-        float amount = getAmount();
-
+        float amount = getAmount();  // The amount of each transaction
         List<Account> members = alert.getMembers();  // Fraud members
 
         int last_orig_index = members.size() / 2;  // The first half accounts are senders

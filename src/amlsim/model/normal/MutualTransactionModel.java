@@ -27,7 +27,7 @@ public class MutualTransactionModel extends AbstractTransactionModel {
                 counterpart = origs.get(0);
             }
         }
-        float amount = this.receivedAmount;
+        float amount = this.balance;
         if(!this.account.getDests().contains(counterpart)) {
             this.account.addDest(counterpart);    // Add a new destination
         }

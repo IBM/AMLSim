@@ -46,16 +46,16 @@ public class FanInTransactionModel extends FraudTransactionModel {
             long step = getRandomStep();
             Arrays.fill(steps, step);
         }else if(schedule_mode == FIXED_INTERVAL){
-            long range = maxStep - minStep + 1;
+            long range = endStep - startStep + 1;
             if(numOrigs < range){
                 long interval = range / numOrigs;
                 for(int i=0; i<numOrigs; i++){
-                    steps[i] = minStep + interval*i;
+                    steps[i] = startStep + interval*i;
                 }
             }else{
                 long batch = numOrigs / range;
                 for(int i=0; i<numOrigs; i++){
-                    steps[i] = minStep + i/batch;
+                    steps[i] = startStep + i/batch;
                 }
             }
         }else if(schedule_mode == RANDOM_RANGE){

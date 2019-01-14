@@ -3,7 +3,6 @@ package amlsim;
 import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
 import amlsim.model.fraud.FraudTransactionModel;
-import amlsim.obsolete.AMLTransaction;
 import amlsim.stat.Diameter;
 import paysim.*;
 
@@ -43,8 +42,6 @@ public class AMLSim extends ParameterizedPaySim {
 
 	private static Diameter diameter;
 
-
-//	private EmptyAggregateParamFileCreator aggregateCreator = new EmptyAggregateParamFileCreator();
 
 	private AMLSim(long seed) {
 		super(seed);
@@ -423,44 +420,40 @@ public class AMLSim extends ParameterizedPaySim {
 
 
 	public void writeLog() {
-		if(TX_OPT){  // Use transaction repository instead of transaction object list
-			return;
-		}
-		try {
-			FileWriter writer1 = new FileWriter(new File(AMLSim.logFileName), true);
-			BufferedWriter writer = new BufferedWriter(writer1);
-			this.setWriter(writer);
+        // Use transaction repository instead of transaction object list
 
-			for(int i = 0; i < this.getTrans().size(); ++i) {
-				AMLTransaction temp = (AMLTransaction) this.getTrans().get(i);
-				writer.write(temp.getStep() + "," + temp.getDescription() + ","
-						+ this.getDoublePrecision(temp.getAmount())+ "," + temp.getClientOrigBefore().getName() + ","
-						+ this.getDoublePrecision(temp.getClientOrigBefore().getBalance()) + ","
-						+ this.getDoublePrecision(temp.getClientOrigAfter().getBalance()) + ","
-						+ temp.getClientDestAfter().getName() + ","
-						+ this.getDoublePrecision(temp.getClientDestBefore().getBalance()) + ","
-						+ this.getDoublePrecision(temp.getClientDestAfter().getBalance()) + ","
-						+ (temp.isFraud() ? 1 : 0) + "," + temp.getAlertID() + "\n");
-				writer.flush();
-			}
-
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
+//		if(TX_OPT){  // Use transaction repository instead of transaction object list
+//			return;
+//		}
+//		try {
+//			FileWriter writer1 = new FileWriter(new File(AMLSim.logFileName), true);
+//			BufferedWriter writer = new BufferedWriter(writer1);
+//			this.setWriter(writer);
+//
+//			for(int i = 0; i < this.getTrans().size(); ++i) {
+//				AMLTransaction temp = (AMLTransaction) this.getTrans().get(i);
+//				writer.write(temp.getStep() + "," + temp.getDescription() + ","
+//						+ this.getDoublePrecision(temp.getAmount())+ "," + temp.getClientOrigBefore().getName() + ","
+//						+ this.getDoublePrecision(temp.getClientOrigBefore().getBalance()) + ","
+//						+ this.getDoublePrecision(temp.getClientOrigAfter().getBalance()) + ","
+//						+ temp.getClientDestAfter().getName() + ","
+//						+ this.getDoublePrecision(temp.getClientDestBefore().getBalance()) + ","
+//						+ this.getDoublePrecision(temp.getClientDestAfter().getBalance()) + ","
+//						+ (temp.isFraud() ? 1 : 0) + "," + temp.getAlertID() + "\n");
+//				writer.flush();
+//			}
+//			writer.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	public void writeSummaryFile() {
 		// Skip writing summary file of PaySim
 	}
 
-//	public AggregateParamFileCreator getAggregateCreator() {
-//		return this.aggregateCreator;
-//	}
 
-
-	public static void main(String args[]){
+	public static void main(String[] args){
 		if(args.length < 6){
 			System.err.println("Usage: java amlsim.AMLSim -file [PropertyFile] -for [Steps] -r [Repeats] [-name [SimulatorName]]");
 			System.exit(1);

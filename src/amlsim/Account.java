@@ -4,7 +4,6 @@ import amlsim.model.*;
 import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
 import amlsim.model.normal.*;
-import amlsim.obsolete.AMLTransaction;
 import paysim.*;
 import sim.engine.SimState;
 import sim.engine.Steppable;
@@ -23,9 +22,9 @@ public class Account extends Client implements Steppable {
 	private Map<Long, Account> dests = new HashMap<>();  // Receiver Client ID --> Client Object
 	private Account prevOrig = null;  // Previous sender Client
 	private Account prevDest = null;  // Previous receiver Client
-	List<Alert> groups = new ArrayList<>();
+	List<Alert> alerts = new ArrayList<>();
 //	private Map<Long, AMLTransaction> tx_repository = new HashMap<>();  // Step --> Transaction Object
-	private Map<Long, List<AMLTransaction>> tx_repository = new HashMap<>(); // Step --> Transaction List
+//	private Map<Long, List<AMLTransaction>> tx_repository = new HashMap<>(); // Step --> Transaction List
 	private Map<Long, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
 	private static List<String> all_tx_types = new ArrayList<>();
 
@@ -59,8 +58,8 @@ public class Account extends Client implements Steppable {
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
 //			case AbstractTransactionModel.COARSE: this.model = new CoarseGrainedTransactionModel(); break;
 //			case AbstractTransactionModel.FINE: this.model = new FineGrainedTransactionModel(); break;
-			case AbstractTransactionModel.DISTRIBUTE: this.model = new FanOutTransactionModel(); break;
-			case AbstractTransactionModel.GATHER: this.model = new FanInTransactionModel(); break;
+			case AbstractTransactionModel.FANOUT: this.model = new FanOutTransactionModel(); break;
+			case AbstractTransactionModel.FANIN: this.model = new FanInTransactionModel(); break;
 			case AbstractTransactionModel.MUTUAL: this.model = new MutualTransactionModel(); break;
 			case AbstractTransactionModel.FORWARD: this.model = new ForwardTransactionModel(); break;
 			case AbstractTransactionModel.PERIODICAL: this.model = new PeriodicalTransactionModel(); break;
@@ -144,7 +143,7 @@ public class Account extends Client implements Steppable {
 	 * @param ag Alert group
 	 */
 	public void addAlertGroup(Alert ag){
-		this.groups.add(ag);
+		this.alerts.add(ag);
 	}
 
 	/**
@@ -155,42 +154,34 @@ public class Account extends Client implements Steppable {
 	public void step(SimState state) {
 		long currentStep = state.schedule.getSteps();  // Current simulation step
 		if(currentStep < this.startStep || this.endStep < currentStep){
-			return;  // Perform transaction if this account is active
+			return;  // Skip transactions if this account is not active
 		}
 		handleAction(state);
 	}
 
-//	public void sendTransaction(AMLTransaction tx){
-//		long step = tx.step;
-//		this.tx_repository.put(step, tx);
-//		if(!this.tx_repository.containsKey(step)){
-//			this.tx_repository.put(step, new ArrayList<>());
-//		}
-//		this.tx_repository.get(step).add(tx);
+//	/**
+//	 * @deprecated This method is obsolete because of performance overhead
+//	 * @param step Current simulation step
+//	 * @return Transaction list
+//	 */
+//	public List<AMLTransaction> getTransaction(long step){
+//		if(AMLSim.TX_OPT)return null;
+//
+//		List<AMLTransaction> txs =  this.tx_repository.get(step);
+//		this.tx_repository.remove(step);
+//		return txs;
 //	}
-
-	/**
-	 * @deprecated This method is obsolete because of performance overhead
-	 * @param step Current simulation step
-	 * @return Transaction list
-	 */
-	public List<AMLTransaction> getTransaction(long step){
-		if(AMLSim.TX_OPT)return null;
-
-		List<AMLTransaction> txs =  this.tx_repository.get(step);
-		this.tx_repository.remove(step);
-		return txs;
-	}
 
 
 	public void handleAction(SimState state) {
 		AMLSim amlsim = (AMLSim) state;
-
-		for(Alert ag : groups){
-			ag.registerTransactions(state.schedule.getSteps());
+		long step = state.schedule.getSteps();
+		for(Alert ag : alerts){
+			ag.registerTransactions(step);
 		}
 
-		handleTransaction(amlsim);
+		this.model.sendTransaction(step);
+//		handleTransaction(amlsim);
 		handleCashTransaction(amlsim);
 	}
 
@@ -198,26 +189,21 @@ public class Account extends Client implements Steppable {
 	 * Perform cash transactions (deposit and withdrawal)
 	 * @param amlsim AMLSim object
 	 */
-	void handleCashTransaction(AMLSim amlsim){
+	private void handleCashTransaction(AMLSim amlsim){
 		long step = amlsim.schedule.getSteps();
 		this.cashInModel.sendTransaction(step);
 		this.cashOutModel.sendTransaction(step);
-//		List<AMLTransaction> txs = this.cashInModel.sendTransaction(step);
-//		txs.addAll(this.cashOutModel.sendTransaction(step));
-//		for(AMLTransaction tx : txs){
-//			amlsim.getTrans().add(tx);
-//		}
 	}
 
-	/**
-	 * @deprecated This method is obsolete. Use methods in TransactionModel instead
-	 * @param amlsim AMLSimulator object
-	 * @return true
-	 */
-	boolean handleTransaction(AMLSim amlsim) {
-		long step = amlsim.schedule.getSteps();
-
-		List<AMLTransaction> txs = this.getTransaction(step);  // Get a registered transaction
+//	/**
+//	 * @deprecated This method is obsolete because of performance problem
+//	 * @param amlsim AMLSimulator object
+//	 * @return true
+//	 */
+//	boolean handleTransaction(AMLSim amlsim) {
+//		long step = amlsim.schedule.getSteps();
+//
+//		List<AMLTransaction> txs = this.getTransaction(step);  // Get a registered transaction
 //		if(txs == null) {
 //			txs = this.model.sendTransaction(step);
 //		}
@@ -253,9 +239,9 @@ public class Account extends Client implements Steppable {
 //			tx.setFraud(false);
 //			amlsim.getTrans().add(tx);
 //		}
+//		return true;
+//	}
 
-		return true;
-	}
 
 	/**
 	 * Get the previous origin (sender) account

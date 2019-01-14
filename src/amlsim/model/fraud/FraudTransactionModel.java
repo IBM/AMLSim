@@ -36,7 +36,7 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
             case CYCLE: model = new CycleTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
             case BIPARTITE: model = new BipartiteTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
             case STACK: model = new StackTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
-            case DENSE: model = new DenseTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
+            case DENSE: model = new RandomTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
             default: throw new IllegalArgumentException("Unknown fraud model ID: " + modelID);
         }
         model.setParameters(minAmount, minStep, maxStep);

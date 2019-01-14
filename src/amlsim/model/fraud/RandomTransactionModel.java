@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 
-public class DenseTransactionModel extends FraudTransactionModel {
+public class RandomTransactionModel extends FraudTransactionModel {
 
     private static int count = 0;
 
@@ -24,7 +24,7 @@ public class DenseTransactionModel extends FraudTransactionModel {
 
     }
 
-    public DenseTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep) {
+    public RandomTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 

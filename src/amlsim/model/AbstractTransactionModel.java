@@ -10,13 +10,13 @@ public abstract class AbstractTransactionModel {
 
     // Transaction model ID
     public static final int SINGLE = 0;
-    public static final int COARSE = 1;
-    public static final int FINE = 2;
-    public static final int DISTRIBUTE = 3;
-    public static final int GATHER = 4;
-    public static final int MUTUAL = 5;
-    public static final int FORWARD = 6;
-    public static final int PERIODICAL = 7;
+//    public static final int COARSE = 1;
+//    public static final int FINE = 2;
+    public static final int FANOUT = 1;
+    public static final int FANIN = 2;
+    public static final int MUTUAL = 3;
+    public static final int FORWARD = 4;
+    public static final int PERIODICAL = 5;
 
     protected Account account;
     protected float receivedAmount;

@@ -1,4 +1,4 @@
-package amlsim.model.normal;
+package amlsim.obsolete;
 
 import amlsim.Account;
 import amlsim.AMLSim;

@@ -1,0 +1,123 @@
+//
+// Note: No specific bank models are used for this fraud transaction model class.
+//
+
+package amlsim.model.fraud;
+
+import amlsim.Account;
+
+import java.util.*;
+
+/**
+ * Cycle transaction model
+ */
+public class CycleTransactionModel extends FraudTransactionModel {
+
+    // Transaction schedule
+    private long[] steps;
+    public static final int FIXED_INTERVAL = 1;  // All accounts send money in order with the same interval
+    public static final int RANDOM_INTERVAL = 2;  // All accounts send money in order with random intervals
+    public static final int UNORDERED = 3;  // All accounts send money randomly
+
+    public CycleTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep){
+        super(minAmount, maxAmount, minStep, maxStep);
+    }
+
+    /**
+     * Define schedule of transaction
+     * @param modelID Schedule model ID as integer
+     */
+    public void setSchedule(int modelID){
+        List<Account> members = alert.getMembers();  // All fraud transaction members
+        int length = members.size();
+        steps = new long[length];
+
+        if(modelID == FIXED_INTERVAL){
+            long range = maxStep - minStep + 1;
+            if(length < range){
+                long interval = range / length;
+                for(int i=0; i<length; i++){
+                    steps[i] = minStep + interval*i;
+                }
+            }else{
+                long batch = length / range;
+                for(int i=0; i<length; i++){
+                    steps[i] = minStep + i/batch;
+                }
+            }
+        }else if(modelID == RANDOM_INTERVAL || modelID == UNORDERED){
+            for(int i=0; i<length; i++){
+                steps[i] = getRandomStep();
+            }
+            if(modelID == RANDOM_INTERVAL){
+                Arrays.sort(steps);
+            }
+        }
+    }
+
+    @Override
+    public String getType() {
+        return "CycleFraud";
+    }
+
+    /**
+     * Create and add transactions
+     * @param step Current simulation step
+     */
+    @Override
+    public void sendTransactions(long step) {
+        int length = alert.getMembers().size();
+        long alertID = alert.getAlertID();
+        boolean isFraud = alert.isFraud();
+        float amount = getAmount();
+
+//        System.out.println(alertID + " " + Arrays.toString(steps));
+        // Create cycle transactions
+        for(int i=0; i<length; i++){
+            if(steps[i] == step){
+                int j = (i+1) % length;  // i, j: index of the previous, next account
+                Account src = alert.getMembers().get(i);  // The previous account
+                Account dst = alert.getMembers().get(j);  // The next account
+                sendTransaction(step, amount, src, dst, isFraud, alertID);
+            }
+        }
+
+//        if(alert.isFraud()) {  // Fraud
+//            int interval = (maxStep - minStep) / length;
+//
+//            int subjectIndex = alert.getSubjectIndex();
+//            float amount = getAmount();
+//
+//            for(int i=0; i<length; i++){
+//                int srcIdx = (i + subjectIndex) % length;
+//                int dstIdx = (srcIdx + 1) % length;
+//                AMLClient src = alert.getMembers().get(srcIdx);
+//                AMLClient dst = alert.getMembers().get(dstIdx);
+//
+//                long st = step + interval * i;
+//                AMLTransaction tx = sendTransaction(st, amount, src, dst);
+//                tx.setAlertID(alert.getAlertID());
+//                tx.setFraud(true);
+//                txs.add(tx);
+//            }
+//
+//        }else{  // False alert (not fraud)
+//            for(int i=0; i<length; i++){
+//                int srcIdx = i;
+//                int dstIdx = (srcIdx + 1) % length;
+//                AMLClient src = alert.getMembers().get(srcIdx);
+//                AMLClient dst = alert.getMembers().get(dstIdx);
+//
+//                long st = StepCalculator.getStepRange(minStep, maxStep);
+//                float amount = (float)src.getBalance();
+//                AMLTransaction tx = sendTransaction(st, amount, src, dst);
+//                tx.setAlertID(alert.getAlertID());
+//                tx.setFraud(false);
+//                txs.add(tx);
+//            }
+//
+//        }
+
+//        return null;
+    }
+}

@@ -1,0 +1,2 @@
+count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,orig_country,bene_country,orig_business,bene_business,is_fraud
+200,dense,2,5,10,100,5,20,150,0.5,True,True,True,True,True

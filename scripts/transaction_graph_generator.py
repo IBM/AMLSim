@@ -113,22 +113,6 @@ class TransactionGenerator:
     else:
       return True
 
-
-  #### Pickup account vertices
-  # def get_account_vertex(self, suspicious=None):
-  #   """Get an account vertex
-  #
-  #   :param suspicious: If True, extract one only from suspicious accounts.
-  #   If False, extract one only from non-suspicious accounts. If None (default), extract one from all accounts.
-  #   :return: An account ID
-  #   """
-  #   if suspicious is None:
-  #     candidates = self.g.nodes()
-  #   else:
-  #     candidates = [n for n in self.g.nodes() if self.g.node[n]["suspicious"] == suspicious]  # True/False
-  #   return random.choice(candidates)
-
-
   def get_alert_members(self, num, hasSubject):
     """Get account vertices randomly (high-degree vertices are likely selected)
 
@@ -365,7 +349,7 @@ class TransactionGenerator:
     if alert_file:
       csv_name = alert_file
     else:
-      csv_name = os.path.join(self.input_dir, self.conf.get("InputFile", "fraudPattern"))
+      csv_name = os.path.join(self.input_dir, self.conf.get("InputFile", "alertPattern"))
 
     idx_num = None
     idx_type = None

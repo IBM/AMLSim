@@ -17,7 +17,8 @@ p = 0.1
 
 
 factor = int(argv[2])
-g_ = nx.barabasi_albert_graph(n, factor, seed=0)
+# g_ = nx.barabasi_albert_graph(n, factor, seed=0)
+g_ = nx.scale_free_graph(n, seed=0)
 g = nx.DiGraph(g_)  # Convert the generated to a directed graph without parallel edges
 
 print g  # Graph Type

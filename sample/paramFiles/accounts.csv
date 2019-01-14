@@ -1,0 +1,2 @@
+count,min_balance,max_balance,start_day,end_day,country,business_type,suspicious,model
+30,100,200,1,50,US,I,false,0

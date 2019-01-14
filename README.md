@@ -107,7 +107,7 @@ Put all jar files of the following libraries to `jars` directory.
 All output files of the Python script
 - accounts.csv
 - transactions.csv
-- fraudPatterns.csv
+- alertPatterns.csv
 
 Java property file
 - amlsim.properties

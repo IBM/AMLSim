@@ -1,4 +1,4 @@
-# AMLSimulator
+# AMLSim
 Transaction Simulator for AML
 
 Extended [PaySim](https://github.com/EdgarLopezPhD/PaySim) with fraud transaction features

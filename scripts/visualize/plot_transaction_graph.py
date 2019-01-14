@@ -51,8 +51,6 @@ def load_log(fname):
 def get_alert_graph(g, alertID):
   edge_alerts = nx.get_edge_attributes(g, "alertID")
   edges = [k for k, v in edge_alerts.iteritems() if v == alertID]
-  # g_ = nx.MultiDiGraph()
-  # g_.add_edges_from(edges)
   g_ = g.edge_subgraph(edges)
   return g_
 
@@ -65,10 +63,8 @@ def plot_graph(g):
 
   steps = {(src, dst): v for (src, dst, k), v in nx.get_edge_attributes(g, "step").iteritems()}
   amounts = {(src, dst): v for (src, dst, k), v in nx.get_edge_attributes(g, "amount").iteritems()}
-  # print steps, amounts
   edge_labels = {e: "{:d}:{:.2f}".format(st, amounts[e]) for e, st in steps.iteritems()}
   labels = nx.draw_networkx_edge_labels(g, pos, edge_labels)
-  # print labels
   plt.show()
 
 

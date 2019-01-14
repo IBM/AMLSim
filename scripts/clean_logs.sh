@@ -6,4 +6,4 @@ rm -rf ${DIR}/*/
 rm -f ${DIR}/*.txt
 rm -f ${DIR}/*.csv
 rm -f ${DIR}/*.png
-
+rm -f ${DIR}/*.gif

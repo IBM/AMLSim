@@ -10,6 +10,10 @@ import sys
 
 #### Utility functions parsing values
 def parse_int(value):
+  """ Convert string to int
+  :param value: string value
+  :return: int value if the parameter can be converted to str, otherwise None
+  """
   try:
     return int(value)
   except ValueError:
@@ -17,6 +21,10 @@ def parse_int(value):
 
 
 def parse_amount(value):
+  """ Convert string to amount (float)
+  :param value: string value
+  :return: float value if the parameter can be converted to float, otherwise None
+  """
   try:
     return float(value)
   except ValueError:
@@ -24,6 +32,10 @@ def parse_amount(value):
 
 
 def parse_flag(value):
+  """ Convert string to boolean (True or false)
+  :param value: string value
+  :return: True if the value is equal to "true" (case insensitive), otherwise False
+  """
   return value.lower() == "true"
 
 
@@ -36,10 +48,10 @@ class TransactionGenerator:
     :param confFile: Configuration (ini) file name
     :param ttypeCSV: Transaction type distribution CSV file
     """
-    self.g = nx.MultiDiGraph()
-    self.num_accounts = 0
-    self.degrees = dict()
-    self.hubs = list()
+    self.g = nx.MultiDiGraph()  # Transaction graph object
+    self.num_accounts = 0  # Number of total accounts
+    self.degrees = dict()  # Degree distribution
+    self.hubs = list()  # Hub vertices
     self.subject_candidates = set()
 
     self.conf = ConfigParser()
@@ -439,14 +451,14 @@ class TransactionGenerator:
         # members = self.get_account_vertices(accounts)
         for i in range(num):
           ## Add fraud patterns
-          self.add_fraud_pattern(is_fraud, pattern_type, accounts, scheduleID, individual_amount, aggregated_amount, transaction_count,
+          self.add_alert_pattern(is_fraud, pattern_type, accounts, scheduleID, individual_amount, aggregated_amount, transaction_count,
                                  amount_difference, period, amount_rounded, orig_country, bene_country, orig_business, bene_business)
           count += 1
           if count % 1000 == 0:
             print "Write %d alerts" % count
 
 
-  def add_fraud_pattern(self, isFraud, pattern_type, accounts, scheduleID=1, individual_amount=None, aggregated_amount=None,
+  def add_alert_pattern(self, isFraud, pattern_type, accounts, scheduleID=1, individual_amount=None, aggregated_amount=None,
                         transaction_freq=None, amount_difference=None, period=None, amount_rounded=None,
                         orig_country=False, bene_country=False, orig_business=False, bene_business=False):
     """Add an AML rule transaction set

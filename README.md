@@ -25,22 +25,22 @@ python scripts/transaction_relationship_generator.py prop.ini paramFiles/deg1K.c
 ## Input files
 See CSV files under `paramFiles` directory
 - accounts.csv
-    - Account parameter file
-- patterns.csv
-    - Simple transaction pattern file
-- amlrule.csv
-    - Complex suspicious transaction pattern file
+  - Account parameter file
+- aletPatterns.csv
+  - Alert (fraud) transaction pattern parameter file
+- degree.csv
+  - Degree distribution parameter file
+- transactionType.csv
+  - Transaction distribution parameter file
 
 Python ini file
 - prop.ini
 
-Transaction CSV file (edge list)
-- transactions.csv
 
-## Output files
+## Output files (input files of the Simulator)
 See CSV files under `outputs` directory
 - accounts.csv
-    - Accounts and their properties list (vertex list of transaction graph) 
+    - Accounts and their properties list (vertex list of transaction graph)
 - transactions.csv
     - Transaction list (edge list of transaction graph)
 - fraudgroup.csv
@@ -55,7 +55,7 @@ Vertex (account) list of the generated transaction network
 - `country` Country of the account
 - `business` Business type of the account
 - `suspicious` Whether the account is suspicious
-- `fraud_id` Involving fraud transaction set IDs (multiple)
+- `fraud_id` Involving fraud transaction set ID
 
 ### transactions.csv
 Edge (transaction) list of the generated transaction network
@@ -77,29 +77,31 @@ Alert (suspicious) account and customer list
 # Transaction Simulator (Java Application)
 
 ## Java packages and classes
-- `amlsim/` : Java package for AMLSimulator
-  - `amlsim/` : Transaction model (normal, cash and fraud transactions)
-     - `cash/`
-     - `fraud/`
-     - `normal/`
-  - `obsolete/` : Place for obsolete (deprecated) classes  
-  - `stat/` : Java classes to compute statistical features of the transaction graph
-    - `Diameter.java`
-    - `HyperANFDist.java`
-    - `HyperANFTest.java`
-  - `Account.java`
-  - `Alert.java`
-  - `AMLSim.java`
-  - `Branch.java`
-  - `FraudAccount.java`
-  - `TransactionRepository.java`
+- `amlsim/` Java package for AMLSimulator
+  - `model/` Transaction models (normal, cash and alert transactions)
+     - `cash/` Cash transaction models
+       - `CashModel.java` Base class of cash transaction models
+       - `CashInModel.java` Cash-in (deposit) model
+       - `CashOutModel.java` Cash-out (withdrawal) model
+     - `fraud/` Alert (fraud) transaction models
+       - `BipartiteTransactionModel.java` 
+     - `normal/` Normal transaction models
+  - `obsolete/` Place for obsolete (deprecated) classes  
+  - `stat/` Java classes to compute statistical features of the transaction graph
+    - `Diameter.java` Compute diameter and average distance of the transaction graph
+  - `Account.java` Account (agent) class
+  - `Alert.java` Alert (fraud) class
+  - `AMLSim.java` AMLSim main class
+  - `Branch.java` Branch of bank class
+  - `FraudAccount.java` Fraud account class
+  - `TransactionRepository.java` Transaction repository
 
 
 ## Dependencies
 Put all jar files of the following libraries to `jars` directory.
 
 - [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 18
-- [PaySim](https://github.com/EdgarLopezPhD/PaySim): Please generate the jar file using Eclipse
+- [PaySim](https://github.com/EdgarLopezPhD/PaySim) Please generate the jar file from class files
 - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) 3.6.1
 
 
@@ -124,6 +126,7 @@ java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xmx1g -cp "jars/*:bin" aml
 - PropFile: Property file path of the Java application (`amlsim.properties`)
 - Steps: Number of steps per simulation
 - Simulations: Number of simulation iterations
+- Name: Simulation name (optional: if absent, the current time is used)
 
 Example:
 ```bash
@@ -144,7 +147,7 @@ java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xmx1g -cp "jars/*:bin" aml
 ```bash
 python scripts/draw_transaction_graph.py [TransactionLog] [AlertID]
 ```
-- TransactionLog: Log CSV file path from AMLSimulator (e.g. `outputs/PS_20180905_120828_575/20180905_120828_575_log.csv`)
+- TransactionLog: Log CSV file path from AMLSimulator (e.g. `outputs/sample/sample_log.csv`)
 - AlertID: An alert ID to be visualized
 
 

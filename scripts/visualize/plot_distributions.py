@@ -225,6 +225,8 @@ if __name__ == "__main__":
   prop = ConfigParser()
   prop.read(argv[2])
 
+  output_dir = prop.get("OutputFile", "directory")
+
   deg_plot = prop.get("PlotFile", "degree")
   wcc_plot = prop.get("PlotFile", "wcc")
   alert_plot = prop.get("PlotFile", "alert")
@@ -232,16 +234,15 @@ if __name__ == "__main__":
   cc_plot = prop.get("PlotFile", "clustering")
   dia_plot = prop.get("PlotFile", "diameter")
 
-  plot_degree_distribution(g, deg_plot)
-  plot_wcc_distribution(g, wcc_plot)
+  plot_degree_distribution(g, os.path.join(output_dir, deg_plot))
+  plot_wcc_distribution(g, os.path.join(output_dir, wcc_plot))
 
   param_dir = prop.get("InputFile", "directory")
   amlrule = os.path.join(param_dir, prop.get("InputFile", "amlrule")) if len(argv) == 3 else argv[3]
-  plot_aml_rule(amlrule, alert_plot)
+  plot_aml_rule(amlrule, os.path.join(output_dir, alert_plot))
 
-  output_dir = prop.get("OutputFile", "directory")
   tx_count = prop.get("OutputFile", "counter_log")
-  plot_tx_count(os.path.join(output_dir, tx_count), count_plot)
+  plot_tx_count(os.path.join(output_dir, tx_count), os.path.join(output_dir, count_plot))
 
   plot_clustering_coefficient(g, os.path.join(output_dir, cc_plot))
 

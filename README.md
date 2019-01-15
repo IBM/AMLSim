@@ -120,13 +120,13 @@ Java property file
 Build and execute AMLSimulator
 ```bash
 mkdir bin
-javac -cp "jars/*" -d bin src/amlsim/*.java src/amlsim/model/*.java src/amlsim/model/fraud/*.java src/amlsim/model/cash/*.java
+javac -cp "jars/*" -d bin src/amlsim/*.java src/amlsim/stat/*.java src/amlsim/model/*.java src/amlsim/model/normal/*.java src/amlsim/model/fraud/*.java src/amlsim/model/cash/*.java
 java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xmx1g -cp "jars/*:bin" amlsim.AMLSim -file [PropFile] -for [Steps] -r [Simulations] -name [Name]
 ```
 - PropFile: Property file path of the Java application (`amlsim.properties`)
 - Steps: Number of steps per simulation
 - Simulations: Number of simulation iterations
-- Name: Simulation name (optional: if absent, the current time is used)
+- Name: Simulation name (optional: if absent, the current timestamp will be used)
 
 Example:
 ```bash
@@ -137,15 +137,14 @@ java -Xms2g -Xmx4g -cp "jars/*:bin" amlsim.AMLSim -file amlsim.properties -for 1
 ## Example: generate transaction CSV files from small sample parameter files
 ```bash
 cd /path/to/AMLSimulator
-cp /path/to/sample/small/*.csv paramFiles/
-python scripts/transaction_relationship_generator.py prop.ini paramFiles/deg1K.csv paramFiles/tx_type.csv
+python scripts/transaction_relationship_generator.py prop.ini paramFiles/1K/degree.csv paramFiles/transactionType.csv
 java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xmx1g -cp "jars/*:bin" amlsim.AMLSim -file amlsim.properties -for 150 -r 1 -name sample
 ```
 
 
 # Visualize a transaction subgraph of the specified alert
 ```bash
-python scripts/draw_transaction_graph.py [TransactionLog] [AlertID]
+python scripts/visualize/plot_transaction_graph.py [TransactionLog] [AlertID]
 ```
 - TransactionLog: Log CSV file path from AMLSimulator (e.g. `outputs/sample/sample_log.csv`)
 - AlertID: An alert ID to be visualized

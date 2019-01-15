@@ -1,7 +1,6 @@
 package amlsim.model.cash;
 
 import amlsim.AMLSim;
-import amlsim.obsolete.AMLTransaction;
 import amlsim.Branch;
 
 import static java.lang.Math.round;
@@ -63,11 +62,11 @@ public class CashInModel extends CashModel {
                 float amount = computeAmount();
                 sendTransaction(step, amount, account, branch, "CASH-IN");
             }else {
-                Branch branch = account.getBranch();
-                float amount = computeAmount();
-                AMLTransaction tx = new AMLTransaction(step, account, (short) 0, amount, "CASH-IN");
-                tx.setClientDestAfter(branch);
-                account.deposit(amount);
+//                Branch branch = account.getBranch();
+//                float amount = computeAmount();
+//                AMLTransaction tx = new AMLTransaction(step, account, (short) 0, amount, "CASH-IN");
+//                tx.setClientDestAfter(branch);
+//                account.deposit(amount);
 //                txs.add(tx);
             }
         }

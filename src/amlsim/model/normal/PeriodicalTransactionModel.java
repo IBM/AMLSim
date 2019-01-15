@@ -2,11 +2,8 @@ package amlsim.model.normal;
 
 import amlsim.Account;
 import amlsim.AMLSim;
-import amlsim.obsolete.AMLTransaction;
 import amlsim.model.AbstractTransactionModel;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Send money to neighbors periodically
@@ -32,7 +29,7 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
         int totalRemit = (int)AMLSim.getNumOfSteps() / PERIOD; // Total number of remittances
         int eachRemit = (numDests < totalRemit) ? 1 : numDests / totalRemit;
 
-        List<AMLTransaction> txs = new ArrayList<>();
+//        List<AMLTransaction> txs = new ArrayList<>();
 
         for(int i=0; i<eachRemit; i++) {
             float amount = this.balance;

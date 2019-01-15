@@ -65,18 +65,15 @@ Java property file
 
 Commands
 ```bash
-mkdir bin
-javac -cp "jars/*" -d bin src/amlsim/*.java src/amlsim/stat/*.java src/amlsim/model/*.java src/amlsim/model/normal/*.java src/amlsim/model/fraud/*.java src/amlsim/model/cash/*.java
-java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xmx1g -cp "jars/*:bin" amlsim.AMLSim -file [PropFile] -for [Steps] -r [Simulations] -name [Name]
+sh scripts/build_AMLSim.sh
+sh scripts/run_AMLSim.sh [SimulationName] [Steps]
 ```
-- PropFile: Property file path of the Java application (`amlsim.properties`)
+- SimulationName: Simulation name
 - Steps: Number of steps per simulation
-- Simulations: Number of simulation iterations
-- Name: Simulation name (optional: if absent, the current timestamp will be used)
 
 Example:
 ```bash
-java -Xms2g -Xmx4g -cp "jars/*:bin" amlsim.AMLSim -file amlsim.properties -for 150 -r 1 -name sample
+sh scripts/run_AMLSim.sh sample 150
 ```
 
 
@@ -84,7 +81,7 @@ java -Xms2g -Xmx4g -cp "jars/*:bin" amlsim.AMLSim -file amlsim.properties -for 1
 ```bash
 cd /path/to/AMLSim
 python scripts/transaction_relationship_generator.py prop.ini paramFiles/1K/degree.csv paramFiles/transactionType.csv
-java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xmx1g -cp "jars/*:bin" amlsim.AMLSim -file amlsim.properties -for 150 -r 1 -name sample
+sh scripts/run_AMLSim.sh sample 150
 ```
 
 

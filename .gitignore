@@ -1,5 +1,4 @@
 # Compiled class file
-*.class
 bin/
 
 # Log file
@@ -23,11 +22,12 @@ bin/
 hs_err_pid*
 
 # IntelliJ IDEA
-*.iml
 .idea/
 tmp/
 
-# Output CSV and Log(txt) files
+# Output CSV, Log(txt) and image files
 outputs/*.csv
 outputs/*/
 outputs/*.txt
+outputs/*.png
+outputs/*.gif

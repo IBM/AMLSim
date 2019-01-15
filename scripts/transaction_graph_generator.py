@@ -755,7 +755,7 @@ class TransactionGenerator:
 if __name__ == "__main__":
   argv = sys.argv
   if len(argv) < 4:
-    print("Usage: python %s [ConfFile] [DegreeFile] [TypeFile] [AMLFile]" % argv[0])
+    print("Usage: python %s [ConfFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
     exit(1)
 
   txg = TransactionGenerator(argv[1], argv[3])

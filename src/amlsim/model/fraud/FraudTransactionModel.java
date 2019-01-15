@@ -28,18 +28,27 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     public static final int STACK = 5;
     public static final int DENSE = 6;
 
-    public static FraudTransactionModel getModel(int modelID, float minAmount, float maxAmount, int minStep, int maxStep){
+    /**
+     * Create alert transaction model
+     * @param modelID Alert transactoin model ID as int
+     * @param minAmount Minimum transaction amount
+     * @param maxAmount Maximum transaction amount
+     * @param startStep Start step
+     * @param endStep End step
+     * @return Fraud transaction model object
+     */
+    public static FraudTransactionModel getModel(int modelID, float minAmount, float maxAmount, int startStep, int endStep){
         FraudTransactionModel model;
         switch(modelID){
-            case FAN_OUT: model = new FanOutTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
-            case FAN_IN: model = new FanInTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
-            case CYCLE: model = new CycleTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
-            case BIPARTITE: model = new BipartiteTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
-            case STACK: model = new StackTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
-            case DENSE: model = new RandomTransactionModel(minAmount, maxAmount, minStep, maxStep); break;
+            case FAN_OUT: model = new FanOutTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case FAN_IN: model = new FanInTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case CYCLE: model = new CycleTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case BIPARTITE: model = new BipartiteTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case STACK: model = new StackTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case DENSE: model = new RandomTransactionModel(minAmount, maxAmount, startStep, endStep); break;
             default: throw new IllegalArgumentException("Unknown fraud model ID: " + modelID);
         }
-        model.setParameters(minAmount, minStep, maxStep);
+        model.setParameters(minAmount, startStep, endStep);
         return model;
     }
 
@@ -51,10 +60,19 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
 
     public abstract void setSchedule(int modelID);
 
+    /**
+     * Bind this alert transaction model to the alert
+     * @param ag Alert object
+     */
     public void setAlert(Alert ag){
         this.alert = ag;
     }
 
+    /**
+     * Whether the current simulation step is within the valid simulation step range
+     * @param step Current simulation step
+     * @return If the current step is within the valid simulation step range, return true
+     */
     public boolean isValidStep(long step){
         return startStep <= step && step <= endStep;
     }

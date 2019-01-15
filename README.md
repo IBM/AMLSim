@@ -10,7 +10,7 @@ This project aims at building a multi-agent simulator of anti-money laundering -
 
 ## Launch script
 ```bash
-python scripts/transaction_relationship_generator.py [PropFile] [DegreeFile] [TransactionTypeFile]
+python scripts/transaction_graph_generator.py [PropFile] [DegreeFile] [TransactionTypeFile]
 ```
 - PropFile: Configuration file path (`prop.ini`) of the transaction graph generator
 - DegreeFile: Degree distribution parameter file
@@ -156,7 +156,7 @@ python scripts/draw_transaction_graph.py [TransactionLog] [AlertID]
 python scripts/convert_logs.py [ConfFile] [TransactionLog]
 ```
 - ConfFile: Configuration ini file for the data conversion (`convert.ini`)
-- TransactionLog: Log CSV file path (e.g. `outputs/sample/sample_log.csv`)
+- TransactionLog: Transaction log CSV file under `outputs/(name)/` (e.g. `outputs/sample/sample_log.csv`)
 
 Example: 
 ```bash

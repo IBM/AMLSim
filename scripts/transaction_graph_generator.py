@@ -60,7 +60,7 @@ class TransactionGenerator:
     np.random.seed(self.seed)
     random.seed(self.seed)
 
-    self.factor = int(self.conf.get("Base", "edge_factor"))
+    self.degree_threshold = int(self.conf.get("Base", "degree_threshold"))
     # self.prob = float(self.conf.get("Base", "triangle_prob"))
 
     self.default_max_amount = parse_amount(self.conf.get("General", "default_max_amount"))
@@ -102,7 +102,7 @@ class TransactionGenerator:
     TODO: More options how to choose fraud accounts
     """
     self.degrees = self.g.degree(self.g.nodes())
-    self.hubs = [n for n in self.g.nodes() if self.factor <= self.degrees[n]]
+    self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
     self.subject_candidates = set(self.g.nodes())
 
   #### Highrisk country and business

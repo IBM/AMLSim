@@ -15,9 +15,9 @@ public class CycleTransactionModel extends FraudTransactionModel {
 
     // Transaction schedule
     private long[] steps;  // Array of simulation steps when each transaction is scheduled to be made
-    public static final int FIXED_INTERVAL = 1;  // All accounts send money in order with the same interval
-    public static final int RANDOM_INTERVAL = 2;  // All accounts send money in order with random intervals
-    public static final int UNORDERED = 3;  // All accounts send money randomly
+    public static final int FIXED_INTERVAL = 0;  // All accounts send money in order with the same interval
+    public static final int RANDOM_INTERVAL = 1;  // All accounts send money in order with random intervals
+    public static final int UNORDERED = 2;  // All accounts send money randomly
 
     public CycleTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep){
         super(minAmount, maxAmount, minStep, maxStep);

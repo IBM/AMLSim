@@ -47,8 +47,18 @@ Property file
 ### Dependencies
 Put all jar files of the following libraries to `jars` directory.
 - [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 18
-- [PaySim](https://github.com/EdgarLopezPhD/PaySim) Please generate the jar file from class files
 - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) 3.6.1
+- [PaySim](https://github.com/EdgarLopezPhD/PaySim) Please generate `paysim.jar` with the following commands
+```
+git clone https://github.com/EdgarLopezPhD/PaySim.git
+cd PaySim
+git checkout 62a29b77c28bd03e717a67c8ab975c671ba0080d
+mkdir bin jars
+cp /path/to/commons-math-3-3.6.1*.jar /path/to/mason.18.jar jars/
+javac -d bin -cp "jars/*" src/paysim/*.java
+cd bin
+jar cf paysim.jar paysim
+```
 
 
 ### Input data files

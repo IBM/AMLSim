@@ -88,9 +88,18 @@ sh scripts/run_AMLSim.sh sample 150
 
 
 ### Example: generate transaction CSV files from small sample parameter files
+Before running the Python script, please check and edit configuration file `prop.ini`.
+```ini
+[InputFile]
+directory = paramFiles/1K
+account_list = accounts.csv
+alertPattern = alertPatterns.csv
+```
+
+Then, please run transaction graph generator and simulator scripts.
 ```bash
 cd /path/to/AMLSim
-python scripts/transaction_relationship_generator.py prop.ini paramFiles/1K/degree.csv paramFiles/transactionType.csv
+python scripts/transaction_graph_generator.py prop.ini paramFiles/1K/degree.csv paramFiles/1K/transactionType.csv
 sh scripts/run_AMLSim.sh sample 150
 ```
 

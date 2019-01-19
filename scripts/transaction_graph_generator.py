@@ -240,17 +240,21 @@ class TransactionGenerator:
       :param num_v: Number of total account vertices
       :return: In-degree and out-degree sequence list
       """
+      # print num_v
       in_deg = list()  # In-degree sequence
       out_deg = list()  # Out-degree sequence
       with open(deg_csv, "r") as rf:  # Load in/out-degree sequences from parameter CSV file for each account
         reader = csv.reader(rf)
         next(reader)
         for row in reader:
-          num_v = int(row[0])
-          in_deg.extend(int(row[1]) * [num_v])
-          out_deg.extend(int(row[2]) * [num_v])
+          nv = int(row[0])
+          in_deg.extend(int(row[1]) * [nv])
+          out_deg.extend(int(row[2]) * [nv])
 
+      print len(in_deg), len(out_deg)
+      assert len(in_deg) == len(out_deg), "In/Out-degree Sequences must have equal length."
       total_v = len(in_deg)
+      # print total_v
       # print total_v, num_v
       if total_v > num_v:  # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
         diff = total_v - num_v  # The number of extra accounts to be removed
@@ -268,13 +272,15 @@ class TransactionGenerator:
         out_deg = out_tmp
       else:  # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
         repeats = num_v / total_v  # Number of repetitions of degree sequences
-        print len(in_deg), repeats
+        print len(in_deg), len(out_deg), repeats
         in_deg = in_deg * repeats
         out_deg = out_deg * repeats
         print len(in_deg)
         remain = num_v - total_v * repeats  # Number of extra accounts
         in_deg.extend([1] * remain)  # Add 1-degree account vertices
         out_deg.extend([1] * remain)
+
+      assert sum(in_deg) == sum(out_deg), "Sequences must have equal sums."
       return in_deg, out_deg
 
 

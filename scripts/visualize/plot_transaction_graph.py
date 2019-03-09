@@ -48,10 +48,13 @@ def load_log(fname):
   return g
 
 
-def get_alert_graph(g, alertID):
-  edge_alerts = nx.get_edge_attributes(g, "alertID")
-  edges = [k for k, v in edge_alerts.iteritems() if v == alertID]
-  g_ = g.edge_subgraph(edges)
+def get_alert_graph(g, aid):
+  g_ = nx.MultiDiGraph()
+  for e in g.edges(keys=True, data=True):
+    src, dst, key, data = e
+    if data.get("alertID") == aid:
+      g_.add_edge(src, dst, key=key, attr_dict=data)
+  # print(g_.edges(data=True))
   return g_
 
 

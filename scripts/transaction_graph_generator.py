@@ -42,26 +42,25 @@ def parse_flag(value):
 
 class TransactionGenerator:
 
-  def __init__(self, confFile, ttypeCSV):
-    """Initialize transaction network.
-    
-    :param confFile: Configuration (ini) file name
-    :param ttypeCSV: Transaction type distribution CSV file
+  def __init__(self, conf_file, type_file):
+    """Initialize transaction network from parameter files.
+    :param conf_file: Configuration (ini) file name
+    :param type_file: Transaction type distribution CSV file
     """
     self.g = nx.MultiDiGraph()  # Transaction graph object
     self.num_accounts = 0  # Number of total accounts
     self.degrees = dict()  # Degree distribution
     self.hubs = list()  # Hub vertices
     self.subject_candidates = set()
+    self.attr_names = list()  # Additional account attribute names
 
     self.conf = ConfigParser()
-    self.conf.read(confFile)
+    self.conf.read(conf_file)
     self.seed = int(self.conf.get("General", "seed"))
     np.random.seed(self.seed)
     random.seed(self.seed)
 
     self.degree_threshold = int(self.conf.get("Base", "degree_threshold"))
-    # self.prob = float(self.conf.get("Base", "triangle_prob"))
 
     self.default_max_amount = parse_amount(self.conf.get("General", "default_max_amount"))
     self.default_min_amount = parse_amount(self.conf.get("General", "default_min_amount"))
@@ -91,7 +90,7 @@ class TransactionGenerator:
           ttypes.extend([ttype] * int(row[1]))
       return ttypes
 
-    self.tx_types = get_types(ttypeCSV)
+    self.tx_types = get_types(type_file)
 
 
 
@@ -168,19 +167,102 @@ class TransactionGenerator:
     return random.sample(candidates, num)
 
 
-  #### Load and add account vertices from CSV file
   def load_account_list(self):
+    """Load and add account vertices from a CSV file
+    :return:
+    """
+    is_aggregated = self.conf.get("InputFile", "is_aggregated").lower() == "true"
+    if is_aggregated:
+      self.load_account_param()
+    else:
+      self.load_account_raw()
+
+
+  def load_account_raw(self):
+    """Load and add account vertices from a CSV file with raw account info
+    header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
+    :return:
+    """
+    if not self.conf.has_option("InputFile", "min_balance"):
+      raise KeyError("Option 'min_balance' is required to load raw account list")
+    min_balance = float(self.conf.get("InputFile", "min_balance"))
+
+    if not self.conf.has_option("InputFile", "max_balance"):
+      raise KeyError("Option 'max_balance' is required to load raw account list")
+    max_balance = float(self.conf.get("InputFile", "max_balance"))
+
+    if not self.conf.has_option("InputFile", "start_day"):
+      raise KeyError("Option 'start_day' is required to load raw account list")
+    start_day = int(self.conf.get("InputFile", "start_day"))
+
+    if not self.conf.has_option("InputFile", "end_day"):
+      raise KeyError("Option 'end_day' is required to load raw account list")
+    end_day = int(self.conf.get("InputFile", "end_day"))
+
+    default_model = int(self.conf.get("InputFile", "default_model")) \
+      if self.conf.has_option("InputFile", "default_model") else 1
+
+    fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
+    self.attr_names.extend(["seq", "first_name", "last_name", "street_addr", "city", "state", "zip",
+                            "gender", "phone_number", "birth_date", "ssn"])
+
+    with open(fname, "r") as rf:
+      reader = csv.reader(rf)
+      header = next(reader)
+      name2idx = {n:i for i,n in enumerate(header)}
+      idx_aid = name2idx["uuid"]
+      idx_seq = name2idx["seq"]
+      idx_first_name = name2idx["first_name"]
+      idx_last_name = name2idx["last_name"]
+      idx_street_addr = name2idx["street_addr"]
+      idx_city = name2idx["city"]
+      idx_state = name2idx["state"]
+      idx_zip = name2idx["zip"]
+      idx_gender = name2idx["gender"]
+      idx_phone_number = name2idx["phone_number"]
+      idx_birth_date = name2idx["birth_date"]
+      idx_ssn = name2idx["ssn"]
+
+      for row in reader:
+        aid = row[idx_aid]
+        seq = row[idx_seq]
+        first_name = row[idx_first_name]
+        last_name = row[idx_last_name]
+        street_addr = row[idx_street_addr]
+        city = row[idx_city]
+        state = row[idx_state]
+        zip_code = row[idx_zip]
+        gender = row[idx_gender]
+        phone_number = row[idx_phone_number]
+        birth_date = row[idx_birth_date]
+        ssn = row[idx_ssn]
+
+        attr = {"seq": seq, "first_name": first_name, "last_name": last_name,
+                "street_addr": street_addr, "city": city, "state": state, "zip": zip_code,
+                "gender": gender, "phone_number": phone_number, "birth_date": birth_date, "ssn": ssn}
+
+        init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
+        self.add_account(aid, init_balance, start_day, end_day, "", "", False, default_model, **attr)
+
+
+
+  def load_account_param(self):
+    """Load and add account vertices from a CSV file with aggregated parameters
+    Each row can represent two or more accounts
+    :return:
+    """
+
     fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
 
-    idx_num = None
-    idx_min = None
-    idx_max = None
-    idx_start = None
-    idx_end = None
-    idx_country = None
-    idx_business = None
-    idx_suspicious = None
-    idx_model = None
+    idx_num = None  # Number of accounts per row
+    idx_min = None  # Minimum initial balance
+    idx_max = None    # Maximum initial balance
+    idx_start = None  # Start step
+    idx_end = None  # End step
+    idx_country = None  # Country
+    idx_business = None  # Business type
+    idx_suspicious = None  # Suspicious flag
+    idx_model = None  # Transaction model
 
     with open(fname, "r") as rf:
       reader = csv.reader(rf)
@@ -289,12 +371,15 @@ class TransactionGenerator:
     g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg, seed=0)  # Generate a directed graph from degree sequences (not transaction graph)
 
     print("Add %d base transactions" % g.number_of_edges())
-    for src, dst in g.edges():
+    nodes = self.g.nodes()
+    for src_i, dst_i in g.edges():
+      src = nodes[src_i]
+      dst = nodes[dst_i]
       self.add_transaction(src, dst)  # Add edges to transaction graph
 
 
 
-  def add_account(self, aid, init_balance, start, end, country, business, suspicious, modelID):
+  def add_account(self, aid, init_balance, start, end, country, business, suspicious, modelID, **attr):
     """Add an account vertex
     :param aid: Account ID
     :param init_balance: Initial amount
@@ -304,10 +389,11 @@ class TransactionGenerator:
     :param business: business type
     :param suspicious: Whether the account is suspicious
     :param modelID: Remittance model ID
+    :param attr: Additional attributes
     :return:
     """
     if self.check_account_absent(aid):  # Add an account vertex with an ID and attributes if an account with the same ID is not yet added
-      self.g.add_node(aid, init_balance=init_balance, start=start, end=end, country=country, business=business, suspicious=suspicious, isFraud=False, modelID=modelID)
+      self.g.add_node(aid, init_balance=init_balance, start=start, end=end, country=country, business=business, suspicious=suspicious, isFraud=False, modelID=modelID, **attr)
 
 
   def add_transaction(self, src, dst, amount=None, date=None, ttype=None):
@@ -690,16 +776,15 @@ class TransactionGenerator:
 
   def write_account_list(self):
     """Write all account list
-
     """
-
     fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "accounts"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
-      writer.writerow(["ACCOUNT_ID", "PRIMARY_CUSTOMER_ID", "init_balance", "start", "end", "country", "business", "suspicious", "isFraud", "modelID"])
+      base_attrs = ["ACCOUNT_ID", "PRIMARY_CUSTOMER_ID", "init_balance", "start", "end", "country", "business", "suspicious", "isFraud", "modelID"]
+      writer.writerow(base_attrs + self.attr_names)
       for n in self.g.nodes(data=True):
         aid = n[0]  # Account ID
-        cid = "C_%d" % aid  # Customer ID bounded to this account
+        cid = "C_" + str(aid)  # Customer ID bounded to this account
         prop = n[1]  # Account attributes
         balance = "{0:.2f}".format(prop["init_balance"])  # Initial balance
         start = prop["start"]  # Start time (when the account is opened)
@@ -709,7 +794,10 @@ class TransactionGenerator:
         suspicious = prop["suspicious"]  # Whether this account is suspicious (unused)
         isFraud = "true" if prop["isFraud"] else "false"  # Whether this account is involved in fraud transactions
         modelID = prop["modelID"]  # Transaction behavior model ID
-        writer.writerow([aid, cid, balance, start, end, country, business, suspicious, isFraud, modelID])
+        values = [aid, cid, balance, start, end, country, business, suspicious, isFraud, modelID]
+        for attr_name in self.attr_names:
+          values.append(prop[attr_name])
+        writer.writerow(values)
     print("Exported %d accounts." % self.g.number_of_nodes())
 
 
@@ -730,16 +818,15 @@ class TransactionGenerator:
 
   def write_alert_members(self):
     """Write alert account list
-
     """
-
     def get_outEdge_attrs(g, vid, name):
       return [v for k, v in nx.get_edge_attributes(g, name).iteritems() if (k[0] == vid or k[1] == vid)]
 
     fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alertgroup"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
-      writer.writerow(["alertID", "reason", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep", "scheduleID"])
+      base_attrs = ["alertID", "reason", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep", "scheduleID"]
+      writer.writerow(base_attrs + self.attr_names)
       for gid, sub_g in self.alert_groups.iteritems():
         modelID = sub_g.graph["modelID"]
         scheduleID = sub_g.graph["scheduleID"]
@@ -752,7 +839,11 @@ class TransactionGenerator:
           maxAmount = '{:.2f}'.format(max(get_outEdge_attrs(sub_g, n, "amount")))
           minStep = start
           maxStep = end
-          writer.writerow([gid, reason, n, isSubject, modelID, minAmount, maxAmount, minStep, maxStep, scheduleID])
+          values = [gid, reason, n, isSubject, modelID, minAmount, maxAmount, minStep, maxStep, scheduleID]
+          prop = self.g.node[n]
+          for attr_name in self.attr_names:
+            values.append(prop[attr_name])
+          writer.writerow(values)
 
     print("Exported members of %d alerted groups." % len(self.alert_groups))
 
@@ -764,14 +855,19 @@ if __name__ == "__main__":
     print("Usage: python %s [ConfFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
     exit(1)
 
-  txg = TransactionGenerator(argv[1], argv[3])
+  _conf_file = argv[1]
+  _deg_file = argv[2]
+  _type_file = argv[3]
+
+  txg = TransactionGenerator(_conf_file, _type_file)
   txg.load_account_list()  # Load account list CSV file
-  txg.generate_normal_transactions(argv[2])  # Load a parameter CSV file for the base transaction types
+  txg.generate_normal_transactions(_deg_file)  # Load a parameter CSV file for the base transaction types
   txg.set_subject_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
   if len(argv) == 4:
     txg.load_alert_patterns()  # Add alert patterns
   else:
-    txg.load_alert_patterns(argv[4])
+    _alert_file = argv[4]
+    txg.load_alert_patterns(_alert_file)
   txg.write_account_list()  # Export accounts to a CSV file
   txg.write_transaction_list()  # Export transactions to a CSV file
   txg.write_alert_members()  # Export alert accounts to a CSV file

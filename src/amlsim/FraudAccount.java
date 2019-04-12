@@ -10,7 +10,8 @@ public class FraudAccount extends Account {
 
 	private int count = 0;
 
-	FraudAccount(long id, int modelID, float init_balance, int start, int end){
+//	FraudAccount(long id, int modelID, float init_balance, int start, int end){
+    FraudAccount(String id, int modelID, float init_balance, int start, int end){
 		super(id, modelID, init_balance, start, end);
 	}
 
@@ -49,9 +50,9 @@ public class FraudAccount extends Account {
 		return true;
 	}
 
-	public String getName() {
-		return Long.toString(this.id);
-	}
+//	public String getName() {
+//		return Long.toString(this.id);
+//	}
 
 	public String toString() {
 		return "F" + this.id;

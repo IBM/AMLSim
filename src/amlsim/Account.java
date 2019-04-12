@@ -11,21 +11,26 @@ import java.util.*;
 
 public class Account extends Client implements Steppable {
 
-	protected long id;
+//	protected long id;
+    protected String id;
+
 	protected AbstractTransactionModel model;
 	protected CashInModel cashInModel;
 	protected CashOutModel cashOutModel;
 	private boolean caseSubject = false;
 	private Random rand = new Random();
 	private Branch branch = null;
-	private Map<Long, Account> origs = new HashMap<>();  // Sender Client ID --> Client Object
-	private Map<Long, Account> dests = new HashMap<>();  // Receiver Client ID --> Client Object
-	private Account prevOrig = null;  // Previous sender Client
+//	private Map<Long, Account> origs = new HashMap<>();  // Sender Client ID --> Client Object
+//	private Map<Long, Account> dests = new HashMap<>();  // Receiver Client ID --> Client Object
+    private Map<String, Account> origs = new HashMap<>();  // Sender Client ID --> Client Object
+    private Map<String, Account> dests = new HashMap<>();  // Receiver Client ID --> Client Object
+
+    private Account prevOrig = null;  // Previous sender Client
 	private Account prevDest = null;  // Previous receiver Client
 	List<Alert> alerts = new ArrayList<>();
-//	private Map<Long, AMLTransaction> tx_repository = new HashMap<>();  // Step --> Transaction Object
-//	private Map<Long, List<AMLTransaction>> tx_repository = new HashMap<>(); // Step --> Transaction List
-	private Map<Long, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
+//	private Map<Long, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
+    private Map<String, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
+
 	private static List<String> all_tx_types = new ArrayList<>();
 
 	private ArrayList<ActionProbability> probList;
@@ -37,7 +42,8 @@ public class Account extends Client implements Steppable {
 
 
 	public Account(){
-		this.id = 0;
+//		this.id = 0;
+        this.id = "-";
 		this.model = null;
 	}
 
@@ -49,15 +55,14 @@ public class Account extends Client implements Steppable {
 	 * @param start Start step
 	 * @param end End step
 	 */
-	public Account(long id, int modelID, float init_balance, long start, long end){
+//	public Account(long id, int modelID, float init_balance, long start, long end){
+    public Account(String id, int modelID, float init_balance, long start, long end){
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
 
 		switch(modelID){
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
-//			case AbstractTransactionModel.COARSE: this.model = new CoarseGrainedTransactionModel(); break;
-//			case AbstractTransactionModel.FINE: this.model = new FineGrainedTransactionModel(); break;
 			case AbstractTransactionModel.FANOUT: this.model = new FanOutTransactionModel(); break;
 			case AbstractTransactionModel.FANIN: this.model = new FanInTransactionModel(); break;
 			case AbstractTransactionModel.MUTUAL: this.model = new MutualTransactionModel(); break;
@@ -111,7 +116,9 @@ public class Account extends Client implements Steppable {
 	}
 
 	public String getTxType(Account dest){
-		long destID = dest.id;
+//		long destID = dest.id;
+        String destID = dest.id;
+
 		if(this.tx_types.containsKey(destID)){
 			return tx_types.get(destID);
 		}else if(!this.tx_types.isEmpty()){
@@ -268,16 +275,20 @@ public class Account extends Client implements Steppable {
 	}
 
 	public String getName() {
-		return Long.toString(this.id);
+//		return Long.toString(this.id);
+        return this.id;
 	}
 
 	/**
 	 * Get the account identifier as long
 	 * @return Account identifier
 	 */
-	public long getID(){
-		return this.id;
-	}
+    public String getID(){
+        return this.id;
+    }
+//	public long getID(){
+//		return this.id;
+//	}
 
 	/**
 	 * Get the account identifier as String

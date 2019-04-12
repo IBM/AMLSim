@@ -20,7 +20,8 @@ public class AMLSim extends ParameterizedPaySim {
 	public static final int TX_SIZE = 10000000;  // Transaction buffer size
 	private static TransactionRepository txs = new TransactionRepository(TX_SIZE);
 
-	private Map<Long, Integer> idMap = new HashMap<>();  // Account ID --> Index
+//	private Map<Long, Integer> idMap = new HashMap<>();  // Account ID --> Index
+    private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
 	private Map<Long, Alert> alertGroups = new HashMap<>();
 	private int numBranches = 0;
 	private ArrayList<Branch> branches = new ArrayList<>();
@@ -53,7 +54,7 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 	
 	//Parse the arguments
-	public void parseArgs(String args[]){
+	public void parseArgs(String[] args){
 		//Parse the arguments given
 		for (int x = 0; x < args.length - 1; x++){
 			switch (args[x]) {
@@ -78,7 +79,7 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 	}
 	
-	public void runSimulation(String args[]){
+	public void runSimulation(String[] args){
 		parseArgs(args);
 		numOfRepeat = 1;
 		executeSimulation();
@@ -88,7 +89,8 @@ public class AMLSim extends ParameterizedPaySim {
 		return numOfSteps;
 	}
 
-	public Account getClientFromID(long id){
+//	public Account getClientFromID(long id){
+    public Account getClientFromID(String id){
 		int index = this.idMap.get(id);
 		return (Account) this.getClients().get(index);
 	}
@@ -196,7 +198,8 @@ public class AMLSim extends ParameterizedPaySim {
 		Map<String, Integer> columnIndex = getColumnIndices(line);
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
-			long accountID = Long.parseLong(elements[columnIndex.get("ACCOUNT_ID")]);
+//			long accountID = Long.parseLong(elements[columnIndex.get("ACCOUNT_ID")]);
+            String accountID = elements[columnIndex.get("ACCOUNT_ID")];
 			boolean isFraud = elements[columnIndex.get("isFraud")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
 			float init_balance = Float.parseFloat(elements[columnIndex.get("init_balance")]);
@@ -226,9 +229,12 @@ public class AMLSim extends ParameterizedPaySim {
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
 			long txID = Long.parseLong(elements[columnIndex.get("id")]);
-			long srcID = Long.parseLong(elements[columnIndex.get("src")]);
-			long dstID = Long.parseLong(elements[columnIndex.get("dst")]);
-			String ttype = elements[columnIndex.get("ttype")];
+//			long srcID = Long.parseLong(elements[columnIndex.get("src")]);
+//			long dstID = Long.parseLong(elements[columnIndex.get("dst")]);
+            String srcID = elements[columnIndex.get("src")];
+            String dstID = elements[columnIndex.get("dst")];
+
+            String ttype = elements[columnIndex.get("ttype")];
 
 			Account src = getClientFromID(srcID);
 			Account dst = getClientFromID(dstID);
@@ -247,7 +253,9 @@ public class AMLSim extends ParameterizedPaySim {
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
 			long alertID = Long.parseLong(elements[columnIndex.get("alertID")]);
-			long clientID = Long.parseLong(elements[columnIndex.get("clientID")]);
+//			long clientID = Long.parseLong(elements[columnIndex.get("clientID")]);
+            String clientID = elements[columnIndex.get("clientID")];
+
 			boolean isSubject = elements[columnIndex.get("isSubject")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
 			float minAmount = Float.parseFloat(elements[columnIndex.get("minAmount")]);
@@ -298,10 +306,11 @@ public class AMLSim extends ParameterizedPaySim {
 			AMLSim.simulatorName = "PS_" + format.format(c.getTime());
 		}
 
-		File f = new File(System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName);
+		String dirPath = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName;
+		File f = new File(dirPath);
 		boolean result = f.mkdir();
 		if(!result){
-			System.err.println("Warning: output log directory cannot be created");
+			System.err.println("Warning: output log directory cannot be created to: " + dirPath);
 		}
 	}
 
@@ -395,12 +404,16 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 
 	public static void handleTransaction(long step, String desc, float amt, Account orig, Account dest, boolean fraud, long aid){
-		long origID = orig.getID();
+//		long origID = orig.getID();
+        String origID = orig.getID();
+
 		float origBefore = (float)orig.getBalance();
 		orig.withdraw(amt);
 		float origAfter = (float)orig.getBalance();
 
-		long destID = dest.getID();
+//		long destID = dest.getID();
+        String destID = orig.getID();
+
 		float destBefore = (float)dest.getBalance();
 		dest.deposit(amt);
 		float destAfter = (float)dest.getBalance();
@@ -467,9 +480,6 @@ public class AMLSim extends ParameterizedPaySim {
 			p.setCurrentLoop(i);
 			p.runSimulation(args);
 		}
-		
-			
-	}	
+	}
 }
-
 

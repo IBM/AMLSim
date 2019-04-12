@@ -19,8 +19,11 @@ public class TransactionRepository {
     private long[] steps;
     private String[] descriptions;
     private float[] amounts;
-    private long[] origIDs;
-    private long[] destIDs;
+//    private long[] origIDs;
+//    private long[] destIDs;
+    private String[] origIDs;
+    private String[] destIDs;
+
     private float[] origBefore;
     private float[] origAfter;
     private float[] destBefore;
@@ -43,8 +46,11 @@ public class TransactionRepository {
         this.steps = new long[size];
         this.descriptions = new String[size];
         this.amounts = new float[size];
-        this.origIDs = new long[size];
-        this.destIDs = new long[size];
+//        this.origIDs = new long[size];
+//        this.destIDs = new long[size];
+        this.origIDs = new String[size];
+        this.destIDs = new String[size];
+
         this.origBefore = new float[size];
         this.origAfter = new float[size];
         this.destBefore = new float[size];
@@ -53,7 +59,8 @@ public class TransactionRepository {
         this.alertIDs = new long[size];
     }
 
-    public void addTransaction(long step, String desc, float amt, long origID, long destID,  float origBefore,
+//    public void addTransaction(long step, String desc, float amt, long origID, long destID,  float origBefore,
+    public void addTransaction(long step, String desc, float amt, String origID, String destID,  float origBefore,
                                float origAfter, float destBefore, float destAfter, boolean fraud, long aid){
         this.steps[index] = step;
         this.descriptions[index] = desc;

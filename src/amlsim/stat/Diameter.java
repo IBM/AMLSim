@@ -11,7 +11,9 @@ import it.unimi.dsi.webgraph.algo.HyperBall;
 public class Diameter {
 
     private ArrayListMutableGraph graph;  // Transaction graph (WebGraph)
-    private Map<Long, Integer> id2idx;  // Account ID --> Index of Graph
+//    private Map<Long, Integer> id2idx;  // Account ID --> Index of Graph
+    private Map<String, Integer> id2idx;  // Account ID --> Index of Graph
+
     private Map<Integer, Set<Integer>>  adj;  // Adjacency set (account index --> neighbor account index)
 
     public Diameter(int numAccounts){
@@ -25,7 +27,8 @@ public class Diameter {
      * @param srcID source account ID
      * @param dstID destination account ID
      */
-    public void addEdge(long srcID, long dstID){
+//    public void addEdge(long srcID, long dstID){
+    public void addEdge(String srcID, String dstID){
         if(!id2idx.containsKey(srcID)){
             int idx = id2idx.size();
             id2idx.put(srcID, idx);

@@ -223,6 +223,7 @@ class TransactionGenerator:
       idx_birth_date = name2idx["birth_date"]
       idx_ssn = name2idx["ssn"]
 
+      count = 0
       for row in reader:
         aid = row[idx_aid]
         seq = row[idx_seq]
@@ -236,13 +237,15 @@ class TransactionGenerator:
         phone_number = row[idx_phone_number]
         birth_date = row[idx_birth_date]
         ssn = row[idx_ssn]
+        model = default_model
 
         attr = {"seq": seq, "first_name": first_name, "last_name": last_name,
                 "street_addr": street_addr, "city": city, "state": state, "zip": zip_code,
                 "gender": gender, "phone_number": phone_number, "birth_date": birth_date, "ssn": ssn}
 
         init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
-        self.add_account(aid, init_balance, start_day, end_day, "", "", False, default_model, **attr)
+        self.add_account(aid, init_balance, start_day, end_day, "", "", False, model, **attr)
+        count += 1
 
 
 
@@ -322,7 +325,6 @@ class TransactionGenerator:
       :param num_v: Number of total account vertices
       :return: In-degree and out-degree sequence list
       """
-      # print num_v
       in_deg = list()  # In-degree sequence
       out_deg = list()  # Out-degree sequence
       with open(deg_csv, "r") as rf:  # Load in/out-degree sequences from parameter CSV file for each account
@@ -333,11 +335,9 @@ class TransactionGenerator:
           in_deg.extend(int(row[1]) * [nv])
           out_deg.extend(int(row[2]) * [nv])
 
-      print len(in_deg), len(out_deg)
+      # print(len(in_deg), len(out_deg))
       assert len(in_deg) == len(out_deg), "In/Out-degree Sequences must have equal length."
       total_v = len(in_deg)
-      # print total_v
-      # print total_v, num_v
       if total_v > num_v:  # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
         diff = total_v - num_v  # The number of extra accounts to be removed
         in_tmp = list()
@@ -354,10 +354,10 @@ class TransactionGenerator:
         out_deg = out_tmp
       else:  # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
         repeats = num_v / total_v  # Number of repetitions of degree sequences
-        print len(in_deg), len(out_deg), repeats
+        # print(len(in_deg), len(out_deg), repeats)
         in_deg = in_deg * repeats
         out_deg = out_deg * repeats
-        print len(in_deg)
+        # print(len(in_deg))
         remain = num_v - total_v * repeats  # Number of extra accounts
         in_deg.extend([1] * remain)  # Add 1-degree account vertices
         out_deg.extend([1] * remain)
@@ -367,7 +367,7 @@ class TransactionGenerator:
 
 
     in_deg, out_deg = get_degrees(degcsv, self.num_accounts)
-    print sum(in_deg), sum(out_deg)
+    # print(sum(in_deg), sum(out_deg))
     g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg, seed=0)  # Generate a directed graph from degree sequences (not transaction graph)
 
     print("Add %d base transactions" % g.number_of_edges())
@@ -546,7 +546,7 @@ class TransactionGenerator:
                                  amount_difference, period, amount_rounded, orig_country, bene_country, orig_business, bene_business)
           count += 1
           if count % 1000 == 0:
-            print "Write %d alerts" % count
+            print("Write %d alerts" % count)
 
 
   def add_alert_pattern(self, isFraud, pattern_type, accounts, scheduleID=1, individual_amount=None, aggregated_amount=None,

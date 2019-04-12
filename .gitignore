@@ -2,6 +2,7 @@
 bin/
 
 # Log file
+logs/
 *.log
 
 # BlueJ files
@@ -23,6 +24,7 @@ hs_err_pid*
 
 # IntelliJ IDEA
 .idea/
+*.iml
 tmp/
 
 # Output CSV, Log(txt) and image files

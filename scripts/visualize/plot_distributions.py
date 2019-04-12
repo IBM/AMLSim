@@ -63,7 +63,6 @@ def plot_wcc_distribution(g, plot_img):
   """
   wccs = nx.weakly_connected_components(g)
   wcc_sizes = Counter([len(wcc) for wcc in wccs])
-  # print wcc_sizes
   sizes = wcc_sizes.keys()
   size_seq = sorted(set(sizes))
   size_hist = [wcc_sizes[x] for x in size_seq]
@@ -163,11 +162,10 @@ def plot_clustering_coefficient(g, plot_img, interval=10):
     edges[v].append(k)
 
   for t in range(max_step):
-    # edges = [k for k,v in nx.get_edge_attributes(g, "step").iteritems() if v == t]
     gg.add_edges_from(edges[t])
     if t % interval == 0:
       v = nx.average_clustering(gg) if gg.number_of_nodes() else 0.0
-      print t, v
+      print("Step: %d, Coefficient: %f" % (t, v))
       values.append(v)
 
   plt.clf()

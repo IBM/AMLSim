@@ -22,6 +22,22 @@ Account configuration list
   - 5: Periodical
 
 
+Raw account list
+- `uuid` Account ID
+- `seq`
+- `first_name`
+- `last_name`
+- `street_addr`
+- `city`
+- `state`
+- `zip`
+- `gender`
+- `phone_number`
+- `birth_date`
+- `ssn`
+
+
+
 ### degree.csv
 This CSV file has three columns with header names: `Count`, `In-degree` and `Out-degree`.
 Each CSV row indicates how many account vertices with certain in(out)-degrees should be generated.

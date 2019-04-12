@@ -305,13 +305,18 @@ public class AMLSim extends ParameterizedPaySim {
 			SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS");
 			AMLSim.simulatorName = "PS_" + format.format(c.getTime());
 		}
+		System.out.println("Simulator Name: " + AMLSim.simulatorName);
 
 		String dirPath = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName;
 		File f = new File(dirPath);
-		boolean result = f.mkdir();
-		if(!result){
-			System.err.println("Warning: output log directory cannot be created to: " + dirPath);
-		}
+		if(f.exists()){
+            System.err.println("Warning: output log directory already exists: " + dirPath);
+        }else {
+            boolean result = f.mkdir();
+            if (!result) {
+                System.err.println("Warning: output log directory cannot be created to: " + dirPath);
+            }
+        }
 	}
 
 	private void loadAggregatedFile() {
@@ -412,7 +417,7 @@ public class AMLSim extends ParameterizedPaySim {
 		float origAfter = (float)orig.getBalance();
 
 //		long destID = dest.getID();
-        String destID = orig.getID();
+        String destID = dest.getID();
 
 		float destBefore = (float)dest.getBalance();
 		dest.deposit(amt);

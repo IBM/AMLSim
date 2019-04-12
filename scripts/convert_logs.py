@@ -250,28 +250,24 @@ class LogConverter:
       if alertID >= 0 and alertID in self.frauds:
         self.frauds[alertID].add_transaction(txID, amount, days, orig, dest, orig, dest)
         txID += 1
-    # print txID
 
 
     alerts = set()
     count = 0
     frauds = len(self.frauds)
     for fraudID, fg in self.frauds.iteritems():
-      # print fraudID, fg.count, fg.subject
       if fg.count == 0:
         continue
       data = fg.get_alerts()
       reason = fg.get_reason()
       escalated = "YES" if (fg.subject is not None) else "NO"
-      # if escalated == "YES":
-      #   print fraudID
       for row in data:
         acct = str(row[0])
         org_type = "INDIVIDUAL" if self.org_types[acct] == "I" else "COMPANY"
         alerts.add((fraudID, row[0], row[1], row[2], reason, org_type, escalated))
       count += 1
       if count % 100 == 0:
-        print count, "/", frauds
+        print("Frauds: %d/%d" % (count, frauds))
 
     count = 0
     with open(fpath, "w") as wf:

@@ -50,16 +50,12 @@ def kronecker_generator_general(N, M):
   c_norm = C/(1 - (A + B))
   a_norm = A/(A + B)
   tmp = N
-  # ib = 0
   while tmp > 0:
     tmp /= 2
-    # if tmp % 2 == 1:
     ii_bit = (np.random.rand(1, M) > ab).astype(int)
     ac = c_norm * ii_bit + a_norm * (1 - ii_bit)
     jj_bit = (np.random.rand(1, M) > ac).astype(int)
     ijw[:2,:] = ijw[:2,:] + tmp * np.vstack((ii_bit, jj_bit))
-    # ib += 1
-    # print tmp, ib, ijw[:2,:]
   ijw[2,:] = np.random.rand(1, M)
   ijw[:2,:] = ijw[:2,:] - 1
   q = range(M)
@@ -72,7 +68,6 @@ def kronecker_generator_general(N, M):
 
 
 def powerlaw_cluster_generator(N, edgefactor):
-  # edges = nx.powerlaw_cluster_graph(N, edgefactor, 0.1, seed=0).edges()
   edges = nx.barabasi_albert_graph(N, edgefactor, seed=0).edges()  # Undirected edges
 
   # Swap the direction of half edges to diffuse degree
@@ -89,20 +84,12 @@ if __name__ == "__main__":
     print("Usage: python %s [NumVertices] [EdgeFactor] [DegCSV]" % argv[0])
     exit(1)
 
-  # n = int(argv[1])
-  # factor = int(argv[2])
-  # m = n * factor
   n = int(argv[1])
   factor = int(argv[2])
   g = powerlaw_cluster_generator(n, factor)
 
-  # g_ = nx.scale_free_graph(n, seed=0)
-  # g = nx.DiGraph(g_)  # Convert the generated to a directed graph without parallel edges
-  # g = kronecker_generator(scale, factor)
-
-  # print g  # Graph Type
-  print g.number_of_nodes()  # Number of vertices (accounts)
-  print g.number_of_edges()  # Number of edges (transactions)
+  print("Number of vertices: %d" % g.number_of_nodes())  # Number of vertices (accounts)
+  print("Number of edges: %d" % g.number_of_edges())  # Number of edges (transactions)
 
   in_deg = Counter(g.in_degree().values())
   out_deg = Counter(g.out_degree().values())

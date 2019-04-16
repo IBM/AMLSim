@@ -14,6 +14,7 @@ public class Account extends Client implements Steppable {
 //	protected long id;
     protected String id;
 
+    protected Map<String, String> extraAttributes;
 	protected AbstractTransactionModel model;
 	protected CashInModel cashInModel;
 	protected CashOutModel cashOutModel;
@@ -56,10 +57,11 @@ public class Account extends Client implements Steppable {
 	 * @param end End step
 	 */
 //	public Account(long id, int modelID, float init_balance, long start, long end){
-    public Account(String id, int modelID, float init_balance, long start, long end){
+    public Account(String id, int modelID, float init_balance, long start, long end, Map<String, String> attrs){
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
+		this.extraAttributes = attrs;
 
 		switch(modelID){
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
@@ -81,6 +83,10 @@ public class Account extends Client implements Steppable {
 		this.cashOutModel.setAccount(this);
 		this.cashOutModel.setParameters(init_balance, start, end);
 	}
+
+	public String getAttrValue(String name){
+        return this.extraAttributes.get(name);
+    }
 
 	public long getStartStep(){
 		return this.startStep;

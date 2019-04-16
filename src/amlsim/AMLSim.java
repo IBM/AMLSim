@@ -191,11 +191,16 @@ public class AMLSim extends ParameterizedPaySim {
 		return columnIndex;
 	}
 
+	final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "isFraud", "modelID", "init_balance", "start", "end"));
+
 	protected void loadAccountFile(String accountFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(accountFile));
 		String line = reader.readLine();
 		System.out.println("Header: " + line);
 		Map<String, Integer> columnIndex = getColumnIndices(line);
+		Set<String> extraColumns = new HashSet<>(columnIndex.keySet());
+		extraColumns.removeAll(baseColumns);
+
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
 //			long accountID = Long.parseLong(elements[columnIndex.get("ACCOUNT_ID")]);
@@ -206,8 +211,14 @@ public class AMLSim extends ParameterizedPaySim {
 			int start_step = Integer.parseInt(elements[columnIndex.get("start")]);
 			int end_step = Integer.parseInt(elements[columnIndex.get("end")]);
 
-			Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, start_step, end_step)
-					: new Account(accountID, modelID, init_balance, start_step, end_step);
+			Map<String, String> extraValues = new HashMap<>();
+			for(String column : extraColumns){
+			    int idx = columnIndex.get(column);
+                extraValues.put(column, elements[idx]);
+            }
+
+			Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, start_step, end_step, extraValues)
+					: new Account(accountID, modelID, init_balance, start_step, end_step, extraValues);
 
 			int index = this.getClients().size();
 			client.setBranch(this.branches.get(index % this.numBranches));

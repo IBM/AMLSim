@@ -3,6 +3,8 @@ package amlsim;
 import amlsim.model.fraud.*;
 import sim.engine.SimState;
 
+import java.util.Map;
+
 /**
  * Suspicious account class
  */
@@ -11,8 +13,8 @@ public class FraudAccount extends Account {
 	private int count = 0;
 
 //	FraudAccount(long id, int modelID, float init_balance, int start, int end){
-    FraudAccount(String id, int modelID, float init_balance, int start, int end){
-		super(id, modelID, init_balance, start, end);
+    FraudAccount(String id, int modelID, float init_balance, int start, int end, Map<String, String> attrs){
+		super(id, modelID, init_balance, start, end, attrs);
 	}
 
 

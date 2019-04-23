@@ -25,12 +25,18 @@ def load_csv(tx_csv):
   g = nx.DiGraph()
   with open(tx_csv, "r") as rf:
     reader = csv.reader(rf)
-    next(reader)
+    header = next(reader)
+    indices = {name:index for index, name in enumerate(header)}
+    src_idx = indices["SENDER_ACCOUNT_ID"]
+    dst_idx = indices["RECEIVER_ACCOUNT_ID"]
+    type_idx = indices["TX_TYPE"]
+    time_idx = indices["TIMESTAMP"]
+
     for row in reader:
-      src = row[1]
-      dst = row[2]
-      ttype = row[3]
-      step = int(row[6])
+      src = row[src_idx]
+      dst = row[dst_idx]
+      ttype = row[type_idx]
+      step = int(row[time_idx])
       if ttype in CASH_TYPE:
         continue
       g.add_edge(src, dst, step=step)

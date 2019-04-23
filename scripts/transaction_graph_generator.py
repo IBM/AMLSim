@@ -780,7 +780,7 @@ class TransactionGenerator:
     fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "accounts"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
-      base_attrs = ["ACCOUNT_ID", "PRIMARY_CUSTOMER_ID", "init_balance", "start", "end", "country", "business", "suspicious", "isFraud", "modelID"]
+      base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY", "ACCOUNT_TYPE", "IS_SUSPICIOUS", "IS_FRAUD", "TX_BEHAVIOR_ID"]
       writer.writerow(base_attrs + self.attr_names)
       for n in self.g.nodes(data=True):
         aid = n[0]  # Account ID

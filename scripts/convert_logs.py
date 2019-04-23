@@ -87,11 +87,11 @@ class FraudGroup:
 
   def get_alerts(self):
     rows = list()
-    for txid, tx in self.transactions.iteritems():
-      origAcct = tx[2]
-      origName = tx[4]
+    for tx_id, tx in self.transactions.iteritems():
+      origAcct = str(tx[2])
+      origName = str(tx[4])
       date = days_to_date(tx[1])
-      rows.append([origAcct, origName, date])
+      rows.append((origAcct, origName, date))
     return rows
 
 
@@ -125,11 +125,12 @@ class LogConverter:
     reader = csv.reader(af)
     header = next(reader)
     indices = {name:index for index, name in enumerate(header)}
-    columns = len(header)
+    id_idx = indices["ACCOUNT_ID"]
+    type_idx = indices["ACCOUNT_TYPE"]
     for row in reader:
-      acct = row[indices["ACCOUNT_ID"]]
-      atype = row[indices["business"]]
-      self.org_types[acct] = atype
+      acct_id = row[id_idx]
+      acct_type = row[type_idx]
+      self.org_types[acct_id] = acct_type
     af.close()
 
     tx_set = set()
@@ -144,11 +145,9 @@ class LogConverter:
     indices = {name:index for index, name in enumerate(header)}
     columns = len(header)
 
-    tx_writer.writerow(["TXN_ID", "ACCOUNT_ID", "COUNTER_PARTY_ACCOUNT_NUM", "TXN_SOURCE_TYPE_CODE",
-                        "tx_count", "TXN_AMOUNT_ORIG", "start", "end"])
-    cash_tx_writer.writerow(["TXN_ID", "ACCOUNT_ID", "BRANCH_ID", "TXN_SOURCE_TYPE_CODE",
-                        "tx_count", "TXN_AMOUNT_ORIG", "RUN_DATE", "end"])
-    alert_writer.writerow(["AlertId", "TranNo", "ByOrderAcct", "BeneAcct"])
+    tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
+    cash_tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
+    alert_writer.writerow(["ALERT_ID", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID"])
 
     txID = 1
     for row in reader:
@@ -156,15 +155,11 @@ class LogConverter:
         continue
       try:
         days = int(row[indices["step"]])
-        datestr = str(days) # days_to_date(days)
+        date_str = str(days) # days_to_date(days)
 
         amount = row[indices["amount"]]
         origID = row[indices["nameOrig"]]
         destID = row[indices["nameDest"]]
-        # origName = "Account" + origID
-        # destName = "Account" + destID
-        # origBank = "Bank" + origID
-        # destBank = "Bank" + destID
 
         fraudID = int(row[indices["isFraud"]])
         alertID = int(row[indices["alertID"]])
@@ -176,14 +171,14 @@ class LogConverter:
         continue
 
       if ttype in CASH_TYPES:
-        cash_tx = (origID, destID, ttype, 1, amount, datestr, datestr)
+        cash_tx = (origID, destID, ttype, amount, date_str)
         if cash_tx not in cash_tx_set:
-          cash_tx_writer.writerow([txID, origID, destID, ttype, 1, amount, datestr, datestr])
+          cash_tx_writer.writerow([txID, origID, destID, ttype, amount, date_str])
           cash_tx_set.add(cash_tx)
       else:
-        tx = (origID, destID, ttype, 1, amount, datestr, datestr)
+        tx = (origID, destID, ttype, amount, date_str)
         if tx not in tx_set:
-          tx_writer.writerow([txID, origID, destID, ttype, 1, amount, datestr, datestr])
+          tx_writer.writerow([txID, origID, destID, ttype, amount, date_str])
           tx_set.add(tx)
       if is_alert:
         alert_writer.writerow([alertID, txID, origID, destID])
@@ -244,27 +239,28 @@ class LogConverter:
         orig = int(row[indices["nameOrig"]])
         dest = int(row[indices["nameDest"]])
         alertID = int(row[indices["alertID"]])
+        orig_name = "C_%d" % orig
+        dest_name = "C_%d" % dest
       except ValueError:
         continue
 
       if alertID >= 0 and alertID in self.frauds:
-        self.frauds[alertID].add_transaction(txID, amount, days, orig, dest, orig, dest)
+        self.frauds[alertID].add_transaction(txID, amount, days, orig, dest, orig_name, dest_name)
         txID += 1
-
 
     alerts = set()
     count = 0
     frauds = len(self.frauds)
-    for fraudID, fg in self.frauds.iteritems():
+    for fraud_id, fg in self.frauds.iteritems():
       if fg.count == 0:
         continue
       data = fg.get_alerts()
       reason = fg.get_reason()
       escalated = "YES" if (fg.subject is not None) else "NO"
       for row in data:
-        acct = str(row[0])
-        org_type = "INDIVIDUAL" if self.org_types[acct] == "I" else "COMPANY"
-        alerts.add((fraudID, row[0], row[1], row[2], reason, org_type, escalated))
+        acct_id, cust_id, date = row
+        org_type = "INDIVIDUAL" if self.org_types[acct_id] == "I" else "COMPANY"
+        alerts.add((fraud_id, acct_id, cust_id, date, reason, org_type, escalated))
       count += 1
       if count % 100 == 0:
         print("Frauds: %d/%d" % (count, frauds))
@@ -272,21 +268,10 @@ class LogConverter:
     count = 0
     with open(fpath, "w") as wf:
       writer = csv.writer(wf)
-      writer.writerow(["ALERT_KEY", "ALERT_TEXT", "ACCOUNT_ID", "CUSTOMER_ID", "EVENT_DATE", "CHECK_NAME", "Organization_Type", "Escalated_To_Case_Investigation"])
+      writer.writerow(["ALERT_ID", "MAIN_ACCOUNT_ID", "MAIN_CUSTOMER_ID", "EVENT_DATE", "ALERT_TYPE", "ACCOUNT_TYPE", "IS_FRAUD"])
       for alert in alerts:
-        writer.writerow((count,) + alert)
+        writer.writerow(alert)
         count += 1
-      # for fraudID, fg in self.frauds.iteritems():
-      #   if fg.count == 0:
-      #     continue
-      #   data = fg.get_alerts()
-      #   reason = fg.get_reason()
-      #   escalated = "YES" if (fg.subject is not None) else "NO"
-      #   for row in data:
-      #     acct = str(row[0])
-      #     org_type = "INDIVIDUAL" if self.org_types[acct] == "I" else "COMPANY"
-      #     writer.writerow([count, fraudID, row[0], row[1], row[2], reason, org_type, escalated])  # escalated or not
-
 
 
   def output_subject_accounts(self):

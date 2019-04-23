@@ -130,9 +130,15 @@ public class AMLSim extends ParameterizedPaySim {
 
 	public void loadParametersFromFile(){
 		super.loadParametersFromFile();
+        Properties prop = this.getParamters();
+
+		// Number of transaction limit
+        int transactionLimit = Integer.parseInt(prop.getProperty("transactionLimit"));
+        if(transactionLimit > 0){
+            txs.setLimit(transactionLimit);
+        }
 
 		// Parameters of Cash Transactions
-		Properties prop = this.getParamters();
 		int norm_in_int = Integer.parseInt(prop.getProperty("normal_cash_in_interval"));  // Interval of cash-in transactions for normal account
 		int fraud_in_int = Integer.parseInt(prop.getProperty("fraud_cash_in_interval"));  // Interval of cash-in transactions for suspicious account
 		float norm_in_min = Float.parseFloat(prop.getProperty("normal_cash_in_min"));  // Minimum amount of cash-in transactions for normal account
@@ -149,11 +155,6 @@ public class AMLSim extends ParameterizedPaySim {
 		float fraud_out_max = Float.parseFloat(prop.getProperty("fraud_cash_out_max"));  // Maximum amount of cash-out transactions for suspicious account
 		CashOutModel.setParam(norm_out_int, fraud_out_int, norm_out_min, norm_out_max, fraud_out_min, fraud_out_max);
 
-
-//		int alertRatio = Integer.parseInt(this.getParamters().getProperty("alertRatio"));
-//		if(alertRatio <= 0){
-//			throw new IllegalStateException("The alertRatio must be positive");
-//		}
 
 		// Create branches (for cash transactions)
 		this.numBranches = Integer.parseInt(this.getParamters().getProperty("numBranches"));
@@ -176,9 +177,6 @@ public class AMLSim extends ParameterizedPaySim {
 		}catch (IOException e){
 			e.printStackTrace();
 		}
-
-//		String amountPropFile = System.getProperty("user.dir") + this.getParamters().getProperty("amountProp");
-//		AmountCalculator.load(amountPropFile);
 	}
 
 
@@ -191,7 +189,7 @@ public class AMLSim extends ParameterizedPaySim {
 		return columnIndex;
 	}
 
-	final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "isFraud", "modelID", "init_balance", "start", "end"));
+	private final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "IS_FRAUD", "TX_BEHAVIOR_ID", "INIT_BALANCE", "START_DATE", "END_DATE"));
 
 	protected void loadAccountFile(String accountFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(accountFile));
@@ -205,11 +203,11 @@ public class AMLSim extends ParameterizedPaySim {
 			String[] elements = line.split(",");
 //			long accountID = Long.parseLong(elements[columnIndex.get("ACCOUNT_ID")]);
             String accountID = elements[columnIndex.get("ACCOUNT_ID")];
-			boolean isFraud = elements[columnIndex.get("isFraud")].toLowerCase().equals("true");
-			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
-			float init_balance = Float.parseFloat(elements[columnIndex.get("init_balance")]);
-			int start_step = Integer.parseInt(elements[columnIndex.get("start")]);
-			int end_step = Integer.parseInt(elements[columnIndex.get("end")]);
+			boolean isFraud = elements[columnIndex.get("IS_FRAUD")].toLowerCase().equals("true");
+			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
+			float init_balance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
+			int start_step = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
+			int end_step = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
 
 			Map<String, String> extraValues = new HashMap<>();
 			for(String column : extraColumns){
@@ -451,31 +449,6 @@ public class AMLSim extends ParameterizedPaySim {
 
 	public void writeLog() {
         // Use transaction repository instead of transaction object list
-
-//		if(TX_OPT){  // Use transaction repository instead of transaction object list
-//			return;
-//		}
-//		try {
-//			FileWriter writer1 = new FileWriter(new File(AMLSim.logFileName), true);
-//			BufferedWriter writer = new BufferedWriter(writer1);
-//			this.setWriter(writer);
-//
-//			for(int i = 0; i < this.getTrans().size(); ++i) {
-//				AMLTransaction temp = (AMLTransaction) this.getTrans().get(i);
-//				writer.write(temp.getStep() + "," + temp.getDescription() + ","
-//						+ this.getDoublePrecision(temp.getAmount())+ "," + temp.getClientOrigBefore().getName() + ","
-//						+ this.getDoublePrecision(temp.getClientOrigBefore().getBalance()) + ","
-//						+ this.getDoublePrecision(temp.getClientOrigAfter().getBalance()) + ","
-//						+ temp.getClientDestAfter().getName() + ","
-//						+ this.getDoublePrecision(temp.getClientDestBefore().getBalance()) + ","
-//						+ this.getDoublePrecision(temp.getClientDestAfter().getBalance()) + ","
-//						+ (temp.isFraud() ? 1 : 0) + "," + temp.getAlertID() + "\n");
-//				writer.flush();
-//			}
-//			writer.close();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
 	}
 
 	public void writeSummaryFile() {

@@ -31,7 +31,7 @@ python scripts/transaction_relationship_generator.py prop.ini paramFiles/deg1K.c
 See CSV files under `paramFiles` directory
 - accounts.csv
   - Account parameter file
-- aletPatterns.csv
+- alertPatterns.csv
   - Alert (fraud) transaction pattern parameter file
 - degree.csv
   - Degree distribution parameter file

@@ -14,7 +14,10 @@ public class TransactionRepository {
 
     public final int size;
     private int index = 0;
-    private DecimalFormat amt_fmt;
+//    private DecimalFormat amt_fmt;
+
+    private int count = 0;
+    private int limit = Integer.MAX_VALUE;
 
     private long[] steps;
     private String[] descriptions;
@@ -38,16 +41,14 @@ public class TransactionRepository {
         this.txCounter = new HashMap<>();
         this.fraudCounter = new HashMap<>();
 
-        this.amt_fmt = new DecimalFormat("#.#");
-        int precision = 2;
-        this.amt_fmt.setMinimumFractionDigits(precision);
+//        this.amt_fmt = new DecimalFormat("#.#");
+//        int precision = 2;
+//        this.amt_fmt.setMinimumFractionDigits(precision);
 
         this.size = size;
         this.steps = new long[size];
         this.descriptions = new String[size];
         this.amounts = new float[size];
-//        this.origIDs = new long[size];
-//        this.destIDs = new long[size];
         this.origIDs = new String[size];
         this.destIDs = new String[size];
 
@@ -59,9 +60,22 @@ public class TransactionRepository {
         this.alertIDs = new long[size];
     }
 
+    public void setLimit(int limit){
+        this.limit = limit;
+    }
+
 //    public void addTransaction(long step, String desc, float amt, long origID, long destID,  float origBefore,
     public void addTransaction(long step, String desc, float amt, String origID, String destID,  float origBefore,
                                float origAfter, float destBefore, float destAfter, boolean fraud, long aid){
+        if(count >= limit){
+            if(count == limit){
+                System.err.println("Warning: the number of output transactions has reached the limit: " + limit);
+                flushLog();
+                count++;
+            }
+            return;
+        }
+
         this.steps[index] = step;
         this.descriptions[index] = desc;
         this.amounts[index] = amt;
@@ -78,8 +92,10 @@ public class TransactionRepository {
             fraudCounter.put(step, fraudCounter.getOrDefault(step, 0) + 1);
         }else if(!desc.contains("CASH-")) {
             txCounter.put(step, txCounter.getOrDefault(step, 0) + 1);  // Exclude cash transactions for counter
+            count--;
         }
 
+        count++;
         index++;
         if(index >= size){
             flushLog();

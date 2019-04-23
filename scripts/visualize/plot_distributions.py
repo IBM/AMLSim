@@ -8,6 +8,7 @@ import csv
 from ConfigParser import ConfigParser
 from collections import Counter, defaultdict
 import networkx as nx
+import powerlaw
 
 import matplotlib
 matplotlib.use('Agg')
@@ -48,12 +49,19 @@ def plot_degree_distribution(g, plot_img):
   :param plot_img: Degree distribution image (log-log plot)
   :return:
   """
-  degs = g.degree().values()
-  deg_seq = sorted(set(degs),reverse=True)
-  deg_hist = [degs.count(x) for x in deg_seq]
+  degrees = g.degree().values()
+  deg_seq = sorted(set(degrees),reverse=True)
+  deg_hist = [degrees.count(x) for x in deg_seq]
+
+  pw_result = powerlaw.Fit(degrees)
+  alpha = pw_result.power_law.alpha
+  alpha_text = "alpha = %f" % alpha
+  print(alpha_text)
 
   plt.clf()
-  plt.loglog(deg_seq, deg_hist, 'bo-')
+  fig, ax = plt.subplots(1,1)
+  ax.loglog(deg_seq, deg_hist, 'bo-')
+  plt.text(0.1, 0.1, alpha_text, transform=ax.transAxes)
   plt.title("Degree Distribution")
   plt.xlabel("Degree")
   plt.ylabel("Number of accounts")
@@ -142,6 +150,7 @@ def plot_tx_count(tx_step_csv, plot_img):
   plt.clf()
   p_n = plt.plot(x, normal, "b")
   p_f = plt.plot(x, fraud, "r")
+  plt.yscale('log')
   plt.legend((p_n[0], p_f[0]), ("Normal", "Fraud"))
   plt.title("Number of transactions per step")
   plt.xlabel("Simulation step")

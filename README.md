@@ -132,18 +132,18 @@ python scripts/convert_logs.py convert.ini outputs/sample/sample_log.csv
     ```
 1. Launch JanusGraph server
     ```bash
-    cd /path/to/janusgraph-0.1.1-hadoop2/
+    cd /path/to/janusgraph-0.2.2-hadoop2/
     ./bin/janusgraph.sh start
     ```
 1. Launch Groovy script to load transaction graph edge list and case account file list.
     ```bash
     cd /path/to/AMLSim
-    /path/to/janusgraph-0.1.1-hadoop2/bin/gremlin.sh scripts/janusgraph/load_transaction_janusgraph.groovy
+    /path/to/janusgraph-0.2.2-hadoop2/bin/gremlin.sh scripts/janusgraph/load_transaction_janusgraph.groovy
     ```
 1. Then, run graph analytics on the JanusGraph.
     ```bash
     cd /path/to/janusgraph/scripts
-    /path/to/janusgraph-0.1.1-hadoop2/bin/gremlin.sh egonet/ego_test.groovy
+    /path/to/janusgraph-0.2.2-hadoop2/bin/gremlin.sh egonet/ego_test.groovy
     ```
 
 

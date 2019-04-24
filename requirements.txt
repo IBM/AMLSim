@@ -1,2 +1,3 @@
 networkx==1.10
 matplotlib
+powerlaw

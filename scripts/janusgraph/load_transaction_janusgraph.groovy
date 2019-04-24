@@ -1,46 +1,44 @@
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicLong
 
 USER_DIR = System.getProperty('user.working_dir','.') + '/'
 DATA_DIR = USER_DIR + "outputs/"
+ACCT_CSV = DATA_DIR + "accounts.csv"
 TX_CSV = DATA_DIR + "tx.csv"
-CASE_CSV = DATA_DIR + "case_accts.csv"
-PROP_FILE = "janusgraph.properties"
+PROP_FILE = USER_DIR + "janusgraph.properties"
 
-println "Start loading transactions from " + TX_CSV
 
+println "Open JanusGraph database from " + PROP_FILE
 counter = new AtomicLong()
 batchSize = 100000
 cache = [:]
 graph = JanusGraphFactory.open(PROP_FILE)
 
 
-case_file = new File(CASE_CSV)
-case_set = case_file.readLines().toSet()
-
 
 // create schema
 mgmt = graph.openManagement()
 // vertex schema
-mgmt.makePropertyKey('acct').dataType(String.class).make()
-mgmt.makePropertyKey('name').dataType(String.class).make()
-mgmt.makePropertyKey('city').dataType(String.class).make()
-mgmt.makePropertyKey('state').dataType(String.class).make()
-mgmt.makePropertyKey('country').dataType(String.class).make()
-mgmt.makePropertyKey('address').dataType(String.class).make()
-mgmt.makePropertyKey('sar').dataType(Boolean.class).make()
-mgmt.makePropertyKey('start_day').dataType(Long.class).make()
-mgmt.makePropertyKey('end_day').dataType(Long.class).make()
+// ACCOUNT_ID,CUSTOMER_ID,INIT_BALANCE,START_DATE,END_DATE,COUNTRY,ACCOUNT_TYPE,IS_SUSPICIOUS,IS_FRAUD,TX_BEHAVIOR_ID
+mgmt.makePropertyKey('acct_id').dataType(String.class).make()  // ACCOUNT_ID
+mgmt.makePropertyKey('cust_id').dataType(String.class).make()  // CUSTOMER_ID
+mgmt.makePropertyKey('init_amount').dataType(Float.class).make()  // INIT_BALANCE
+mgmt.makePropertyKey('start_date').dataType(Long.class).make()  // START_DATE
+mgmt.makePropertyKey('end_date').dataType(Long.class).make()  // END_DATE
+mgmt.makePropertyKey('country').dataType(String.class).make()  // COUNTRY
+mgmt.makePropertyKey('acct_type').dataType(String.class).make()  // ACCOUNT_TYPE
+mgmt.makePropertyKey('is_suspicious').dataType(Boolean.class).make()  // IS_SUSPICIOUS
+mgmt.makePropertyKey('is_fraud_acct').dataType(Boolean.class).make()  // IS_FRAUD
+mgmt.makePropertyKey('behavior_id').dataType(Long.class).make()  // TX_BEHAVIOR_ID
+
 // edge schema
+// TX_ID,SENDER_ACCOUNT_ID,RECEIVER_ACCOUNT_ID,TX_TYPE,TX_AMOUNT,TIMESTAMP,IS_FRAUD,ALERT_ID
 mgmt.makeEdgeLabel('edgelabel').make()
-mgmt.makePropertyKey('tkey').dataType(String.class).make()
-mgmt.makePropertyKey('orig_addr').dataType(String.class).make()
-mgmt.makePropertyKey('bene_addr').dataType(String.class).make()
-mgmt.makePropertyKey('amount').dataType(Float.class).make()
-mgmt.makePropertyKey('date').dataType(String.class).make()
-mgmt.makePropertyKey('tid').dataType(Boolean.class).make()
-mgmt.makePropertyKey('alert').dataType(Boolean.class).make()
+mgmt.makePropertyKey('tx_id').dataType(String.class).make()  // TX_ID
+mgmt.makePropertyKey('tx_type').dataType(String.class).make()  // TX_TYPE
+mgmt.makePropertyKey('amount').dataType(Float.class).make()  // TX_AMOUNT
+mgmt.makePropertyKey('date').dataType(Long.class).make()  // TIMESTAMP
+mgmt.makePropertyKey('is_fraud_tx').dataType(Boolean.class).make()  // IS_FRAUD
+mgmt.makePropertyKey('alert_id').dataType(Long.class).make()  // ALERT_ID
 mgmt.commit()
 
 mutate = { ->
@@ -49,14 +47,10 @@ mutate = { ->
     }
 }
 
-addVertex = { def acct, def sar ->
+addVertex = { def acct, def cust, def amt, def start, def end, def country, def type, def suspicious, def fraud, def behavior ->
     if(!cache.containsKey(acct)){
-        name = acct
-        city = acct + "_city"
-        state = acct + "_state"
-        country = acct + "_country"
-        address = acct + "_addr"
-        v = graph.addVertex("acct", acct, "name", name, "city", city, "state", state, "country", country, "address", address, "sar", sar)
+        v = graph.addVertex("acct_id", acct, "cust_id", cust, "init_amount", amt, "start_date", start, "end_date", end,
+                "country", country, "acct_type", type, "is_suspicious", suspicious, "is_fraud_acct", fraud, "behavior_id", behavior)
         mutate()
         cache[acct] = v
     }
@@ -67,22 +61,26 @@ setProperty = {def placeholder, def label, def key, def value ->
     mutate()
 }
 
-getDays= { def date ->
-    return date.toInteger()
-}
 
-// for each line in csvparsed, build the vertex and edge
+/**
+ * Load account list (vertices)
+ * ACCOUNT_ID,CUSTOMER_ID,INIT_BALANCE,START_DATE,END_DATE,COUNTRY,ACCOUNT_TYPE,IS_SUSPICIOUS,IS_FRAUD,TX_BEHAVIOR_ID
+ */
+println "Start loading accounts from " + ACCT_CSV
 line_counter = new AtomicLong()
-reader = new BufferedReader(new FileReader(TX_CSV))
+reader = new BufferedReader(new FileReader(ACCT_CSV))
 
-// Column index
 DEFAULT_INDEX = -1
-
-orig_idx = DEFAULT_INDEX
-dest_idx = DEFAULT_INDEX
-transactionID_idx = DEFAULT_INDEX
-amount_idx = DEFAULT_INDEX
-date_idx = DEFAULT_INDEX
+acct_idx = DEFAULT_INDEX
+cust_idx = DEFAULT_INDEX
+amt_idx = DEFAULT_INDEX
+start_idx = DEFAULT_INDEX
+end_idx = DEFAULT_INDEX
+country_idx = DEFAULT_INDEX
+type_idx = DEFAULT_INDEX
+suspicious_idx = DEFAULT_INDEX
+fraud_idx = DEFAULT_INDEX
+behavior_idx = DEFAULT_INDEX
 
 
 // read the header
@@ -90,21 +88,104 @@ line = reader.readLine()
 fields = line.split(',', -1)
 for(int i=0; i<fields.length; i++){
     switch(fields[i]){
-        case "ACCOUNT_ID": orig_idx = i; break
-        case "COUNTER_PARTY_ACCOUNT_NUM": dest_idx = i; break
-        case "TXN_ID": transactionID_idx = i; break
-        case "TXN_AMOUNT_ORIG": amount_idx = i; break
-        case "start": date_idx = i; break
+        case "ACCOUNT_ID": acct_idx = i; break
+        case "CUSTOMER_ID": cust_idx = i; break
+        case "INIT_BALANCE": amt_idx = i; break
+        case "START_DATE": start_idx = i; break
+        case "END_DATE": end_idx = i; break
+        case "COUNTRY": country_idx = i; break
+        case "ACCOUNT_TYPE": type_idx = i; break
+        case "IS_SUSPICIOUS": suspicious_idx = i; break
+        case "IS_FRAUD": fraud_idx = i; break
+        case "TX_BEHAVIOR_ID": behavior_idx = i; break
     }
 }
 
-println "---- Column indices ----"
-println "\tOrig: " + orig_idx
-println "\tDest: " + dest_idx
-println "\tTranNo: " + transactionID_idx
-println "\tBaseAmt: " + amount_idx
-println "\tValueDate: " + date_idx
+println "---- Account Column Indices ----"
+println "\tAccount ID: " + acct_idx
+println "\tCustomer ID: " + cust_idx
+println "\tInitial Balance: " + amt_idx
+println "\tStart Date: " + start_idx
+println "\tEnd Date: " + end_idx
+println "\tCountry: " + country_idx
+println "\tAccount Type: " + type_idx
+println "\tSuspicious: " + suspicious_idx
+println "\tFraud: " + fraud_idx
+println "\tBehavior ID: " + behavior_idx
 
+while (true){
+    line = reader.readLine()
+    if (line_counter.incrementAndGet() % batchSize == 0) {
+        println line_counter
+    }
+    if(line == null){
+        break
+    }
+
+    fields = line.split(',', -1)
+    acct_id = fields[acct_idx]
+    cust_id = fields[cust_idx]
+    init_amt = fields[amt_idx].toFloat()
+    start = fields[start_idx].toLong()
+    end = fields[end_idx].toLong()
+    country = fields[country_idx]
+    acct_type = fields[type_idx]
+    is_suspicious = fields[suspicious_idx].toBoolean()
+    is_fraud = fields[fraud_idx].toBoolean()
+    behavior_id = fields[behavior_idx].toLong()
+
+    addVertex(acct_id, cust_id, init_amt, start, end, country, acct_type, is_suspicious, is_fraud, behavior_id)
+}
+
+
+
+
+/**
+ * Load transaction list (edges)
+ * TX_ID,SENDER_ACCOUNT_ID,RECEIVER_ACCOUNT_ID,TX_TYPE,TX_AMOUNT,TIMESTAMP,IS_FRAUD,ALERT_ID
+ */
+// for each line in csvparsed, build the vertex and edge
+println "Start loading transactions from " + TX_CSV
+line_counter = new AtomicLong()
+reader = new BufferedReader(new FileReader(TX_CSV))
+
+// Column index
+DEFAULT_INDEX = -1
+txid_idx = DEFAULT_INDEX
+orig_idx = DEFAULT_INDEX
+dest_idx = DEFAULT_INDEX
+type_idx = DEFAULT_INDEX
+amt_idx = DEFAULT_INDEX
+date_idx = DEFAULT_INDEX
+fraud_idx = DEFAULT_INDEX
+alert_idx = DEFAULT_INDEX
+
+
+// read the header
+line = reader.readLine()
+fields = line.split(',', -1)
+for(int i=0; i<fields.length; i++){
+    switch(fields[i]){
+        case "TX_ID": txid_idx = i; break
+        case "SENDER_ACCOUNT_ID": orig_idx = i; break
+        case "RECEIVER_ACCOUNT_ID": dest_idx = i; break
+        case "TX_TYPE": type_idx = i; break
+        case "TX_AMOUNT": amt_idx = i; break
+        case "TIMESTAMP": date_idx = i; break
+        case "IS_FRAUD": fraud_idx = i; break
+        case "ALERT_ID": alert_idx = i; break
+    }
+}
+
+println "---- Transaction Column Indices ----"
+println "\tTransaction ID: " + txid_idx
+println "\tSender ID: " + orig_idx
+println "\tReceiver ID: " + dest_idx
+println "\tTransaction Type: " + type_idx
+println "\tAmount: " + amt_idx
+println "\tDate: " + date_idx
+println "\tFraud: " + fraud_idx
+println "\tAlert ID: " + alert_idx
 
 
 while (true) {
@@ -116,57 +197,26 @@ while (true) {
         break
     }
     //split line
-    line = line.split(',',-1)
+    fields = line.split(',', -1)
 
-    orig = line[dest_idx].replaceAll("\\s", "")
-    bene = line[dest_idx].replaceAll("\\s", "")
+    orig = fields[orig_idx].replaceAll("\\s", "")
+    dest = fields[dest_idx].replaceAll("\\s", "")
 
-    // add vertex
-    if(orig != ""){
-        if(case_set.contains(orig)){
-            addVertex(orig, true)
-        }else{
-            addVertex(orig, false)
-        }
-    }
-    if(bene != ""){
-        if(case_set.contains(bene)){
-            addVertex(bene, true)
-        }else{
-            addVertex(bene, false)
-        }
-    }
     // add edges
-    if(orig != "" && bene != ""){
-        transaction_ID = line[transactionID_idx]  // 0
-        amount = line[amount_idx].toFloat()  // 5
-        date = line[date_idx]  // 10
+    if(orig != "" && dest != ""){
+        tx_id = fields[txid_idx]
+        tx_type = fields[type_idx]
+        amount = fields[amt_idx].toFloat()
+        date = fields[date_idx].toLong()
+        is_fraud = fields[fraud_idx].toBoolean()
+        alert_id = fields[alert_idx].toLong()
+
         // Here is a difference than python version "key" -> "tkey" since "key" is protected value in namespace
-        cache[orig].addEdge("edgelabel", cache[bene], "tkey", transaction_ID, "orig_addr", orig, "bene_addr", bene, "amount", amount, "date", date, "tid", transaction_ID, "alert", "")
+        cache[orig].addEdge("edgelabel", cache[dest], "tx_id", tx_id, "tx_type", tx_type, "amount", amount, "date", date, "is_fraud_tx", is_fraud, "alert_id", alert_id)
         mutate()
-        days = getDays(date)
-        START = "start_day"
-        END = "end_day"
-
-        orig_start = cache[orig].property(START)
-        orig_end = cache[orig].property(END)
-        if(orig_start.isPresent() == false || days < orig_start.value()){
-            setProperty("label", orig, START, days)
-        }
-        if(orig_end.isPresent() == false || days > orig_end.value()){
-            setProperty("label", orig, END, days)
-        }
-
-        bene_start = cache[bene].property(START)
-        bene_end = cache[bene].property(END)
-        if(bene_start.isPresent() == false || days < bene_start.value()){
-            setProperty("label", bene, START, days)
-        }
-        if(bene_end.isPresent() == false || days > bene_end.value()){
-            setProperty("label", bene, END, days)
-        }
     }
 }
+
 graph.tx().commit()
 
 g = graph.traversal()
@@ -177,9 +227,6 @@ println "total edges added: ${numE}"
 g.close()
 graph.close()
 System.exit(0)
-
-
-
 
 
 

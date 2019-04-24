@@ -18,6 +18,10 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
         return "FanOut";
     }
 
+    private boolean isValidStep(long step){
+        return (step - this.account.getStartStep() + generateDiff()) % INTERVAL == 0;
+    }
+
     @Override
     public void sendTransaction(long step) {
         List<Account> dests = this.account.getDests();  // Destination accounts
@@ -25,8 +29,8 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
         if(numDests == 0){  // No destination accounts
             return;
         }
-        if(step % INTERVAL != this.account.getStartStep() % INTERVAL){
-            return;  // It makes transactions every "INTERVAL" simulation steps
+        if(!isValidStep(step)){
+            return;
         }
 
         float amount = this.balance / numDests;  // Each amount is same TODO: make it flexible

@@ -2,6 +2,7 @@ package amlsim.model;
 
 import amlsim.Account;
 import amlsim.AMLSim;
+import java.util.Random;
 
 /**
  * Base class of transaction models
@@ -17,6 +18,9 @@ public abstract class AbstractTransactionModel {
     public static final int MUTUAL = 3;
     public static final int FORWARD = 4;
     public static final int PERIODICAL = 5;
+
+    private static Random rand = new Random();
+    private static final int FLUCTUATION = 2;  // Fluctuation of the transaction interval TODO: Enable users to specify this value
 
     protected Account account;  // Account object
     protected float balance;  // Current balance
@@ -38,6 +42,15 @@ public abstract class AbstractTransactionModel {
      * @param step Current simulation step
      */
     public abstract void sendTransaction(long step);
+
+    /**
+     * Generate a difference of the simulation step
+     * @return Difference of simulation step [-FLUCTUATION, FLUCTUATION]
+     */
+    protected static int generateDiff(){
+        int t = rand.nextInt(FLUCTUATION * 2 + 1);
+        return t - FLUCTUATION;
+    }
 
     /**
      * Set initial parameters

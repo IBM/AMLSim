@@ -103,12 +103,17 @@ class LogConverter:
     self.log_file = tx_log
     conf = ConfigParser()
     conf.read(confFile)
+
+    self.work_dir = conf.get("General", "work_dir")
+    if not os.path.isdir(self.work_dir):
+      os.makedirs(self.work_dir)
+
     self.acct_file = conf.get("Input", "acct_file")
     self.tx_file = conf.get("Output", "tx_file")
     self.cash_tx_file = conf.get("Output", "cash_tx_file")
     self.group_file = conf.get("Input", "group_file")
+    self.case_file = conf.get("Output", "case_file")
     self.alert_file = conf.get("Output", "alert_file")
-    self.fraud_dir = conf.get("Output", "fraud_dir")
     self.subject_file = conf.get("Output", "subject_file")
 
 
@@ -116,11 +121,12 @@ class LogConverter:
   def convert_transaction_list(self):
     print("Convert transaction list from %s to %s, %s and %s" % (self.log_file, self.tx_file, self.cash_tx_file, self.alert_file))
 
-    af = open(self.acct_file, "r")
+
+    af = open(os.path.join(self.work_dir, self.acct_file), "r")
     rf = open(self.log_file, "r")
-    tf = open(self.tx_file, "w")
-    cf = open(self.cash_tx_file, "w")
-    lf = open(self.alert_file, "w")
+    tf = open(os.path.join(self.work_dir, self.tx_file), "w")
+    cf = open(os.path.join(self.work_dir, self.cash_tx_file), "w")
+    lf = open(os.path.join(self.work_dir, self.alert_file), "w")
 
     reader = csv.reader(af)
     header = next(reader)
@@ -145,43 +151,52 @@ class LogConverter:
     indices = {name:index for index, name in enumerate(header)}
     columns = len(header)
 
-    tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
-    cash_tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
-    alert_writer.writerow(["ALERT_ID", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID"])
+    tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
+    cash_tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
+    alert_writer.writerow(["ALERT_ID", "ALERT_TYPE", "IS_FRAUD", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
+
+    step_idx = indices["step"]
+    amt_idx = indices["amount"]
+    orig_idx = indices["nameOrig"]
+    dest_idx = indices["nameDest"]
+    fraud_idx = indices["isFraud"]
+    alert_idx = indices["alertID"]
+    type_idx = indices["type"]
 
     txID = 1
     for row in reader:
       if len(row) < columns:
         continue
       try:
-        days = int(row[indices["step"]])
+        days = int(row[step_idx])
         date_str = str(days) # days_to_date(days)
 
-        amount = row[indices["amount"]]
-        origID = row[indices["nameOrig"]]
-        destID = row[indices["nameDest"]]
+        amount = row[amt_idx]
+        origID = row[orig_idx]
+        destID = row[dest_idx]
 
-        fraudID = int(row[indices["isFraud"]])
-        alertID = int(row[indices["alertID"]])
+        fraudID = int(row[fraud_idx])
+        alertID = int(row[alert_idx])
 
-        is_sar = fraudID > 0
+        is_fraud = fraudID > 0
         is_alert = alertID >= 0
-        ttype = row[indices["type"]]
+        ttype = row[type_idx]
       except ValueError:
         continue
 
       if ttype in CASH_TYPES:
         cash_tx = (origID, destID, ttype, amount, date_str)
         if cash_tx not in cash_tx_set:
-          cash_tx_writer.writerow([txID, origID, destID, ttype, amount, date_str])
+          cash_tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
           cash_tx_set.add(cash_tx)
       else:
         tx = (origID, destID, ttype, amount, date_str)
         if tx not in tx_set:
-          tx_writer.writerow([txID, origID, destID, ttype, amount, date_str])
+          tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
           tx_set.add(tx)
       if is_alert:
-        alert_writer.writerow([alertID, txID, origID, destID])
+        alert_type = self.frauds.get(alertID).get_reason()
+        alert_writer.writerow([alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str])
 
       txID += 1
 
@@ -195,7 +210,7 @@ class LogConverter:
     input_file = self.group_file
 
     print("Load alert groups: %s" % input_file)
-    rf = open(input_file, "r")
+    rf = open(os.path.join(self.work_dir, input_file), "r")
     reader = csv.reader(rf)
     header = next(reader)
     indices = {name:index for index, name in enumerate(header)}
@@ -214,13 +229,7 @@ class LogConverter:
 
   def output_fraud_cases(self):
     input_file = self.log_file
-    fraud_dir = self.fraud_dir
-
-    # create fraud case directory
-    if not os.path.isdir(fraud_dir):
-      os.makedirs(fraud_dir)
-    fname = "alerts.csv"
-    fpath = os.path.join(fraud_dir, fname)
+    fpath = os.path.join(self.work_dir, self.case_file)
 
     print("Convert fraud cases from %s to %s" % (input_file, fpath))
     rf = open(input_file, "r")
@@ -270,7 +279,8 @@ class LogConverter:
       writer = csv.writer(wf)
       writer.writerow(["ALERT_ID", "MAIN_ACCOUNT_ID", "MAIN_CUSTOMER_ID", "EVENT_DATE", "ALERT_TYPE", "ACCOUNT_TYPE", "IS_FRAUD"])
       for alert in alerts:
-        writer.writerow(alert)
+        fraud_id, acct_id, cust_id, date, alert_type, acct_type, is_fraud = alert
+        writer.writerow((count, acct_id, cust_id, date, alert_type, acct_type, is_fraud))
         count += 1
 
 
@@ -281,7 +291,7 @@ class LogConverter:
       if subject:
         subject_ids.add(subject)
 
-    output_file = self.subject_file
+    output_file = os.path.join(self.work_dir, self.subject_file)
     print("Write subject accounts to %s" % output_file)
     with open(output_file, "w") as wf:
       writer = csv.writer(wf)

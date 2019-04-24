@@ -126,7 +126,7 @@ python scripts/convert_logs.py convert.ini outputs/sample/sample_log.csv
 
 
 ## Load transaction graph edge list and case account file list to JanusGraph
-1. First, please copy transaction `tx.csv` and case account ID list `case_accts.csv` files from the sample data directory to the `output` directory.
+1. First, please copy account list `accounts.csv` and transaction list `tx.csv` files from the sample data directory to the `output` directory.
     ```bash
     cp /path/to/sample/1K/*.csv outputs/
     ```
@@ -147,7 +147,7 @@ python scripts/convert_logs.py convert.ini outputs/sample/sample_log.csv
     ```
 
 
-## Remove all log and image files from outputs directory
+## Remove all log and image files from `outputs` directory
 ```bash
 sh scripts/clean_logs.sh
 ```

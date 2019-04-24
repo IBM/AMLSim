@@ -32,10 +32,8 @@ public class SingleTransactionModel extends AbstractTransactionModel {
         }
         if(step == this.startStep){
             steps = rand.longs(numDests, this.startStep, this.endStep + 1).sorted().toArray();
-//            System.out.println(Arrays.toString(steps));
         }
 
-//        System.out.println(numDests);
         if(index >= numDests)return;  // This account has already sent to all neighbors
 
         float amount = this.balance;

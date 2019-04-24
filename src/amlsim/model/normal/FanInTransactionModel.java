@@ -18,6 +18,10 @@ public class FanInTransactionModel extends AbstractTransactionModel {
         return "FanIn";
     }
 
+    private boolean isValidStep(long step){
+        return (step - this.account.getStartStep() + generateDiff()) % INTERVAL == 0;
+    }
+
     @Override
     public void sendTransaction(long step) {
         List<Account> origs = this.account.getOrigs();  // Sender accounts
@@ -26,7 +30,8 @@ public class FanInTransactionModel extends AbstractTransactionModel {
         if(numDests == 0){
             return;
         }
-        if(step % INTERVAL != this.account.getStartStep() % INTERVAL){
+
+        if(!isValidStep(step)){
             return;
         }
 

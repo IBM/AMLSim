@@ -203,6 +203,7 @@ class LogConverter:
     rf.close()
     tf.close()
     cf.close()
+    lf.close()
 
 
 

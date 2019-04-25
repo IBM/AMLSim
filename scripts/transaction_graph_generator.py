@@ -199,12 +199,21 @@ class TransactionGenerator:
       raise KeyError("Option 'end_day' is required to load raw account list")
     end_day = int(self.conf.get("InputFile", "end_day"))
 
-    default_model = int(self.conf.get("InputFile", "default_model")) \
-      if self.conf.has_option("InputFile", "default_model") else 1
+    if not self.conf.has_option("InputFile", "start_range"):
+      raise KeyError("Option 'start_range' is required to load raw account list")
+    start_range = int(self.conf.get("InputFile", "start_range"))
+
+    if not self.conf.has_option("InputFile", "end_range"):
+      raise KeyError("Option 'end_range' is required to load raw account list")
+    end_range = int(self.conf.get("InputFile", "end_range"))
+
+    # default_model = int(self.conf.get("InputFile", "default_model")) \
+    #   if self.conf.has_option("InputFile", "default_model") else 1
+    model_ids = [1, 2, 3, 4, 5]
 
     fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
-    self.attr_names.extend(["seq", "first_name", "last_name", "street_addr", "city", "state", "zip",
-                            "gender", "phone_number", "birth_date", "ssn"])
+    self.attr_names.extend(["SEQ", "FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
+                            "GENDER", "PHONE_NUMBER", "BIRTH_DATE", "SSN", "LON", "LAT"])
 
     with open(fname, "r") as rf:
       reader = csv.reader(rf)
@@ -222,6 +231,11 @@ class TransactionGenerator:
       idx_phone_number = name2idx["phone_number"]
       idx_birth_date = name2idx["birth_date"]
       idx_ssn = name2idx["ssn"]
+      idx_lon = name2idx["lon"]
+      idx_lat = name2idx["lat"]
+
+      country = "US"
+      acct_type = "I"
 
       count = 0
       for row in reader:
@@ -237,14 +251,19 @@ class TransactionGenerator:
         phone_number = row[idx_phone_number]
         birth_date = row[idx_birth_date]
         ssn = row[idx_ssn]
-        model = default_model
+        lon = row[idx_lon]
+        lat = row[idx_lat]
+        # model = default_model
+        model = random.choice(model_ids)
+        start = start_day + random.randrange(start_range)
+        end = end_day - random.randrange(end_range)
 
-        attr = {"seq": seq, "first_name": first_name, "last_name": last_name,
-                "street_addr": street_addr, "city": city, "state": state, "zip": zip_code,
-                "gender": gender, "phone_number": phone_number, "birth_date": birth_date, "ssn": ssn}
+        attr = {"SEQ": seq, "FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
+                "CITY": city, "STATE": state, "ZIP": zip_code, "GENDER": gender, "PHONE_NUMBER": phone_number,
+                "BIRTH_DATE": birth_date, "SSN": ssn, "LON": lon, "LAT": lat}
 
         init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
-        self.add_account(aid, init_balance, start_day, end_day, "", "", False, model, **attr)
+        self.add_account(aid, init_balance, start, end, country, acct_type, False, model, **attr)
         count += 1
 
 

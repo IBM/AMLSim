@@ -4,6 +4,7 @@ import numpy as np
 import itertools
 import random
 import csv
+import json
 import os
 import sys
 
@@ -40,6 +41,21 @@ def parse_flag(value):
 
 
 
+class Schema:
+
+  def __init__(self, input_json):
+    with open(input_json, "r") as rf:
+      self.data = json.load(rf)
+
+  def get_header(self, table_name):
+    fields = self.data[table_name]
+    return [f["name"] for f in fields]
+
+
+
+
+
+
 class TransactionGenerator:
 
   def __init__(self, conf_file, type_file):
@@ -61,11 +77,12 @@ class TransactionGenerator:
     random.seed(self.seed)
 
     self.degree_threshold = int(self.conf.get("Base", "degree_threshold"))
-
     self.default_max_amount = parse_amount(self.conf.get("General", "default_max_amount"))
     self.default_min_amount = parse_amount(self.conf.get("General", "default_min_amount"))
     self.total_step = parse_int(self.conf.get("General", "total_step"))
 
+    schema_json = self.conf.get("InputFile", "schema_file")
+    self.schema = Schema(schema_json)
     self.input_dir = self.conf.get("InputFile", "directory")
     self.output_dir = self.conf.get("OutputFile", "directory")
 
@@ -408,23 +425,24 @@ class TransactionGenerator:
     :param business: business type
     :param suspicious: Whether the account is suspicious
     :param modelID: Remittance model ID
-    :param attr: Additional attributes
+    :param attr: Optional attributes
     :return:
     """
     if self.check_account_absent(aid):  # Add an account vertex with an ID and attributes if an account with the same ID is not yet added
       self.g.add_node(aid, init_balance=init_balance, start=start, end=end, country=country, business=business, suspicious=suspicious, isFraud=False, modelID=modelID, **attr)
 
 
-  def add_transaction(self, src, dst, amount=None, date=None, ttype=None):
+  def add_transaction(self, src, dst, amount=None, date=None, ttype=None, **attr):
     """Add a transaction edge
     :param src: Source account ID
     :param dst: Destination account ID
     :param amount: Transaction amount
     :param date: Transaction date
     :param ttype: Transaction type description
+    :param attr: Optional attributes
     :return:
     """
-    self.check_account_exist(src)  # Ensure the source and destination account exist
+    self.check_account_exist(src)  # Ensure the source and destination accounts exist
     self.check_account_exist(dst)
     self.g.add_edge(src, dst, key=self.tx_id, amount=amount, date=date, ttype=ttype)
     self.tx_id += 1

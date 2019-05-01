@@ -1,6 +1,6 @@
 package amlsim.stat;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import it.unimi.dsi.webgraph.*;
 import it.unimi.dsi.webgraph.algo.HyperBall;
@@ -97,6 +97,53 @@ public class Diameter {
             System.err.println("Cannot load and compute graph data");
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public static void main(String[] args) throws IOException{
+        int num_accts = Integer.parseInt(args[0]);
+        String tx_csv = args[1];
+
+        List<List<Integer>> srcs = new ArrayList<>();
+        List<List<Integer>> dsts = new ArrayList<>();
+        int num_bins = 16;
+        for(int i=0; i<num_bins; i++){
+            srcs.add(new ArrayList<>());
+            dsts.add(new ArrayList<>());
+        }
+
+        System.out.println("Load Transaction List");
+        String line;
+        String[] data;
+        BufferedReader br = new BufferedReader(new FileReader(tx_csv));
+        br.readLine();
+        while((line = br.readLine()) != null){
+            data = line.split(",");
+            int src = Integer.parseInt(data[1]);
+            int dst = Integer.parseInt(data[2]);
+            int tm = Integer.parseInt(data[6]);
+
+            int bin = tm / 10;
+            srcs.get(bin).add(src);
+            dsts.get(bin).add(dst);
+        }
+
+        System.out.println("Compute Diameter");
+        Diameter diameter = new Diameter(num_accts);
+        for(int i=0; i<num_bins; i++){
+            int tm = i * 10;
+            List<Integer> src_list = srcs.get(i);
+            List<Integer> dst_list = dsts.get(i);
+
+            int num_edges = src_list.size();
+            for(int j=0; j<num_edges; j++){
+                String src = String.valueOf(src_list.get(j));
+                String dst = String.valueOf(dst_list.get(j));
+                diameter.addEdge(src, dst);
+            }
+
+            double[] ret = diameter.computeDiameter();
+            System.out.println(tm + "," + ret[0] + "," + ret[1]);
         }
     }
 

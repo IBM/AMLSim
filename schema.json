@@ -1,0 +1,800 @@
+{
+  "organization": [
+    {
+      "name": "partyId"
+    }, 
+    {
+      "name": "externalSystemName"
+    }, 
+    {
+      "name": "partyType"
+    }, 
+    {
+      "name": "CREATION_TIME"
+    }, 
+    {
+      "name": "isActive"
+    }, 
+    {
+      "name": "lastReviewTime"
+    }, 
+    {
+      "name": "nextReviewTime"
+    }, 
+    {
+      "name": "establishedDate"
+    }, 
+    {
+      "name": "dissolvedDate"
+    }, 
+    {
+      "name": "natureOfBusiness"
+    }, 
+    {
+      "name": "description"
+    }, 
+    {
+      "name": "organizationSymbol"
+    }, 
+    {
+      "name": "countryOfResidency"
+    }, 
+    {
+      "name": "countryOfIncorporation"
+    }, 
+    {
+      "name": "doingBusinessAs"
+    }, 
+    {
+      "name": "name"
+    }, 
+    {
+      "name": "legalName"
+    }, 
+    {
+      "name": "primaryPhone"
+    }, 
+    {
+      "name": "alternatePhone"
+    }, 
+    {
+      "name": "website"
+    }, 
+    {
+      "name": "companyEmail"
+    }, 
+    {
+      "name": "listedCompany"
+    }, 
+    {
+      "name": "stockExchangeListed"
+    }, 
+    {
+      "name": "industryCode"
+    }, 
+    {
+      "name": "line1"
+    }, 
+    {
+      "name": "line2"
+    }, 
+    {
+      "name": "line3"
+    }, 
+    {
+      "name": "CITY"
+    }, 
+    {
+      "name": "CODE"
+    }, 
+    {
+      "name": "STATE"
+    }, 
+    {
+      "name": "COUNTRY"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_TYPE"
+    }, 
+    {
+      "name": "SECOND_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "SECOND_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "SECOND_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "SECOND_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "SECOND_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "SECOND_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "SECOND_IDENTIFICATION_TYPE"
+    }, 
+    {
+      "name": "THIRD_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "THIRD_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "THIRD_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "THIRD_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "THIRD_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "THIRD_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "THIRD_IDENTIFICATION_TYPE"
+    }, 
+    {
+      "name": "FOURTH_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "FOURTH_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "FOURTH_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "FOURTH_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "FOURTH_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "FOURTH_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "FOURTH_IDENTIFICATION_TYPE"
+    }, 
+    {
+      "name": "FIFTH_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "FIFTH_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "FIFTH_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "FIFTH_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "FIFTH_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "FIFTH_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "FIFTH_IDENTIFICATION_TYPE"
+    }
+  ], 
+  "account": [
+    {
+      "name": "acct_id",
+      "dataType": "string",
+      "graphType": "vertex_id"
+    }, 
+    {
+      "name": "tax_id"
+    }, 
+    {
+      "name": "alt_id"
+    }, 
+    {
+      "name": "dsply_nm"
+    }, 
+    {
+      "name": "type",
+      "dataType": "string",
+      "graphType": "vertex_label"
+    }, 
+    {
+      "name": "initial_deposit",
+      "dataType": "float"
+    }, 
+    {
+      "name": "balance",
+      "dataType": "float"
+    }, 
+    {
+      "name": "net_wrth_prd_end"
+    }, 
+    {
+      "name": "acct_peer_grp_intrl_id"
+    }, 
+    {
+      "name": "acct_rptng_crncy"
+    }, 
+    {
+      "name": "branch_id"
+    }, 
+    {
+      "name": "relationship_mgr_id"
+    }, 
+    {
+      "name": "open_dt"
+    }, 
+    {
+      "name": "close_dt"
+    }, 
+    {
+      "name": "close_reason"
+    }, 
+    {
+      "name": "acct_stat"
+    }, 
+    {
+      "name": "acct_stat_dt"
+    }, 
+    {
+      "name": "acct_last_updated_ts"
+    }, 
+    {
+      "name": "acct_segment"
+    }, 
+    {
+      "name": "dormant_status_flag"
+    }, 
+    {
+      "name": "frozen_status_flag"
+    }, 
+    {
+      "name": "acct_efctv_risk"
+    }, 
+    {
+      "name": "acct_bus_risk"
+    }, 
+    {
+      "name": "cstm_risk1"
+    }, 
+    {
+      "name": "past_confirmed_fraud"
+    }, 
+    {
+      "name": "past_suspected_fraud"
+    }, 
+    {
+      "name": "prior_sar_count"
+    }, 
+    {
+      "name": "is_sar"
+    },
+    {
+      "name": "is_suspicious"
+    },
+    {
+      "name": "tx_behavior_id"
+    },
+    {
+      "name": "seq"
+    },
+    {
+      "name": "first_name"
+    },
+    {
+      "name": "last_name"
+    },
+    {
+      "name": "street_addr"
+    },
+    {
+      "name": "city"
+    },
+    {
+      "name": "state"
+    },
+    {
+      "name": "country"
+    },
+    {
+      "name": "zip"
+    },
+    {
+      "name": "gender"
+    },
+    {
+      "name": "birth_date"
+    },
+    {
+      "name": "ssn"
+    },
+    {
+      "name": "lon"
+    },
+    {
+      "name": "lat"
+    }
+  ], 
+  "transaction": [
+    {
+      "name": "tran_id",
+      "dataType": "long",
+      "graphType": "edge_id"
+    }, 
+    {
+      "name": "reference_source"
+    }, 
+    {
+      "name": "reference_id"
+    }, 
+    {
+      "name": "cxl_trxn_id"
+    }, 
+    {
+      "name": "entry_timestamp"
+    }, 
+    {
+      "name": "tran_timestamp"
+    }, 
+    {
+      "name": "post_timestamp"
+    }, 
+    {
+      "name": "curr"
+    }, 
+    {
+      "name": "base_amt"
+    }, 
+    {
+      "name": "tx_type",
+      "dataType": "string",
+      "graphType": "edge_label"
+    }, 
+    {
+      "name": "paymt_method"
+    }, 
+    {
+      "name": "trxn_type"
+    }, 
+    {
+      "name": "dbt_cdt"
+    }, 
+    {
+      "name": "is_back_office"
+    }, 
+    {
+      "name": "is_bank_to_bank"
+    }, 
+    {
+      "name": "instruction"
+    }, 
+    {
+      "name": "tran_chanl"
+    }, 
+    {
+      "name": "chanl_risk_level"
+    }, 
+    {
+      "name": "chanl_risk_score"
+    }, 
+    {
+      "name": "is_frgn_trxn"
+    }, 
+    {
+      "name": "orig_cust_id"
+    }, 
+    {
+      "name": "orig_acct",
+      "dataType": "string",
+      "graphType": "orig_id"
+    }, 
+    {
+      "name": "orig_inst_id"
+    }, 
+    {
+      "name": "orig_display_nm"
+    }, 
+    {
+      "name": "orig_ctry"
+    }, 
+    {
+      "name": "origbk_cust_id"
+    }, 
+    {
+      "name": "origbk_acct"
+    }, 
+    {
+      "name": "origbk_inst_id"
+    }, 
+    {
+      "name": "origbk_display_nm"
+    }, 
+    {
+      "name": "origbk_ctry"
+    },
+    {
+      "name": "benebk_cust_id"
+    },
+    {
+      "name": "benebk_acct"
+    }, 
+    {
+      "name": "benebk_inst_id"
+    }, 
+    {
+      "name": "benebk_display_nm"
+    }, 
+    {
+      "name": "benebk_ctry"
+    }, 
+    {
+      "name": "bene_cust_id"
+    }, 
+    {
+      "name": "bene_acct",
+      "dataType": "string",
+      "graphType": "dest_id"
+    }, 
+    {
+      "name": "bene_inst_id"
+    }, 
+    {
+      "name": "bene_display_nm"
+    }, 
+    {
+      "name": "bene_ctry"
+    }, 
+    {
+      "name": "intermediary1_cust_id"
+    }, 
+    {
+      "name": "intermediary1_id"
+    }, 
+    {
+      "name": "intermediary1_acct"
+    }, 
+    {
+      "name": "intermediary1_display_nm"
+    }, 
+    {
+      "name": "intermediary1_ctry"
+    }, 
+    {
+      "name": "intermediary2_cust_id"
+    }, 
+    {
+      "name": "intermediary2_id"
+    }, 
+    {
+      "name": "intermediary2_acct"
+    }, 
+    {
+      "name": "intermediary2_display_nm"
+    }, 
+    {
+      "name": "intermediary2_ctry"
+    }, 
+    {
+      "name": "intermediary3_cust_id"
+    }, 
+    {
+      "name": "intermediary3_id"
+    }, 
+    {
+      "name": "intermediary3_acct"
+    }, 
+    {
+      "name": "intermediary3_display_nm"
+    }, 
+    {
+      "name": "intermediary3_ctry"
+    }, 
+    {
+      "name": "intermediary4_cust_id"
+    }, 
+    {
+      "name": "intermediary4_id"
+    }, 
+    {
+      "name": "intermediary4_acct"
+    }, 
+    {
+      "name": "intermediary4_display_nm"
+    }, 
+    {
+      "name": "intermediary4_ctry"
+    },
+    {
+      "name": "is_fraud"
+    },
+    {
+      "name": "alert_id"
+    }
+  ], 
+  "individual": [
+    {
+      "name": "partyId"
+    }, 
+    {
+      "name": "externalSystemName"
+    }, 
+    {
+      "name": "partyType"
+    }, 
+    {
+      "name": "CREATION_TIME"
+    }, 
+    {
+      "name": "isActive"
+    }, 
+    {
+      "name": "lastReviewTime"
+    }, 
+    {
+      "name": "nextReviewTime"
+    }, 
+    {
+      "name": "gender"
+    }, 
+    {
+      "name": "birthTime"
+    }, 
+    {
+      "name": "deathTime"
+    }, 
+    {
+      "name": "maritalStatus"
+    }, 
+    {
+      "name": "nationality"
+    }, 
+    {
+      "name": "lastName"
+    }, 
+    {
+      "name": "firstName"
+    }, 
+    {
+      "name": "middleName"
+    }, 
+    {
+      "name": "title"
+    }, 
+    {
+      "name": "generation"
+    }, 
+    {
+      "name": "alias"
+    }, 
+    {
+      "name": "occupation"
+    }, 
+    {
+      "name": "countryofResidency"
+    }, 
+    {
+      "name": "homePhone"
+    }, 
+    {
+      "name": "workPhone"
+    }, 
+    {
+      "name": "cellPhone"
+    }, 
+    {
+      "name": "alternatePhone"
+    }, 
+    {
+      "name": "personalEmail"
+    }, 
+    {
+      "name": "workEmail"
+    }, 
+    {
+      "name": "alternateEmail"
+    }, 
+    {
+      "name": "birthPlaceCountry"
+    }, 
+    {
+      "name": "sourceOfIncome"
+    }, 
+    {
+      "name": "incomeLevel"
+    }, 
+    {
+      "name": "departmentRace"
+    }, 
+    {
+      "name": "ethnicity"
+    }, 
+    {
+      "name": "chatAddress"
+    }, 
+    {
+      "name": "voiceDeviceId"
+    }, 
+    {
+      "name": "voiceLoginId"
+    }, 
+    {
+      "name": "homeAddressLine1"
+    }, 
+    {
+      "name": "homeAddressLine2"
+    }, 
+    {
+      "name": "homeAddressLine3"
+    }, 
+    {
+      "name": "homeAddressCity"
+    }, 
+    {
+      "name": "homeAddressCode"
+    }, 
+    {
+      "name": "homeAddressState"
+    }, 
+    {
+      "name": "homeAddressCountry"
+    }, 
+    {
+      "name": "workAddressLine1"
+    }, 
+    {
+      "name": "workAddressLine2"
+    }, 
+    {
+      "name": "workAddressLine3"
+    }, 
+    {
+      "name": "workAddressCity"
+    }, 
+    {
+      "name": "workAddressCode"
+    }, 
+    {
+      "name": "workAddressState"
+    }, 
+    {
+      "name": "workAddressCountry"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_NAME"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_LINE1"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_LINE2"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_LINE3"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_CITY"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_CODE"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_STATE"
+    }, 
+    {
+      "name": "ALTERNATE_ADDRESS_COUNTRY"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "PRIMARY_IDENTIFICATION_TYPE"
+    }, 
+    {
+      "name": "SECONDARY_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "SECONDARY_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "SECONDARY_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "SECONDARY_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "SECONDARY_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "SECONDARY_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "SECONDARY_IDENTIFICATION_TYPE"
+    }, 
+    {
+      "name": "ALT_IDENTIFICATION_NAME"
+    }, 
+    {
+      "name": "ALT_IDENTIFICATION_DESCRIPTION"
+    }, 
+    {
+      "name": "ALT_IDENTIFICATION_ISSUE_DATE"
+    }, 
+    {
+      "name": "ALT_IDENTIFICATION_EXPIRY_DATE"
+    }, 
+    {
+      "name": "ALT_IDENTIFICATION_REFERENCE_NUMBER"
+    }, 
+    {
+      "name": "ALT_IDENTIFICATION_ISSUING_AUTHORITY"
+    }, 
+    {
+      "name": "ALT_IDENTIFICATION_TYPE"
+    }
+  ],
+  "alert": [
+    {
+      "name": "alert_id"
+    },
+    {
+      "name": "alert_type"
+    },
+    {
+      "name": "is_fraud"
+    },
+    {
+      "name": "tran_id"
+    },
+    {
+      "name": "orig_acct"
+    },
+    {
+      "name": "bene_acct"
+    },
+    {
+      "name": "tx_type"
+    },
+    {
+      "name": "base_amt"
+    },
+    {
+      "name": "tran_timestamp"
+    }
+  ]
+}

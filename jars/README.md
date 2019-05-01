@@ -10,6 +10,8 @@ Please download external jar files from the following sites.
     - commons-math3-3.6.1.jar
     - commons-math3-3.6.1-tests.jar
     - commons-math3-3.6.1-tools.jar
+- [JSON in Java](https://mvnrepository.com/artifact/org.json/json) 20180813
+    - Download the latest jar file from [here](https://github.com/stleary/JSON-java)
 - dsiutils-2.4.2.jar
 - fastutil-8.1.0.jar
 - jsap-2.1.jar

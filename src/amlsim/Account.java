@@ -39,7 +39,7 @@ public class Account extends Client implements Steppable {
 	private CurrentStepHandler stepHandler = null;
 
 	protected long startStep = 0;
-	protected long endStep = 0;
+	protected long endStep = AMLSim.getNumOfSteps();
 
 
 	public Account(){
@@ -83,6 +83,10 @@ public class Account extends Client implements Steppable {
 		this.cashOutModel.setAccount(this);
 		this.cashOutModel.setParameters(init_balance, start, end);
 	}
+
+	public Account(String id, int modelID, float initBalance, Map<String, String> attrs){
+        this(id, modelID, initBalance, 0, AMLSim.getNumOfSteps(), attrs);
+    }
 
 	public String getAttrValue(String name){
         return this.extraAttributes.get(name);

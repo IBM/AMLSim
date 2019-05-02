@@ -30,7 +30,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private ArrayList<String> paramFile = new ArrayList<>();
 	private ArrayList<String> actions = new ArrayList<>();
 	private BufferedWriter bufWriter;
-	private static long numOfSteps = 1;
+	private static long NUM_OF_STEPS = 1;
 	private int numOfRepeat = 0;
 	private static int currentLoop = 0;
 	public static String logFileName = "";
@@ -40,6 +40,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private String alertFile = "";
 	private String counterLog = "";
 	private String diameterLog = "";
+	private boolean computeDiameter = true;
 
 	private static Diameter diameter;
 
@@ -63,8 +64,8 @@ public class AMLSim extends ParameterizedPaySim {
 					super.setPropertiesFile(filePath);
 					break;
 				case "-for":  //Gets the number of steps
-					numOfSteps = Long.parseLong(args[x + 1]);
-					this.setNrOfSteps(numOfSteps);
+					NUM_OF_STEPS = Long.parseLong(args[x + 1]);
+					this.setNrOfSteps(NUM_OF_STEPS);
 					break;
 				case "-r":  //Gets the number of repetitions
 					numOfRepeat = Integer.parseInt(args[x + 1]);
@@ -86,7 +87,7 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 
 	public static long getNumOfSteps(){
-		return numOfSteps;
+		return NUM_OF_STEPS;
 	}
 
 //	public Account getClientFromID(long id){
@@ -170,13 +171,20 @@ public class AMLSim extends ParameterizedPaySim {
 		this.alertFile = this.getParamters().getProperty("alertFile");
 		this.counterLog = this.getParamters().getProperty("counterLog");
 		this.diameterLog = this.getParamters().getProperty("diameterLog");
+		this.computeDiameter = Boolean.parseBoolean(this.getParamters().getProperty("computeDiameter"));
 
-		try{
-			BufferedWriter writer = new BufferedWriter(new FileWriter(diameterLog));
-			writer.close();
-		}catch (IOException e){
-			e.printStackTrace();
-		}
+		if(diameterLog == null || !computeDiameter){
+		    System.out.println("Computing Transaction Network Diameter Disabled");
+        }else {
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(diameterLog));
+                writer.close();
+                System.out.println("Computing Transaction Network Diameter Enabled");
+            } catch (IOException e) {
+                e.printStackTrace();
+                computeDiameter = false;
+            }
+        }
 	}
 
 
@@ -206,8 +214,8 @@ public class AMLSim extends ParameterizedPaySim {
 			boolean isFraud = elements[columnIndex.get("IS_FRAUD")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
 			float init_balance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
-			int start_step = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
-			int end_step = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
+//			int start_step = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
+//			int end_step = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
 
 			Map<String, String> extraValues = new HashMap<>();
 			for(String column : extraColumns){
@@ -215,8 +223,10 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-			Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, start_step, end_step, extraValues)
-					: new Account(accountID, modelID, init_balance, start_step, end_step, extraValues);
+//			Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, start_step, end_step, extraValues)
+//					: new Account(accountID, modelID, init_balance, start_step, end_step, extraValues);
+            Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, extraValues)
+                    : new Account(accountID, modelID, init_balance, extraValues);
 
 			int index = this.getClients().size();
 			client.setBranch(this.branches.get(index % this.numBranches));
@@ -226,7 +236,7 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 		int numAccounts = idMap.size();
 		System.out.println("Number of total accounts: " + numAccounts);
-		diameter = new Diameter(numAccounts);
+		if(computeDiameter)diameter = new Diameter(numAccounts);
 
 		reader.close();
 	}
@@ -242,7 +252,6 @@ public class AMLSim extends ParameterizedPaySim {
 //			long dstID = Long.parseLong(elements[columnIndex.get("dst")]);
             String srcID = elements[columnIndex.get("src")];
             String dstID = elements[columnIndex.get("dst")];
-
             String ttype = elements[columnIndex.get("ttype")];
 
 			Account src = getClientFromID(srcID);
@@ -373,17 +382,17 @@ public class AMLSim extends ParameterizedPaySim {
 		setWriter(this.bufWriter);
 
 		// Set total simulation steps
-		setNrOfSteps(numOfSteps);
+		setNrOfSteps(NUM_OF_STEPS);
 
 		// Create account objects
 		super.start();
 
 		// Starting the simulation
 		long begin = System.currentTimeMillis();
-		System.out.println("Starting PaySim Running for " + numOfSteps + " steps. Current loop:" + AMLSim.currentLoop);
+		System.out.println("Starting PaySim Running for " + NUM_OF_STEPS + " steps. Current loop:" + AMLSim.currentLoop);
 
 		long step;
-		while ((step = super.schedule.getSteps()) < numOfSteps) {
+		while ((step = super.schedule.getSteps()) < NUM_OF_STEPS) {
 			if (!super.schedule.step(this))
 				break;
 			if (step % 100 == 0 && step != 0) {
@@ -393,13 +402,13 @@ public class AMLSim extends ParameterizedPaySim {
 			else {
 				System.out.print("*");
 			}
-			if (step % 10 == 0 && step > 0){
+			if (computeDiameter && step % 10 == 0 && step > 0){
 				double[] result = diameter.computeDiameter();
 				writeDiameter(step, result);
 			}
 		}
 		txs.flushLog();
-		txs.writeCounterLog(numOfSteps, counterLog);
+		txs.writeCounterLog(NUM_OF_STEPS, counterLog);
 		System.out.println(" - Finished running " + step + " steps ");
 
 		//Finishing the simulation
@@ -433,10 +442,13 @@ public class AMLSim extends ParameterizedPaySim {
 		float destAfter = (float)dest.getBalance();
 
 		txs.addTransaction(step, desc, amt, origID, destID, origBefore, origAfter, destBefore, destAfter, fraud, aid);
-		diameter.addEdge(origID, destID);
+		if(diameter != null)diameter.addEdge(origID, destID);
 	}
 
-	public void writeDiameter(long step, double[] result){
+	private void writeDiameter(long step, double[] result){
+	    if(!computeDiameter){
+	        return;
+        }
 		try{
 			BufferedWriter writer = new BufferedWriter(new FileWriter(diameterLog, true));
 			writer.write(step + "," + result[0] + "," + result[1] + "\n");

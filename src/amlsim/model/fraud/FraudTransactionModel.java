@@ -55,8 +55,8 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     Alert alert;
     protected float minAmount;
     protected float maxAmount;
-    protected int startStep;
-    protected int endStep;
+    protected long startStep;
+    protected long endStep;
 
     public abstract void setSchedule(int modelID);
 
@@ -77,12 +77,17 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
         return startStep <= step && step <= endStep;
     }
 
+
+    public long getStepRange(){
+        return endStep - startStep + 1;
+    }
+
     /**
      * Common constructor of fraud transaction
-     * @param minAmount Mininum transaction amount
+     * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
-     * @param startStep Start simulation step (any transactions cannot be carried out before this step)
-     * @param maxStep End simulation step (any transactions cannot be carried out after this step)
+     * @param startStep Start simulation step of alert transactions (any transactions cannot be carried out before this step)
+     * @param maxStep End simulation step of alert transactions (any transactions cannot be carried out after this step)
      */
     public FraudTransactionModel(float minAmount, float maxAmount, int startStep, int maxStep){
         this.minAmount = minAmount;
@@ -118,14 +123,10 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
      * @return A simulation step within startStep and endStep
      */
     protected long getRandomStep(){
-        return alert.getSimulator().random.nextInt(endStep - startStep + 1) + startStep;
+        return alert.getSimulator().random.nextLong(getStepRange()) + startStep;
     }
 
 
-    /**
-     *
-     * @return
-     */
     @Override
     public String getType() {
         return "Fraud";

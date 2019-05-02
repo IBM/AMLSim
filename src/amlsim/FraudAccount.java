@@ -17,6 +17,10 @@ public class FraudAccount extends Account {
 		super(id, modelID, init_balance, start, end, attrs);
 	}
 
+	FraudAccount(String id, int modelID, float initBalance, Map<String, String> attrs){
+        super(id, modelID, initBalance, attrs);
+    }
+
 
 	public void handleAction(SimState state){
 		AMLSim amlsim = (AMLSim) state;
@@ -31,13 +35,6 @@ public class FraudAccount extends Account {
 		if(success){
 			count++;
 		}
-//		boolean success = handleTransaction(amlsim);
-//		if(!success) {
-//			success = handleFraud(amlsim);
-//		}
-//		if(success){
-//			count++;
-//		}
 	}
 
 	private boolean handleFraud(AMLSim amlsim){
@@ -51,10 +48,6 @@ public class FraudAccount extends Account {
 		model.sendTransaction(amlsim.schedule.getSteps());
 		return true;
 	}
-
-//	public String getName() {
-//		return Long.toString(this.id);
-//	}
 
 	public String toString() {
 		return "F" + this.id;

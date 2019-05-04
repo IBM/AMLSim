@@ -167,20 +167,22 @@ class TransactionGenerator:
     return random.sample(candidates, num)
 
 
-  def load_account_list(self):
+  def load_account_list(self, acct_file):
     """Load and add account vertices from a CSV file
+    :param acct_file: Account list CSV file path
     :return:
     """
     is_aggregated = self.conf.get("InputFile", "is_aggregated").lower() == "true"
     if is_aggregated:
-      self.load_account_param()
+      self.load_account_param(acct_file)
     else:
-      self.load_account_raw()
+      self.load_account_raw(acct_file)
 
 
-  def load_account_raw(self):
+  def load_account_raw(self, fname):
     """Load and add account vertices from a CSV file with raw account info
-    header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
+    header: uuid,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
+    :param fname: Account list CSV file path
     :return:
     """
     if not self.conf.has_option("InputFile", "min_balance"):
@@ -191,28 +193,30 @@ class TransactionGenerator:
       raise KeyError("Option 'max_balance' is required to load raw account list")
     max_balance = float(self.conf.get("InputFile", "max_balance"))
 
-    if not self.conf.has_option("InputFile", "start_day"):
-      raise KeyError("Option 'start_day' is required to load raw account list")
-    start_day = int(self.conf.get("InputFile", "start_day"))
-
-    if not self.conf.has_option("InputFile", "end_day"):
-      raise KeyError("Option 'end_day' is required to load raw account list")
-    end_day = int(self.conf.get("InputFile", "end_day"))
-
-    if not self.conf.has_option("InputFile", "start_range"):
-      raise KeyError("Option 'start_range' is required to load raw account list")
-    start_range = int(self.conf.get("InputFile", "start_range"))
-
-    if not self.conf.has_option("InputFile", "end_range"):
-      raise KeyError("Option 'end_range' is required to load raw account list")
-    end_range = int(self.conf.get("InputFile", "end_range"))
+    # if not self.conf.has_option("InputFile", "start_day"):
+    #   raise KeyError("Option 'start_day' is required to load raw account list")
+    # start_day = int(self.conf.get("InputFile", "start_day"))
+    #
+    # if not self.conf.has_option("InputFile", "end_day"):
+    #   raise KeyError("Option 'end_day' is required to load raw account list")
+    # end_day = int(self.conf.get("InputFile", "end_day"))
+    #
+    # if not self.conf.has_option("InputFile", "start_range"):
+    #   raise KeyError("Option 'start_range' is required to load raw account list")
+    # start_range = int(self.conf.get("InputFile", "start_range"))
+    #
+    # if not self.conf.has_option("InputFile", "end_range"):
+    #   raise KeyError("Option 'end_range' is required to load raw account list")
+    # end_range = int(self.conf.get("InputFile", "end_range"))
 
     # default_model = int(self.conf.get("InputFile", "default_model")) \
     #   if self.conf.has_option("InputFile", "default_model") else 1
     model_ids = [1, 2, 3, 4, 5]
 
-    fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
-    self.attr_names.extend(["SEQ", "FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
+    # fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
+    # self.attr_names.extend(["SEQ", "FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
+    #                         "GENDER", "PHONE_NUMBER", "BIRTH_DATE", "SSN", "LON", "LAT"])
+    self.attr_names.extend(["FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
                             "GENDER", "PHONE_NUMBER", "BIRTH_DATE", "SSN", "LON", "LAT"])
 
     with open(fname, "r") as rf:
@@ -220,7 +224,7 @@ class TransactionGenerator:
       header = next(reader)
       name2idx = {n:i for i,n in enumerate(header)}
       idx_aid = name2idx["uuid"]
-      idx_seq = name2idx["seq"]
+      # idx_seq = name2idx["seq"]
       idx_first_name = name2idx["first_name"]
       idx_last_name = name2idx["last_name"]
       idx_street_addr = name2idx["street_addr"]
@@ -240,7 +244,7 @@ class TransactionGenerator:
       count = 0
       for row in reader:
         aid = row[idx_aid]
-        seq = row[idx_seq]
+        # seq = row[idx_seq]
         first_name = row[idx_first_name]
         last_name = row[idx_last_name]
         street_addr = row[idx_street_addr]
@@ -255,26 +259,29 @@ class TransactionGenerator:
         lat = row[idx_lat]
         # model = default_model
         model = random.choice(model_ids)
-        start = start_day + random.randrange(start_range)
-        end = end_day - random.randrange(end_range)
+        # start = start_day + random.randrange(start_range)
+        # end = end_day - random.randrange(end_range)
 
-        attr = {"SEQ": seq, "FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
+        # attr = {"SEQ": seq, "FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
+        attr = {"FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
                 "CITY": city, "STATE": state, "ZIP": zip_code, "GENDER": gender, "PHONE_NUMBER": phone_number,
                 "BIRTH_DATE": birth_date, "SSN": ssn, "LON": lon, "LAT": lat}
 
         init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
-        self.add_account(aid, init_balance, start, end, country, acct_type, False, model, **attr)
+        # self.add_account(aid, init_balance, start, end, country, acct_type, False, model, **attr)
+        self.add_account(aid, init_balance, country, acct_type, model, **attr)
         count += 1
 
 
 
-  def load_account_param(self):
+  def load_account_param(self, fname):
     """Load and add account vertices from a CSV file with aggregated parameters
     Each row can represent two or more accounts
+    :param fname: Account list CSV file path
     :return:
     """
 
-    fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
+    # fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
 
     idx_num = None  # Number of accounts per row
     idx_min = None  # Minimum initial balance
@@ -298,16 +305,16 @@ class TransactionGenerator:
           idx_min = i
         elif k == "max_balance":
           idx_max = i
-        elif k == "start_day":
-          idx_start = i
-        elif k == "end_day":
-          idx_end = i
+        # elif k == "start_day":
+        #   idx_start = i
+        # elif k == "end_day":
+        #   idx_end = i
         elif k == "country":
           idx_country = i
         elif k == "business_type":
           idx_business = i
-        elif k == "suspicious":
-          idx_suspicious = i
+        # elif k == "suspicious":
+        #   idx_suspicious = i
         elif k == "model":
           idx_model = i
         else:
@@ -318,16 +325,17 @@ class TransactionGenerator:
         num = int(row[idx_num])
         min_balance = parse_amount(row[idx_min])
         max_balance = parse_amount(row[idx_max])
-        start_day = parse_int(row[idx_start])
-        end_day = parse_int(row[idx_end])
+        # start_day = parse_int(row[idx_start])
+        # end_day = parse_int(row[idx_end])
         country = row[idx_country]
         business = row[idx_business]
-        suspicious = parse_flag(row[idx_suspicious])
+        # suspicious = parse_flag(row[idx_suspicious])
         modelID = parse_int(row[idx_model])
 
         for i in range(num):
           init_balance = random.uniform(min_balance, max_balance)  # Generate amount
-          self.add_account(aid, init_balance, start_day, end_day, country, business, suspicious, modelID)
+          # self.add_account(aid, init_balance, start_day, end_day, country, business, suspicious, modelID)
+          self.add_account(aid, init_balance, country, business, modelID)
           aid += 1
 
     self.num_accounts = aid
@@ -398,21 +406,13 @@ class TransactionGenerator:
 
 
 
-  def add_account(self, aid, init_balance, start, end, country, business, suspicious, modelID, **attr):
-    """Add an account vertex
-    :param aid: Account ID
-    :param init_balance: Initial amount
-    :param start: The day when the account opened
-    :param end: The day when the account closed
-    :param country: Country
-    :param business: business type
-    :param suspicious: Whether the account is suspicious
-    :param modelID: Remittance model ID
-    :param attr: Additional attributes
-    :return:
-    """
+  # def add_account(self, aid, init_balance, start, end, country, business, suspicious, modelID, **attr):
+  #   if self.check_account_absent(aid):  # Add an account vertex with an ID and attributes if an account with the same ID is not yet added
+  #     self.g.add_node(aid, init_balance=init_balance, start=start, end=end, country=country, business=business, suspicious=suspicious, isFraud=False, modelID=modelID, **attr)
+
+  def add_account(self, aid, init_balance, country, business, modelID, **attr):
     if self.check_account_absent(aid):  # Add an account vertex with an ID and attributes if an account with the same ID is not yet added
-      self.g.add_node(aid, init_balance=init_balance, start=start, end=end, country=country, business=business, suspicious=suspicious, isFraud=False, modelID=modelID, **attr)
+      self.g.add_node(aid, init_balance=init_balance, country=country, business=business, isFraud=False, modelID=modelID, **attr)
 
 
   def add_transaction(self, src, dst, amount=None, date=None, ttype=None):
@@ -799,21 +799,23 @@ class TransactionGenerator:
     fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "accounts"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
-      base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY", "ACCOUNT_TYPE", "IS_SUSPICIOUS", "IS_FRAUD", "TX_BEHAVIOR_ID"]
+      # base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY", "ACCOUNT_TYPE", "IS_SUSPICIOUS", "IS_FRAUD", "TX_BEHAVIOR_ID"]
+      base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "COUNTRY", "ACCOUNT_TYPE", "IS_FRAUD", "TX_BEHAVIOR_ID"]
       writer.writerow(base_attrs + self.attr_names)
       for n in self.g.nodes(data=True):
         aid = n[0]  # Account ID
         cid = "C_" + str(aid)  # Customer ID bounded to this account
         prop = n[1]  # Account attributes
         balance = "{0:.2f}".format(prop["init_balance"])  # Initial balance
-        start = prop["start"]  # Start time (when the account is opened)
-        end = prop["end"]  # End time (when the account is closed)
+        # start = prop["start"]  # Start time (when the account is opened)
+        # end = prop["end"]  # End time (when the account is closed)
         country = prop["country"]  # Country
         business = prop["business"]  # Business type
-        suspicious = prop["suspicious"]  # Whether this account is suspicious (unused)
+        # suspicious = prop["suspicious"]  # Whether this account is suspicious (unused)
         isFraud = "true" if prop["isFraud"] else "false"  # Whether this account is involved in fraud transactions
         modelID = prop["modelID"]  # Transaction behavior model ID
-        values = [aid, cid, balance, start, end, country, business, suspicious, isFraud, modelID]
+        # values = [aid, cid, balance, start, end, country, business, suspicious, isFraud, modelID]
+        values = [aid, cid, balance, country, business, isFraud, modelID]
         for attr_name in self.attr_names:
           values.append(prop[attr_name])
         writer.writerow(values)
@@ -841,7 +843,7 @@ class TransactionGenerator:
     def get_outEdge_attrs(g, vid, name):
       return [v for k, v in nx.get_edge_attributes(g, name).iteritems() if (k[0] == vid or k[1] == vid)]
 
-    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alertgroup"))
+    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alert_members"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
       base_attrs = ["alertID", "reason", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep", "scheduleID"]
@@ -870,22 +872,23 @@ class TransactionGenerator:
 
 if __name__ == "__main__":
   argv = sys.argv
-  if len(argv) < 4:
-    print("Usage: python %s [ConfFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
+  if len(argv) < 5:
+    print("Usage: python %s [ConfFile] [AccountFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
     exit(1)
 
   _conf_file = argv[1]
-  _deg_file = argv[2]
-  _type_file = argv[3]
+  _acct_file = argv[2]
+  _deg_file = argv[3]
+  _type_file = argv[4]
 
   txg = TransactionGenerator(_conf_file, _type_file)
-  txg.load_account_list()  # Load account list CSV file
+  txg.load_account_list(_acct_file)  # Load account list CSV file
   txg.generate_normal_transactions(_deg_file)  # Load a parameter CSV file for the base transaction types
   txg.set_subject_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
-  if len(argv) == 4:
+  if len(argv) == 5:
     txg.load_alert_patterns()  # Add alert patterns
   else:
-    _alert_file = argv[4]
+    _alert_file = argv[5]
     txg.load_alert_patterns(_alert_file)
   txg.write_account_list()  # Export accounts to a CSV file
   txg.write_transaction_list()  # Export transactions to a CSV file

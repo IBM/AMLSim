@@ -18,15 +18,15 @@ graph = JanusGraphFactory.open(PROP_FILE)
 // create schema
 mgmt = graph.openManagement()
 // vertex schema
-// ACCOUNT_ID,CUSTOMER_ID,INIT_BALANCE,START_DATE,END_DATE,COUNTRY,ACCOUNT_TYPE,IS_SUSPICIOUS,IS_FRAUD,TX_BEHAVIOR_ID
+// ACCOUNT_ID,CUSTOMER_ID,INIT_BALANCE,COUNTRY,ACCOUNT_TYPE,IS_FRAUD,TX_BEHAVIOR_ID
 mgmt.makePropertyKey('acct_id').dataType(String.class).make()  // ACCOUNT_ID
 mgmt.makePropertyKey('cust_id').dataType(String.class).make()  // CUSTOMER_ID
 mgmt.makePropertyKey('init_amount').dataType(Float.class).make()  // INIT_BALANCE
-mgmt.makePropertyKey('start_date').dataType(Long.class).make()  // START_DATE
-mgmt.makePropertyKey('end_date').dataType(Long.class).make()  // END_DATE
+//mgmt.makePropertyKey('start_date').dataType(Long.class).make()  // START_DATE
+//mgmt.makePropertyKey('end_date').dataType(Long.class).make()  // END_DATE
 mgmt.makePropertyKey('country').dataType(String.class).make()  // COUNTRY
 mgmt.makePropertyKey('acct_type').dataType(String.class).make()  // ACCOUNT_TYPE
-mgmt.makePropertyKey('is_suspicious').dataType(Boolean.class).make()  // IS_SUSPICIOUS
+//mgmt.makePropertyKey('is_suspicious').dataType(Boolean.class).make()  // IS_SUSPICIOUS
 mgmt.makePropertyKey('is_fraud_acct').dataType(Boolean.class).make()  // IS_FRAUD
 mgmt.makePropertyKey('behavior_id').dataType(Long.class).make()  // TX_BEHAVIOR_ID
 
@@ -47,14 +47,24 @@ mutate = { ->
     }
 }
 
-addVertex = { def acct, def cust, def amt, def start, def end, def country, def type, def suspicious, def fraud, def behavior ->
+//addVertex = { def acct, def cust, def amt, def start, def end, def country, def type, def suspicious, def fraud, def behavior ->
+//    if(!cache.containsKey(acct)){
+//        v = graph.addVertex("acct_id", acct, "cust_id", cust, "init_amount", amt, "start_date", start, "end_date", end,
+//                "country", country, "acct_type", type, "is_suspicious", suspicious, "is_fraud_acct", fraud, "behavior_id", behavior)
+//        mutate()
+//        cache[acct] = v
+//    }
+//}
+
+addVertex = { def acct, def cust, def amt, def country, def type, def fraud, def behavior ->
     if(!cache.containsKey(acct)){
-        v = graph.addVertex("acct_id", acct, "cust_id", cust, "init_amount", amt, "start_date", start, "end_date", end,
-                "country", country, "acct_type", type, "is_suspicious", suspicious, "is_fraud_acct", fraud, "behavior_id", behavior)
+        v = graph.addVertex("acct_id", acct, "cust_id", cust, "init_amount", amt,
+                "country", country, "acct_type", type, "is_fraud_acct", fraud, "behavior_id", behavior)
         mutate()
         cache[acct] = v
     }
 }
+
 
 setProperty = {def placeholder, def label, def key, def value ->
     cache[label].property(key, value)
@@ -64,7 +74,7 @@ setProperty = {def placeholder, def label, def key, def value ->
 
 /**
  * Load account list (vertices)
- * ACCOUNT_ID,CUSTOMER_ID,INIT_BALANCE,START_DATE,END_DATE,COUNTRY,ACCOUNT_TYPE,IS_SUSPICIOUS,IS_FRAUD,TX_BEHAVIOR_ID
+ * ACCOUNT_ID,CUSTOMER_ID,INIT_BALANCE,COUNTRY,ACCOUNT_TYPE,IS_FRAUD,TX_BEHAVIOR_ID
  */
 println "Start loading accounts from " + ACCT_CSV
 line_counter = new AtomicLong()
@@ -74,11 +84,11 @@ DEFAULT_INDEX = -1
 acct_idx = DEFAULT_INDEX
 cust_idx = DEFAULT_INDEX
 amt_idx = DEFAULT_INDEX
-start_idx = DEFAULT_INDEX
-end_idx = DEFAULT_INDEX
+//start_idx = DEFAULT_INDEX
+//end_idx = DEFAULT_INDEX
 country_idx = DEFAULT_INDEX
 type_idx = DEFAULT_INDEX
-suspicious_idx = DEFAULT_INDEX
+//suspicious_idx = DEFAULT_INDEX
 fraud_idx = DEFAULT_INDEX
 behavior_idx = DEFAULT_INDEX
 
@@ -91,11 +101,11 @@ for(int i=0; i<fields.length; i++){
         case "ACCOUNT_ID": acct_idx = i; break
         case "CUSTOMER_ID": cust_idx = i; break
         case "INIT_BALANCE": amt_idx = i; break
-        case "START_DATE": start_idx = i; break
-        case "END_DATE": end_idx = i; break
+//        case "START_DATE": start_idx = i; break
+//        case "END_DATE": end_idx = i; break
         case "COUNTRY": country_idx = i; break
         case "ACCOUNT_TYPE": type_idx = i; break
-        case "IS_SUSPICIOUS": suspicious_idx = i; break
+//        case "IS_SUSPICIOUS": suspicious_idx = i; break
         case "IS_FRAUD": fraud_idx = i; break
         case "TX_BEHAVIOR_ID": behavior_idx = i; break
     }
@@ -105,11 +115,11 @@ println "---- Account Column Indices ----"
 println "\tAccount ID: " + acct_idx
 println "\tCustomer ID: " + cust_idx
 println "\tInitial Balance: " + amt_idx
-println "\tStart Date: " + start_idx
-println "\tEnd Date: " + end_idx
+//println "\tStart Date: " + start_idx
+//println "\tEnd Date: " + end_idx
 println "\tCountry: " + country_idx
 println "\tAccount Type: " + type_idx
-println "\tSuspicious: " + suspicious_idx
+//println "\tSuspicious: " + suspicious_idx
 println "\tFraud: " + fraud_idx
 println "\tBehavior ID: " + behavior_idx
 
@@ -126,15 +136,16 @@ while (true){
     acct_id = fields[acct_idx]
     cust_id = fields[cust_idx]
     init_amt = fields[amt_idx].toFloat()
-    start = fields[start_idx].toLong()
-    end = fields[end_idx].toLong()
+//    start = fields[start_idx].toLong()
+//    end = fields[end_idx].toLong()
     country = fields[country_idx]
     acct_type = fields[type_idx]
-    is_suspicious = fields[suspicious_idx].toBoolean()
+//    is_suspicious = fields[suspicious_idx].toBoolean()
     is_fraud = fields[fraud_idx].toBoolean()
     behavior_id = fields[behavior_idx].toLong()
 
-    addVertex(acct_id, cust_id, init_amt, start, end, country, acct_type, is_suspicious, is_fraud, behavior_id)
+//    addVertex(acct_id, cust_id, init_amt, start, end, country, acct_type, is_suspicious, is_fraud, behavior_id)
+    addVertex(acct_id, cust_id, init_amt, country, acct_type, is_fraud, behavior_id)
 }
 
 

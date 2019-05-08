@@ -208,25 +208,28 @@ class TransactionGenerator:
       raise KeyError("Option 'max_balance' is required to load raw account list")
     max_balance = float(self.conf.get("InputFile", "max_balance"))
 
-    if not self.conf.has_option("InputFile", "start_day"):
-      raise KeyError("Option 'start_day' is required to load raw account list")
-    start_day = int(self.conf.get("InputFile", "start_day"))
+    if self.conf.has_option("InputFile", "start_day"):
+      start_day = int(self.conf.get("InputFile", "start_day"))
+    else:
+      start_day = None  # No limitation
 
-    if not self.conf.has_option("InputFile", "end_day"):
-      raise KeyError("Option 'end_day' is required to load raw account list")
-    end_day = int(self.conf.get("InputFile", "end_day"))
+    if self.conf.has_option("InputFile", "end_day"):
+      end_day = int(self.conf.get("InputFile", "end_day"))
+    else:
+      end_day = None  # No limitation
 
-    if not self.conf.has_option("InputFile", "start_range"):
-      raise KeyError("Option 'start_range' is required to load raw account list")
-    start_range = int(self.conf.get("InputFile", "start_range"))
+    if self.conf.has_option("InputFile", "start_range"):
+      start_range = int(self.conf.get("InputFile", "start_range"))
+    else:
+      start_range = None
 
-    if not self.conf.has_option("InputFile", "end_range"):
-      raise KeyError("Option 'end_range' is required to load raw account list")
-    end_range = int(self.conf.get("InputFile", "end_range"))
+    if self.conf.has_option("InputFile", "end_range"):
+      end_range = int(self.conf.get("InputFile", "end_range"))
+    else:
+      end_range = None
 
-    # default_model = int(self.conf.get("InputFile", "default_model")) \
-    #   if self.conf.has_option("InputFile", "default_model") else 1
-    model_ids = [1, 2, 3, 4, 5]
+    default_model = int(self.conf.get("InputFile", "default_model")) \
+      if self.conf.has_option("InputFile", "default_model") else 1
 
     fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
     self.attr_names.extend(["SEQ", "FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
@@ -270,10 +273,9 @@ class TransactionGenerator:
         ssn = row[idx_ssn]
         lon = row[idx_lon]
         lat = row[idx_lat]
-        # model = default_model
-        model = random.choice(model_ids)
-        start = start_day + random.randrange(start_range)
-        end = end_day - random.randrange(end_range)
+        model = default_model
+        start = start_day + random.randrange(start_range) if (start_day is not None and start_range is not None) else -1
+        end = end_day - random.randrange(end_range) if (end_day is not None and end_range is not None) else -1
 
         attr = {"SEQ": seq, "FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
                 "CITY": city, "STATE": state, "ZIP": zip_code, "GENDER": gender, "PHONE_NUMBER": phone_number,
@@ -335,8 +337,8 @@ class TransactionGenerator:
         num = int(row[idx_num])
         min_balance = parse_amount(row[idx_min])
         max_balance = parse_amount(row[idx_max])
-        start_day = parse_int(row[idx_start])
-        end_day = parse_int(row[idx_end])
+        start_day = parse_int(row[idx_start]) if idx_start is not None else -1
+        end_day = parse_int(row[idx_end]) if idx_end is not None else -1
         country = row[idx_country]
         business = row[idx_business]
         suspicious = parse_flag(row[idx_suspicious])
@@ -590,7 +592,6 @@ class TransactionGenerator:
                         transaction_freq=None, amount_difference=None, period=None, amount_rounded=None,
                         orig_country=False, bene_country=False, orig_business=False, bene_business=False):
     """Add an AML rule transaction set
-
     :param isFraud: Whether the trasnsaction set is fraud or alert
     :param pattern_type: Pattern type ("fan_in", "fan_out", "dense", "mixed" or "stack")
     :param accounts: Number of transaction members (accounts)
@@ -620,11 +621,13 @@ class TransactionGenerator:
     if aggregated_amount is None:
       aggregated_amount = 0
 
-    start_day = random.randint(0, self.total_step)
-    if period is None:
-      end_day = start_day + self.total_step
-    else:
-      end_day = start_day + period
+    # start_day = random.randint(0, self.total_step)
+    # if period is None:
+    #   end_day = start_day + self.total_step
+    # else:
+    #   end_day = start_day + period
+    start_day = 0
+    end_day = self.total_step
 
 
     ## Create subgraph structure with transaction attributes

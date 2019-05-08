@@ -10,6 +10,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.*;
 
 /**
  * AMLSimulator Main class
@@ -19,12 +20,16 @@ public class AMLSim extends ParameterizedPaySim {
 	public static final boolean TX_OPT = true;  // Optimized transaction
 	public static final int TX_SIZE = 10000000;  // Transaction buffer size
 	private static TransactionRepository txs = new TransactionRepository(TX_SIZE);
+	private static Logger logger = Logger.getLogger("AMLSim");
+	private Handler handler = new ConsoleHandler();
+	private java.util.logging.Formatter formatter = new SimpleFormatter();
 
 //	private Map<Long, Integer> idMap = new HashMap<>();  // Account ID --> Index
     private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
 	private Map<Long, Alert> alertGroups = new HashMap<>();
 	private int numBranches = 0;
 	private ArrayList<Branch> branches = new ArrayList<>();
+	private int defaultInterval = 30;  // Default transaction interval for accounts
 
 	private static String simulatorName = null;
 	private ArrayList<String> paramFile = new ArrayList<>();
@@ -47,7 +52,13 @@ public class AMLSim extends ParameterizedPaySim {
 	private AMLSim(long seed) {
 		super(seed);
 		super.setTagName("1");
+        logger.addHandler(handler);
+        handler.setFormatter(formatter);
 	}
+
+	public static Logger getLogger(){
+	    return logger;
+    }
 
 	public void setCurrentLoop(int currentLoop){
 		AMLSim.currentLoop = currentLoop;
@@ -61,19 +72,23 @@ public class AMLSim extends ParameterizedPaySim {
 				case "-file":
 					String filePath = args[x + 1];
 					super.setPropertiesFile(filePath);
+					logger.info("Properties File: " + filePath);
 					break;
 				case "-for":  //Gets the number of steps
 					numOfSteps = Long.parseLong(args[x + 1]);
 					this.setNrOfSteps(numOfSteps);
+                    logger.info("Simulation Steps: " + numOfSteps);
 					break;
 				case "-r":  //Gets the number of repetitions
 					numOfRepeat = Integer.parseInt(args[x + 1]);
+                    logger.info("Simulation Repeats: " + numOfRepeat);
 					break;
 				case "-inc":  //Gets the number of incrementations for each repetition
 					double incRepeat = Double.parseDouble(args[x + 1]);
 					break;
 				case "-name":  // Simulation name (optional)
 					simulatorName = args[x + 1];
+                    logger.info("Simulator Name: " + simulatorName);
 					break;
 			}
 		}
@@ -89,15 +104,12 @@ public class AMLSim extends ParameterizedPaySim {
 		return numOfSteps;
 	}
 
-//	public Account getClientFromID(long id){
     public Account getClientFromID(String id){
 		int index = this.idMap.get(id);
 		return (Account) this.getClients().get(index);
 	}
 
 	public void initSimulation(){
-		// Load account/transaction files
-
 		// Load account file
 		try{
 			loadAccountFile(this.accountFile);
@@ -131,6 +143,9 @@ public class AMLSim extends ParameterizedPaySim {
 	public void loadParametersFromFile(){
 		super.loadParametersFromFile();
         Properties prop = this.getParamters();
+
+        // Default transaction interval for accounts
+        this.defaultInterval = Integer.parseInt(prop.getProperty("transactionInterval"));
 
 		// Number of transaction limit
         int transactionLimit = Integer.parseInt(prop.getProperty("transactionLimit"));
@@ -331,12 +346,14 @@ public class AMLSim extends ParameterizedPaySim {
 	private void loadAggregatedFile() {
 		this.paramFile = new ArrayList<>();
 
-		this.actions.add("CASH_IN");
-		this.actions.add("CASH_OUT");
-		this.actions.add("DEBIT");
-		this.actions.add("DEPOSIT");
-		this.actions.add("PAYMENT");
-		this.actions.add("TRANSFER");
+		// TODO: Load actions (transaction types) from configuration files
+        this.actions.add("TRANSFER");
+//		this.actions.add("CASH_IN");
+//		this.actions.add("CASH_OUT");
+//		this.actions.add("DEBIT");
+//		this.actions.add("DEPOSIT");
+//		this.actions.add("PAYMENT");
+//		this.actions.add("TRANSFER");
 	}
 
 

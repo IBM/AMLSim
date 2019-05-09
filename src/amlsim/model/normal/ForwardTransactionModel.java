@@ -12,6 +12,13 @@ import java.util.*;
 public class ForwardTransactionModel extends AbstractTransactionModel {
     private int index = 0;
 
+    public void setParameters(int interval, float balance, long start, long end){
+        super.setParameters(interval, balance, start, end);
+        if(this.startStep < 0){  // decentralize the first transaction step
+            this.startStep = generateStartStep(interval);
+        }
+    }
+
     @Override
     public String getType() {
         return "Forward";
@@ -26,7 +33,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
         if(numDests == 0){
             return;
         }
-        if(step % interval != this.account.getStartStep() % interval){
+        if((step - startStep) % interval != 0){
             return;
         }
 
@@ -35,8 +42,5 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
             this.sendTransaction(step, amount, dest);
             index++;
         }
-//        for(Account dest : dests){
-//            this.sendTransaction(step, amount, dest);
-//        }
     }
 }

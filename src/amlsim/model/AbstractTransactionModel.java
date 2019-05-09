@@ -57,7 +57,7 @@ public abstract class AbstractTransactionModel {
      * Get the simulation step range when this model is valid
      * @return The total number of simulation steps
      */
-    public int getValidSteps(){
+    public int getStepRange(){
         // If "startStep" and/or "endStep" is undefined (-1), it tries to return the largest value
         long st = startStep >= 0 ? startStep : 0;
         long ed = endStep > 0 ? endStep : AMLSim.getNumOfSteps();
@@ -86,12 +86,21 @@ public abstract class AbstractTransactionModel {
     }
 
     /**
+     * Generate the start transaction step (to decentralize transaction distribution)
+     * @param range Simulation step range
+     * @return random int value [0, range-1]
+     */
+    protected static int generateStartStep(int range){
+        return rand.nextInt(range);
+    }
+
+    /**
      * Set initial parameters
      * This method will be called when the account is initialized
      * @param interval Transaction interval
      * @param balance Initial balance of the account
-     * @param start Start simulation step (any transactions cannot be carried out before this step)
-     * @param end End step (any transactions cannot be carried out after this step)
+     * @param start Start simulation step (any transactions cannot be sent before this step)
+     * @param end End step (any transactions cannot be sent after this step)
      */
     public void setParameters(int interval, float balance, long start, long end){
         this.interval = interval;

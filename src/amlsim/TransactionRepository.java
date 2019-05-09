@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -127,7 +126,7 @@ public class TransactionRepository {
         // Flush transaction logs to the CSV file
 
         try {
-            FileWriter writer1 = new FileWriter(new File(AMLSim.logFileName), true);
+            FileWriter writer1 = new FileWriter(new File(AMLSim.txLogFileName), true);
             BufferedWriter writer = new BufferedWriter(writer1);
 
             for(int i = 0; i < this.index; i++){

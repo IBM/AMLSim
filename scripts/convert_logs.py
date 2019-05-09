@@ -111,22 +111,22 @@ class LogConverter:
     self.acct_file = conf.get("Input", "acct_file")
     self.tx_file = conf.get("Output", "tx_file")
     self.cash_tx_file = conf.get("Output", "cash_tx_file")
-    self.group_file = conf.get("Input", "group_file")
+    self.group_file = conf.get("Input", "alert_member_file")
     self.case_file = conf.get("Output", "case_file")
-    self.alert_file = conf.get("Output", "alert_file")
+    self.alert_tx_file = conf.get("Output", "alert_tx_file")
     self.subject_file = conf.get("Output", "subject_file")
 
 
 
   def convert_transaction_list(self):
-    print("Convert transaction list from %s to %s, %s and %s" % (self.log_file, self.tx_file, self.cash_tx_file, self.alert_file))
+    print("Convert transaction list from %s to %s, %s and %s" % (self.log_file, self.tx_file, self.cash_tx_file, self.alert_tx_file))
 
 
     af = open(os.path.join(self.work_dir, self.acct_file), "r")
     rf = open(self.log_file, "r")
     tf = open(os.path.join(self.work_dir, self.tx_file), "w")
     cf = open(os.path.join(self.work_dir, self.cash_tx_file), "w")
-    lf = open(os.path.join(self.work_dir, self.alert_file), "w")
+    lf = open(os.path.join(self.work_dir, self.alert_tx_file), "w")
 
     reader = csv.reader(af)
     header = next(reader)
@@ -145,7 +145,7 @@ class LogConverter:
     reader = csv.reader(rf)
     tx_writer = csv.writer(tf)
     cash_tx_writer = csv.writer(cf)
-    alert_writer = csv.writer(lf)
+    alert_tx_writer = csv.writer(lf)
 
     header = next(reader)
     indices = {name:index for index, name in enumerate(header)}
@@ -153,7 +153,7 @@ class LogConverter:
 
     tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
     cash_tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
-    alert_writer.writerow(["ALERT_ID", "ALERT_TYPE", "IS_FRAUD", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
+    alert_tx_writer.writerow(["ALERT_ID", "ALERT_TYPE", "IS_FRAUD", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
 
     step_idx = indices["step"]
     amt_idx = indices["amount"]
@@ -196,7 +196,7 @@ class LogConverter:
           tx_set.add(tx)
       if is_alert:
         alert_type = self.frauds.get(alertID).get_reason()
-        alert_writer.writerow([alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str])
+        alert_tx_writer.writerow([alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str])
 
       txID += 1
 

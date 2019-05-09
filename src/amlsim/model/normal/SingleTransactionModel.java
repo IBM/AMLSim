@@ -21,6 +21,9 @@ public class SingleTransactionModel extends AbstractTransactionModel {
 
     public void setParameters(int interval, float balance, long start, long end){
         super.setParameters(interval, balance, start, end);
+        if(this.startStep < 0){  // decentralize the first transaction step
+            this.startStep = generateStartStep(interval);
+        }
     }
 
     public void sendTransaction(long step){
@@ -36,7 +39,6 @@ public class SingleTransactionModel extends AbstractTransactionModel {
 
         if(index >= numDests)return;  // This account has already sent to all neighbors
 
-//        float amount = this.balance;
         float amount = getTransactionAmount();
         long stepRange = this.endStep - this.startStep + 1;
         int numPerStep = numDests / (int)stepRange;

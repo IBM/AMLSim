@@ -11,7 +11,6 @@ import java.util.*;
 
 public class Account extends Client implements Steppable {
 
-//	protected long id;
     protected String id;
 
     protected Map<String, String> extraAttributes;
@@ -21,15 +20,12 @@ public class Account extends Client implements Steppable {
 	private boolean caseSubject = false;
 	private Random rand = new Random();
 	private Branch branch = null;
-//	private Map<Long, Account> origs = new HashMap<>();  // Sender Client ID --> Client Object
-//	private Map<Long, Account> dests = new HashMap<>();  // Receiver Client ID --> Client Object
     private Map<String, Account> origs = new HashMap<>();  // Sender Client ID --> Client Object
     private Map<String, Account> dests = new HashMap<>();  // Receiver Client ID --> Client Object
 
     private Account prevOrig = null;  // Previous sender Client
 	private Account prevDest = null;  // Previous receiver Client
 	List<Alert> alerts = new ArrayList<>();
-//	private Map<Long, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
     private Map<String, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
 
 	private static List<String> all_tx_types = new ArrayList<>();
@@ -43,7 +39,6 @@ public class Account extends Client implements Steppable {
 
 
 	public Account(){
-//		this.id = 0;
         this.id = "-";
 		this.model = null;
 	}
@@ -166,7 +161,9 @@ public class Account extends Client implements Steppable {
 	@Override
 	public void step(SimState state) {
 		long currentStep = state.schedule.getSteps();  // Current simulation step
-		if(currentStep < this.startStep || this.endStep < currentStep){
+        long start = this.startStep >= 0 ? this.startStep : 0;
+        long end = this.endStep > 0 ? this.endStep : AMLSim.getNumOfSteps();
+		if(currentStep < start || end < currentStep){
 			return;  // Skip transactions if this account is not active
 		}
 		handleAction(state);

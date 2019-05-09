@@ -35,16 +35,16 @@ public class AMLSim extends ParameterizedPaySim {
 	private ArrayList<String> paramFile = new ArrayList<>();
 	private ArrayList<String> actions = new ArrayList<>();
 	private BufferedWriter bufWriter;
-	private static long numOfSteps = 1;
-	private int numOfRepeat = 0;
-	private static int currentLoop = 0;
-	public static String logFileName = "";
+	private static long numOfSteps = 1;  // Number of simulation steps
+	private int numOfRepeat = 0;    // Number of simulation iterations
+	private static int currentLoop = 0;  // Simulation iteration counter
+	public static String txLogFileName = "";
 
 	private String accountFile = "";
 	private String transactionFile = "";
 	private String alertFile = "";
-	private String counterLog = "";
-	private String diameterLog = "";
+	private String counterFile = "";
+	private String diameterFile = "";
 
 	private static Diameter diameter;
 	private boolean computeDiameter = false;
@@ -184,17 +184,22 @@ public class AMLSim extends ParameterizedPaySim {
 		this.accountFile = this.getParamters().getProperty("accountFile");
 		this.transactionFile = this.getParamters().getProperty("transactionFile");
 		this.alertFile = this.getParamters().getProperty("alertFile");
-		this.counterLog = this.getParamters().getProperty("counterLog");
-		this.diameterLog = this.getParamters().getProperty("diameterLog");
+		this.counterFile = this.getParamters().getProperty("counterLog");
+		this.diameterFile = this.getParamters().getProperty("diameterLog");
         this.computeDiameter = Boolean.parseBoolean(this.getParamters().getProperty("computeDiameter"));
 
-        if(computeDiameter && diameterLog != null){
+        if(computeDiameter && diameterFile != null){
             try{
-                BufferedWriter writer = new BufferedWriter(new FileWriter(diameterLog));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(diameterFile));
                 writer.close();
             }catch (IOException e){
                 e.printStackTrace();
                 computeDiameter = false;
+            }
+            if(computeDiameter){
+                logger.info("Compute transaction graph diameters and write them to: " + diameterFile);
+            }else{
+                logger.info("Transaction graph diameter computation is disabled");
             }
         }
 	}
@@ -214,14 +219,13 @@ public class AMLSim extends ParameterizedPaySim {
 	protected void loadAccountFile(String accountFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(accountFile));
 		String line = reader.readLine();
-		System.out.println("Header: " + line);
+		logger.info("Account CSV header: " + line);
 		Map<String, Integer> columnIndex = getColumnIndices(line);
 		Set<String> extraColumns = new HashSet<>(columnIndex.keySet());
 		extraColumns.removeAll(baseColumns);
 
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
-//			long accountID = Long.parseLong(elements[columnIndex.get("ACCOUNT_ID")]);
             String accountID = elements[columnIndex.get("ACCOUNT_ID")];
 			boolean isFraud = elements[columnIndex.get("IS_FRAUD")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
@@ -245,7 +249,7 @@ public class AMLSim extends ParameterizedPaySim {
 			this.schedule.scheduleRepeating(client);
 		}
 		int numAccounts = idMap.size();
-		System.out.println("Number of total accounts: " + numAccounts);
+		logger.info("Number of total accounts: " + numAccounts);
 		diameter = new Diameter(numAccounts);
 
 		reader.close();
@@ -258,8 +262,6 @@ public class AMLSim extends ParameterizedPaySim {
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
 			long txID = Long.parseLong(elements[columnIndex.get("id")]);
-//			long srcID = Long.parseLong(elements[columnIndex.get("src")]);
-//			long dstID = Long.parseLong(elements[columnIndex.get("dst")]);
             String srcID = elements[columnIndex.get("src")];
             String dstID = elements[columnIndex.get("dst")];
 
@@ -334,16 +336,16 @@ public class AMLSim extends ParameterizedPaySim {
 			SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS");
 			AMLSim.simulatorName = "PS_" + format.format(c.getTime());
 		}
-		System.out.println("Simulator Name: " + AMLSim.simulatorName);
+		logger.info("Simulator Name: " + AMLSim.simulatorName);
 
 		String dirPath = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName;
 		File f = new File(dirPath);
 		if(f.exists()){
-            System.err.println("Warning: output log directory already exists: " + dirPath);
+            logger.warning("Output log directory already exists: " + dirPath);
         }else {
             boolean result = f.mkdir();
             if (!result) {
-                System.err.println("Warning: output log directory cannot be created to: " + dirPath);
+                throw new IllegalStateException("Output log directory cannot be created to: " + dirPath);
             }
         }
 	}
@@ -382,8 +384,8 @@ public class AMLSim extends ParameterizedPaySim {
 		loadAggregatedFile();
 
 		//Initiate the dumpfile output writer
-		logFileName = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName + "//" + AMLSim.simulatorName + "_log.csv";
-		initBufWriter(logFileName);
+		txLogFileName = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName + "//" + AMLSim.simulatorName + "_log.csv";
+		initBufWriter(txLogFileName);
 
 		//add the param list to the object
 		setParamFileList(this.paramFile);
@@ -421,7 +423,7 @@ public class AMLSim extends ParameterizedPaySim {
 			}
 		}
 		txs.flushLog();
-		txs.writeCounterLog(numOfSteps, counterLog);
+		txs.writeCounterLog(numOfSteps, counterFile);
 		System.out.println(" - Finished running " + step + " steps ");
 
 		//Finishing the simulation
@@ -460,7 +462,7 @@ public class AMLSim extends ParameterizedPaySim {
 
 	public void writeDiameter(long step, double[] result){
 		try{
-			BufferedWriter writer = new BufferedWriter(new FileWriter(diameterLog, true));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(diameterFile, true));
 			writer.write(step + "," + result[0] + "," + result[1] + "\n");
 			writer.close();
 		}catch (IOException e){

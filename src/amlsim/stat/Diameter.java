@@ -11,7 +11,6 @@ import it.unimi.dsi.webgraph.algo.HyperBall;
 public class Diameter {
 
     private ArrayListMutableGraph graph;  // Transaction graph (WebGraph)
-//    private Map<Long, Integer> id2idx;  // Account ID --> Index of Graph
     private Map<String, Integer> id2idx;  // Account ID --> Index of Graph
 
     private Map<Integer, Set<Integer>>  adj;  // Adjacency set (account index --> neighbor account index)

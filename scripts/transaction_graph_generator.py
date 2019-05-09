@@ -109,6 +109,8 @@ class TransactionGenerator:
         reader = csv.reader(rf)
         next(reader)
         for row in reader:
+          if row[0].startswith("#"):
+            continue
           ttype = row[0]
           ttypes.extend([ttype] * int(row[1]))
       return ttypes
@@ -265,6 +267,8 @@ class TransactionGenerator:
 
       count = 0
       for row in reader:
+        if row[0].startswith("#"):
+          continue
         aid = row[idx_aid]
         seq = row[idx_seq]
         first_name = row[idx_first_name]
@@ -340,6 +344,8 @@ class TransactionGenerator:
 
       aid = 0
       for row in reader:
+        if row[0].startswith("#"):
+          continue
         num = int(row[idx_num])
         min_balance = parse_amount(row[idx_min])
         max_balance = parse_amount(row[idx_max])
@@ -375,6 +381,8 @@ class TransactionGenerator:
         reader = csv.reader(rf)
         next(reader)
         for row in reader:
+          if row[0].startswith("#"):
+            continue
           nv = int(row[0])
           in_deg.extend(int(row[1]) * [nv])
           out_deg.extend(int(row[2]) * [nv])
@@ -556,9 +564,8 @@ class TransactionGenerator:
       ## Generate transaction set
       count = 0
       for row in reader:
-        if "#" in row[0]:  ## Comment
+        if row[0].startswith("#"):
           continue
-
         num = int(row[idx_num])
         pattern_type = row[idx_type]
         accounts = int(row[idx_accts])
@@ -567,8 +574,8 @@ class TransactionGenerator:
         aggregated_amount = parse_amount(row[idx_aggregated])
         transaction_count = parse_int(row[idx_count])
         amount_difference = parse_amount(row[idx_difference])
-        period = parse_int(row[idx_period])
-        amount_rounded = parse_amount(row[idx_rounded])
+        period = parse_int(row[idx_period]) if idx_period is not None else self.total_step
+        amount_rounded = parse_amount(row[idx_rounded]) if idx_rounded is not None else 0.0
         orig_country = parse_flag(row[idx_orig_country]) if idx_orig_country is not None else False
         bene_country = parse_flag(row[idx_bene_country]) if idx_bene_country is not None else False
         orig_business = parse_flag(row[idx_orig_business]) if idx_orig_business is not None else False
@@ -867,7 +874,8 @@ class TransactionGenerator:
     def get_outEdge_attrs(g, vid, name):
       return [v for k, v in nx.get_edge_attributes(g, name).iteritems() if (k[0] == vid or k[1] == vid)]
 
-    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alertgroup"))
+    acct_count = 0
+    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alert_members"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
       base_attrs = ["alertID", "reason", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep", "scheduleID"]
@@ -889,8 +897,9 @@ class TransactionGenerator:
           for attr_name in self.attr_names:
             values.append(prop[attr_name])
           writer.writerow(values)
+          acct_count += 1
 
-    print("Exported members of %d alerted groups." % len(self.alert_groups))
+    print("Exported %d members for %d alerted groups." % (acct_count, len(self.alert_groups)))
 
 
 

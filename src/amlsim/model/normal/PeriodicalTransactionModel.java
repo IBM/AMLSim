@@ -12,13 +12,20 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
 
     private int index = 0;
 
+    public void setParameters(int interval, float balance, long start, long end){
+        super.setParameters(interval, balance, start, end);
+        if(this.startStep < 0){  // decentralize the first transaction step
+            this.startStep = generateStartStep(interval);
+        }
+    }
+
     @Override
     public String getType() {
         return "Periodical";
     }
 
     private boolean isValidStep(long step){
-        return (step - account.getStartStep() + generateDiff()) % interval == 0;
+        return (step - startStep) % interval == 0;
     }
 
     @Override

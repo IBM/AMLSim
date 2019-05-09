@@ -192,63 +192,64 @@ class TransactionGenerator:
     return random.sample(candidates, num)
 
 
-  def load_account_list(self):
+  def load_account_list(self, acct_file):
     """Load and add account vertices from a CSV file
     :return:
     """
     is_aggregated = self.conf.get("InputFile", "is_aggregated").lower() == "true"
     if is_aggregated:
-      self.load_account_param()
+      self.load_account_param(acct_file)
     else:
-      self.load_account_raw()
+      self.load_account_raw(acct_file)
 
 
-  def load_account_raw(self):
+  def load_account_raw(self, acct_file=None):
     """Load and add account vertices from a CSV file with raw account info
     header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
     :return:
     """
-    if not self.conf.has_option("InputFile", "min_balance"):
+    if not self.conf.has_option("General", "min_balance"):
       raise KeyError("Option 'min_balance' is required to load raw account list")
-    min_balance = float(self.conf.get("InputFile", "min_balance"))
+    min_balance = float(self.conf.get("General", "min_balance"))
 
-    if not self.conf.has_option("InputFile", "max_balance"):
+    if not self.conf.has_option("General", "max_balance"):
       raise KeyError("Option 'max_balance' is required to load raw account list")
-    max_balance = float(self.conf.get("InputFile", "max_balance"))
+    max_balance = float(self.conf.get("General", "max_balance"))
 
-    if self.conf.has_option("InputFile", "start_day"):
-      start_day = int(self.conf.get("InputFile", "start_day"))
+    if self.conf.has_option("General", "start_day"):
+      start_day = int(self.conf.get("General", "start_day"))
     else:
       start_day = None  # No limitation
 
-    if self.conf.has_option("InputFile", "end_day"):
-      end_day = int(self.conf.get("InputFile", "end_day"))
+    if self.conf.has_option("General", "end_day"):
+      end_day = int(self.conf.get("General", "end_day"))
     else:
       end_day = None  # No limitation
 
-    if self.conf.has_option("InputFile", "start_range"):
-      start_range = int(self.conf.get("InputFile", "start_range"))
+    if self.conf.has_option("General", "start_range"):
+      start_range = int(self.conf.get("General", "start_range"))
     else:
       start_range = None
 
-    if self.conf.has_option("InputFile", "end_range"):
-      end_range = int(self.conf.get("InputFile", "end_range"))
+    if self.conf.has_option("General", "end_range"):
+      end_range = int(self.conf.get("General", "end_range"))
     else:
       end_range = None
 
-    default_model = int(self.conf.get("InputFile", "default_model")) \
-      if self.conf.has_option("InputFile", "default_model") else 1
+    default_model = int(self.conf.get("General", "default_model")) \
+      if self.conf.has_option("General", "default_model") else 1
 
-    fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
-    self.attr_names.extend(["SEQ", "FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
+
+    self.attr_names.extend(["FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
                             "GENDER", "PHONE_NUMBER", "BIRTH_DATE", "SSN", "LON", "LAT"])
+    if acct_file is None:
+      acct_file = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
 
-    with open(fname, "r") as rf:
+    with open(acct_file, "r") as rf:
       reader = csv.reader(rf)
       header = next(reader)
       name2idx = {n:i for i,n in enumerate(header)}
       idx_aid = name2idx["uuid"]
-      idx_seq = name2idx["seq"]
       idx_first_name = name2idx["first_name"]
       idx_last_name = name2idx["last_name"]
       idx_street_addr = name2idx["street_addr"]
@@ -270,7 +271,6 @@ class TransactionGenerator:
         if row[0].startswith("#"):
           continue
         aid = row[idx_aid]
-        seq = row[idx_seq]
         first_name = row[idx_first_name]
         last_name = row[idx_last_name]
         street_addr = row[idx_street_addr]
@@ -297,13 +297,14 @@ class TransactionGenerator:
 
 
 
-  def load_account_param(self):
+  def load_account_param(self, acct_file=None):
     """Load and add account vertices from a CSV file with aggregated parameters
     Each row can represent two or more accounts
     :return:
     """
 
-    fname = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
+    if acct_file is None:
+      acct_file = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
 
     idx_num = None  # Number of accounts per row
     idx_min = None  # Minimum initial balance
@@ -312,10 +313,9 @@ class TransactionGenerator:
     idx_end = None  # End step
     idx_country = None  # Country
     idx_business = None  # Business type
-    # idx_suspicious = None  # Suspicious flag
     idx_model = None  # Transaction model
 
-    with open(fname, "r") as rf:
+    with open(acct_file, "r") as rf:
       reader = csv.reader(rf)
 
       ## Parse header
@@ -335,8 +335,6 @@ class TransactionGenerator:
           idx_country = i
         elif k == "business_type":
           idx_business = i
-        # elif k == "suspicious":
-        #   idx_suspicious = i
         elif k == "model":
           idx_model = i
         else:
@@ -910,7 +908,7 @@ if __name__ == "__main__":
   _type_file = argv[4]
 
   txg = TransactionGenerator(_conf_file, _type_file)
-  txg.load_account_list()  # Load account list CSV file
+  txg.load_account_list(_acct_file)  # Load account list CSV file
   txg.generate_normal_transactions(_deg_file)  # Load a parameter CSV file for the base transaction types
   txg.set_subject_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
   if len(argv) == 5:

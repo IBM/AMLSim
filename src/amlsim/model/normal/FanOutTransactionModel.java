@@ -31,11 +31,11 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
     public void sendTransaction(long step) {
         List<Account> dests = this.account.getDests();  // Destination accounts
         int numDests = dests.size();
-        if(numDests == 0 || index >= numDests){  // No more destination accounts
+        if(!isValidStep(step) || numDests == 0){  // No more destination accounts
             return;
         }
-        if(!isValidStep(step)){
-            return;
+        if(index >= numDests){
+            index = 0;
         }
 
         float amount = getTransactionAmount();

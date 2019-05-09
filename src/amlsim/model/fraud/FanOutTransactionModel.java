@@ -44,14 +44,18 @@ public class FanOutTransactionModel extends FraudTransactionModel {
 
         // Set schedule
         int numDests = dests.size();
+        int totalStep = endStep - startStep + 1;
+        int defaultInterval = totalStep / numDests;
+        this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
+
         steps = new long[numDests];
         if(schedule_mode == SIMULTANEOUS){
             long step = getRandomStep();
             Arrays.fill(steps, step);
         }else if(schedule_mode == FIXED_INTERVAL){
-            long range = endStep - startStep + 1;
+            int range = endStep - startStep + 1;
             if(numDests < range){
-                long interval = range / numDests;
+                interval = range / numDests;
                 for(int i=0; i<numDests; i++){
                     steps[i] = startStep + interval*i;
                 }

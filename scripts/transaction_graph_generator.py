@@ -47,7 +47,7 @@ def parse_flag(value):
 
 
 
-class Schema:
+class InputSchema:
 
   def __init__(self, input_json):
     with open(input_json, "r") as rf:
@@ -88,7 +88,7 @@ class TransactionGenerator:
     self.total_step = parse_int(self.conf.get("General", "total_step"))
 
     schema_json = self.conf.get("InputFile", "schema_file")
-    self.schema = Schema(schema_json)
+    self.schema = InputSchema(schema_json)
     self.input_dir = self.conf.get("InputFile", "directory")
     self.output_dir = self.conf.get("OutputFile", "directory")
 
@@ -633,11 +633,6 @@ class TransactionGenerator:
     if aggregated_amount is None:
       aggregated_amount = 0
 
-    # start_day = random.randint(0, self.total_step)
-    # if period is None:
-    #   end_day = start_day + self.total_step
-    # else:
-    #   end_day = start_day + period
     start_day = 0
     end_day = self.total_step
 

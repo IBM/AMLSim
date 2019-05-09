@@ -34,7 +34,9 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
             return;
         }
         int numDests = this.account.getDests().size();
-        if(index >= numDests)return;
+        if(index >= numDests){
+            index = 0;
+        }
 
         int totalCount = getNumberOfTransactions();  // Total number of transactions
         int eachCount = (numDests < totalCount) ? 1 : numDests / totalCount;

@@ -37,10 +37,11 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
             return;
         }
 
-        if(index < numDests){
-            Account dest = dests.get(index);
-            this.sendTransaction(step, amount, dest);
-            index++;
+        if(index >= numDests){
+            index = 0;
         }
+        Account dest = dests.get(index);
+        this.sendTransaction(step, amount, dest);
+        index++;
     }
 }

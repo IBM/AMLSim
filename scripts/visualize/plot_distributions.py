@@ -234,9 +234,15 @@ if __name__ == "__main__":
     print("Usage: python %s [TxCSV] [PropINI] [AMLRuleCSV]" % argv[0])
     exit(1)
 
-  g = load_csv(argv[1])
+  tx_file = argv[1]
+  conf_file = argv[2]
+
+  if not os.path.exists(tx_file):
+    print("Transaction file %s not found." % tx_file)
+    exit(1)
+  g = load_csv(tx_file)
   prop = ConfigParser()
-  prop.read(argv[2])
+  prop.read(conf_file)
 
   output_dir = prop.get("OutputFile", "directory")
 
@@ -260,6 +266,9 @@ if __name__ == "__main__":
   plot_clustering_coefficient(g, os.path.join(output_dir, cc_plot))
 
   dia_log = prop.get("OutputFile", "diameter_log")
-  plot_diameter(os.path.join(output_dir, dia_log), os.path.join(output_dir, dia_plot))
+  if os.path.exists(dia_log):
+    plot_diameter(os.path.join(output_dir, dia_log), os.path.join(output_dir, dia_plot))
+  else:
+    print("Diameter log file %s not found." % dia_log)
 
 

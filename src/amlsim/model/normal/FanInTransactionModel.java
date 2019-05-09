@@ -32,8 +32,11 @@ public class FanInTransactionModel extends AbstractTransactionModel {
     public void sendTransaction(long step) {
         List<Account> origs = this.account.getOrigs();  // Sender accounts
         int numOrigs = origs.size();
-        if(!isValidStep(step) || numOrigs == 0 || index >= numOrigs){
+        if(!isValidStep(step) || numOrigs == 0){
             return;
+        }
+        if(index >= numOrigs){
+            index = 0;
         }
 
         Account orig = origs.get(index);

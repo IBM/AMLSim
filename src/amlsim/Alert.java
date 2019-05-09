@@ -69,10 +69,32 @@ public class Alert {
         return members;
     }
 
+    /**
+     * Get the subject account
+     * @return If this alert is fraud, return the subject account. Otherwise, return null.
+     */
     public Account getSubjectAccount(){
         return subject;
     }
 
+    /**
+     * Get the primary account
+     * @return If this alert is fraud, return the subject account. If this alert is not fraud and has at least one member, return the first account. Otherwise, return null.
+     */
+    public Account getPrimaryAccount(){
+        if(isFraud()){
+            return getSubjectAccount();
+        }else if(members.isEmpty()){
+            return null;
+        }else{
+            return members.get(0);
+        }
+    }
+
+    /**
+     * Set subject account
+     * @param fraudster Subject account object
+     */
     public void setSubjectAccount(FraudAccount fraudster){
         this.subject = fraudster;
     }

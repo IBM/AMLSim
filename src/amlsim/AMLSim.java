@@ -284,7 +284,6 @@ public class AMLSim extends ParameterizedPaySim {
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
 			long alertID = Long.parseLong(elements[columnIndex.get("alertID")]);
-//			long clientID = Long.parseLong(elements[columnIndex.get("clientID")]);
             String clientID = elements[columnIndex.get("clientID")];
 
 			boolean isSubject = elements[columnIndex.get("isSubject")].toLowerCase().equals("true");

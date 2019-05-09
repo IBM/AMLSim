@@ -32,20 +32,26 @@ public class CycleTransactionModel extends FraudTransactionModel {
         int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
 
+        int totalStep = endStep - startStep + 1;
+        int defaultInterval = totalStep / length;
+        this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
+
         if(modelID == FIXED_INTERVAL){  // Ordered, same interval
             long range = endStep - startStep + 1;
             if(length < range){
-                long interval = range / length; // If there is enough number of available steps, make transaction with interval
+                this.interval = (int)(range / length); // If there is enough number of available steps, make transaction with interval
                 for(int i=0; i<length; i++){
                     steps[i] = startStep + interval*i;
                 }
             }else{
+                this.interval = 1;
                 long batch = length / range;  // Because of too many transactions, make one or more transactions per step
                 for(int i=0; i<length; i++){
                     steps[i] = startStep + i/batch;
                 }
             }
         }else if(modelID == RANDOM_INTERVAL || modelID == UNORDERED){  // Random interval
+            this.interval = 1;
             for(int i=0; i<length; i++){
                 steps[i] = getRandomStep();
             }

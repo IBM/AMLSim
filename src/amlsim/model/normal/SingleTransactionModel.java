@@ -37,7 +37,9 @@ public class SingleTransactionModel extends AbstractTransactionModel {
             steps = rand.longs(numDests, this.startStep, this.endStep + 1).sorted().toArray();
         }
 
-        if(index >= numDests)return;  // This account has already sent to all neighbors
+        if(index >= numDests){
+            index = 0;
+        }
 
         float amount = getTransactionAmount();
         long stepRange = this.endStep - this.startStep + 1;

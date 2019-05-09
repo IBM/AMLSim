@@ -22,7 +22,9 @@ public class FraudAccount extends Account {
 		long step = state.schedule.getSteps();
 
 		for(Alert ag : alerts){
-			ag.registerTransactions(state.schedule.getSteps());
+            if(this == ag.getPrimaryAccount()){
+                ag.registerTransactions(step);
+            }
 		}
 
 		this.model.sendTransaction(step);
@@ -30,13 +32,6 @@ public class FraudAccount extends Account {
 		if(success){
 			count++;
 		}
-//		boolean success = handleTransaction(amlsim);
-//		if(!success) {
-//			success = handleFraud(amlsim);
-//		}
-//		if(success){
-//			count++;
-//		}
 	}
 
 	private boolean handleFraud(AMLSim amlsim){
@@ -50,10 +45,6 @@ public class FraudAccount extends Account {
 		model.sendTransaction(amlsim.schedule.getSteps());
 		return true;
 	}
-
-//	public String getName() {
-//		return Long.toString(this.id);
-//	}
 
 	public String toString() {
 		return "F" + this.id;

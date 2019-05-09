@@ -21,10 +21,10 @@ public abstract class AbstractTransactionModel {
     private static final int FLUCTUATION = 2;  // Fluctuation of the transaction interval TODO: Enable users to specify this value
 
     protected Account account;  // Account object
-    protected int interval; // Default transaction interval
+    protected int interval = 1; // Default transaction interval
     protected float balance;  // Current balance
-    protected long startStep;  // The first step of transactions
-    protected long endStep;  // The end step of transactions
+    protected long startStep = -1;  // The first step of transactions
+    protected long endStep = -1;  // The end step of transactions
     protected float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
 
     /**
@@ -87,7 +87,7 @@ public abstract class AbstractTransactionModel {
 
     /**
      * Set initial parameters
-     * This method will be called when the account is initialized and receives money
+     * This method will be called when the account is initialized
      * @param interval Transaction interval
      * @param balance Initial balance of the account
      * @param start Start simulation step (any transactions cannot be carried out before this step)
@@ -95,6 +95,10 @@ public abstract class AbstractTransactionModel {
      */
     public void setParameters(int interval, float balance, long start, long end){
         this.interval = interval;
+        setParameters(balance, start, end);
+    }
+
+    public void setParameters(float balance, long start, long end){
         this.balance = balance;
         this.startStep = start;
         this.endStep = end;

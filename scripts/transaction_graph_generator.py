@@ -43,7 +43,7 @@ def parse_flag(value):
   :param value: string value
   :return: True if the value is equal to "true" (case insensitive), otherwise False
   """
-  return value.lower() == "true"
+  return value is not None and value.lower() == "true"
 
 
 
@@ -260,8 +260,8 @@ class TransactionGenerator:
       idx_lon = name2idx["lon"]
       idx_lat = name2idx["lat"]
 
-      country = "US"
-      acct_type = "I"
+      default_country = "US"
+      default_acct_type = "I"
 
       count = 0
       for row in reader:
@@ -283,12 +283,12 @@ class TransactionGenerator:
         start = start_day + random.randrange(start_range) if (start_day is not None and start_range is not None) else -1
         end = end_day - random.randrange(end_range) if (end_day is not None and end_range is not None) else -1
 
-        attr = {"SEQ": seq, "FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
+        attr = {"FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
                 "CITY": city, "STATE": state, "ZIP": zip_code, "GENDER": gender, "PHONE_NUMBER": phone_number,
                 "BIRTH_DATE": birth_date, "SSN": ssn, "LON": lon, "LAT": lat}
 
         init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
-        self.add_account(aid, init_balance, start, end, country, acct_type, False, model, **attr)
+        self.add_account(aid, init_balance, start, end, default_country, default_acct_type, model, **attr)
         count += 1
 
 
@@ -308,7 +308,7 @@ class TransactionGenerator:
     idx_end = None  # End step
     idx_country = None  # Country
     idx_business = None  # Business type
-    idx_suspicious = None  # Suspicious flag
+    # idx_suspicious = None  # Suspicious flag
     idx_model = None  # Transaction model
 
     with open(fname, "r") as rf:
@@ -331,8 +331,8 @@ class TransactionGenerator:
           idx_country = i
         elif k == "business_type":
           idx_business = i
-        elif k == "suspicious":
-          idx_suspicious = i
+        # elif k == "suspicious":
+        #   idx_suspicious = i
         elif k == "model":
           idx_model = i
         else:
@@ -347,12 +347,12 @@ class TransactionGenerator:
         end_day = parse_int(row[idx_end]) if idx_end is not None else -1
         country = row[idx_country]
         business = row[idx_business]
-        suspicious = parse_flag(row[idx_suspicious])
+        # suspicious = parse_flag(row[idx_suspicious])
         modelID = parse_int(row[idx_model])
 
         for i in range(num):
           init_balance = random.uniform(min_balance, max_balance)  # Generate amount
-          self.add_account(aid, init_balance, start_day, end_day, country, business, suspicious, modelID)
+          self.add_account(aid, init_balance, start_day, end_day, country, business, modelID)
           aid += 1
 
     self.num_accounts = aid
@@ -423,7 +423,7 @@ class TransactionGenerator:
 
 
 
-  def add_account(self, aid, init_balance, start, end, country, business, suspicious, modelID, **attr):
+  def add_account(self, aid, init_balance, start, end, country, business, modelID, **attr):
     """Add an account vertex
     :param aid: Account ID
     :param init_balance: Initial amount
@@ -431,13 +431,12 @@ class TransactionGenerator:
     :param end: The day when the account closed
     :param country: Country
     :param business: business type
-    :param suspicious: Whether the account is suspicious
     :param modelID: Remittance model ID
     :param attr: Optional attributes
     :return:
     """
     if self.check_account_absent(aid):  # Add an account vertex with an ID and attributes if an account with the same ID is not yet added
-      self.g.add_node(aid, init_balance=init_balance, start=start, end=end, country=country, business=business, suspicious=suspicious, isFraud=False, modelID=modelID, **attr)
+      self.g.add_node(aid, label="account", init_balance=init_balance, start=start, end=end, country=country, business=business, isFraud=False, modelID=modelID, **attr)
 
 
   def add_transaction(self, src, dst, amount=None, date=None, ttype=None, **attr):
@@ -452,7 +451,7 @@ class TransactionGenerator:
     """
     self.check_account_exist(src)  # Ensure the source and destination accounts exist
     self.check_account_exist(dst)
-    self.g.add_edge(src, dst, key=self.tx_id, amount=amount, date=date, ttype=ttype)
+    self.g.add_edge(src, dst, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=ttype)
     self.tx_id += 1
     if self.tx_id % 1000000 == 0:
       print("Added %d transactions" % self.tx_id)
@@ -570,10 +569,10 @@ class TransactionGenerator:
         amount_difference = parse_amount(row[idx_difference])
         period = parse_int(row[idx_period])
         amount_rounded = parse_amount(row[idx_rounded])
-        orig_country = parse_flag(row[idx_orig_country])
-        bene_country = parse_flag(row[idx_bene_country])
-        orig_business = parse_flag(row[idx_orig_business])
-        bene_business = parse_flag(row[idx_bene_business])
+        orig_country = parse_flag(row[idx_orig_country]) if idx_orig_country is not None else False
+        bene_country = parse_flag(row[idx_bene_country]) if idx_bene_country is not None else False
+        orig_business = parse_flag(row[idx_orig_business]) if idx_orig_business is not None else False
+        bene_business = parse_flag(row[idx_bene_business]) if idx_bene_business is not None else False
         is_fraud = parse_flag(row[idx_fraud])
 
         if not pattern_type in self.alert_types:
@@ -826,7 +825,7 @@ class TransactionGenerator:
     fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "accounts"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
-      base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY", "ACCOUNT_TYPE", "IS_SUSPICIOUS", "IS_FRAUD", "TX_BEHAVIOR_ID"]
+      base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY", "ACCOUNT_TYPE", "IS_FRAUD", "TX_BEHAVIOR_ID"]
       writer.writerow(base_attrs + self.attr_names)
       for n in self.g.nodes(data=True):
         aid = n[0]  # Account ID
@@ -837,10 +836,10 @@ class TransactionGenerator:
         end = prop["end"]  # End time (when the account is closed)
         country = prop["country"]  # Country
         business = prop["business"]  # Business type
-        suspicious = prop["suspicious"]  # Whether this account is suspicious (unused)
+        # suspicious = prop["suspicious"]  # Whether this account is suspicious (unused)
         isFraud = "true" if prop["isFraud"] else "false"  # Whether this account is involved in fraud transactions
         modelID = prop["modelID"]  # Transaction behavior model ID
-        values = [aid, cid, balance, start, end, country, business, suspicious, isFraud, modelID]
+        values = [aid, cid, balance, start, end, country, business, isFraud, modelID]
         for attr_name in self.attr_names:
           values.append(prop[attr_name])
         writer.writerow(values)
@@ -897,22 +896,23 @@ class TransactionGenerator:
 
 if __name__ == "__main__":
   argv = sys.argv
-  if len(argv) < 4:
-    print("Usage: python %s [ConfFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
+  if len(argv) < 5:
+    print("Usage: python %s [ConfFile] [AccountFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
     exit(1)
 
   _conf_file = argv[1]
-  _deg_file = argv[2]
-  _type_file = argv[3]
+  _acct_file = argv[2]
+  _deg_file = argv[3]
+  _type_file = argv[4]
 
   txg = TransactionGenerator(_conf_file, _type_file)
   txg.load_account_list()  # Load account list CSV file
   txg.generate_normal_transactions(_deg_file)  # Load a parameter CSV file for the base transaction types
   txg.set_subject_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
-  if len(argv) == 4:
+  if len(argv) == 5:
     txg.load_alert_patterns()  # Add alert patterns
   else:
-    _alert_file = argv[4]
+    _alert_file = argv[5]
     txg.load_alert_patterns(_alert_file)
   txg.write_account_list()  # Export accounts to a CSV file
   txg.write_transaction_list()  # Export transactions to a CSV file

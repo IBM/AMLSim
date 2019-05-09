@@ -47,6 +47,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private String diameterLog = "";
 
 	private static Diameter diameter;
+	private boolean computeDiameter = false;
 
 
 	private AMLSim(long seed) {
@@ -185,13 +186,17 @@ public class AMLSim extends ParameterizedPaySim {
 		this.alertFile = this.getParamters().getProperty("alertFile");
 		this.counterLog = this.getParamters().getProperty("counterLog");
 		this.diameterLog = this.getParamters().getProperty("diameterLog");
+        this.computeDiameter = Boolean.parseBoolean(this.getParamters().getProperty("computeDiameter"));
 
-		try{
-			BufferedWriter writer = new BufferedWriter(new FileWriter(diameterLog));
-			writer.close();
-		}catch (IOException e){
-			e.printStackTrace();
-		}
+        if(computeDiameter && diameterLog != null){
+            try{
+                BufferedWriter writer = new BufferedWriter(new FileWriter(diameterLog));
+                writer.close();
+            }catch (IOException e){
+                e.printStackTrace();
+                computeDiameter = false;
+            }
+        }
 	}
 
 
@@ -410,7 +415,7 @@ public class AMLSim extends ParameterizedPaySim {
 			else {
 				System.out.print("*");
 			}
-			if (step % 10 == 0 && step > 0){
+			if (computeDiameter && step % 10 == 0 && step > 0){
 				double[] result = diameter.computeDiameter();
 				writeDiameter(step, result);
 			}

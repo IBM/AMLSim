@@ -28,6 +28,10 @@ public class FanOutTransactionModel extends FraudTransactionModel {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
+    public int getNumTransactions(){
+        return alert.getMembers().size() - 1;
+    }
+
     public void setSchedule(int modelID){
         this.schedule_mode = modelID;
 
@@ -82,38 +86,4 @@ public class FanOutTransactionModel extends FraudTransactionModel {
             }
         }
     }
-
-//    @Override
-//    public Collection<AMLTransaction> sendTransactions(long step) {
-//        ArrayList<AMLTransaction> txs = new ArrayList<>();
-//        List<AMLClient> members = this.alert.getMembers();
-//
-//        AMLClient orig = members.get(0);
-//        if(alert.isFraud()) {    // Fraud alert
-//            orig = this.alert.getSubjectAccount();
-//        }else{    // Alert alert (not fraud)
-//            int max_degree = 0;
-//            for(AMLClient c : members){
-//                int degree = c.getDests().size();
-//                if(degree > max_degree){
-//                    orig = c;
-//                    max_degree = degree;
-//                }
-//            }
-//        }
-//
-//        List<AMLClient> dests = orig.getDests();
-//        float amount = getAmount() / dests.size();
-//
-//        long alertID = alert.getAlertID();
-//        boolean isFraud = alert.isFraud();
-//
-//        for(AMLClient dest : dests){
-//            AMLTransaction tx = sendTransaction(step, amount, orig, dest);
-//            tx.setAlertID(alertID);
-//            tx.setFraud(isFraud);
-//            txs.add(tx);
-//        }
-//        return txs;
-//    }
 }

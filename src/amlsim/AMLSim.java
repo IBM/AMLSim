@@ -230,8 +230,8 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-			Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, start_step, end_step, extraValues)
-					: new Account(accountID, modelID, init_balance, start_step, end_step, extraValues);
+			Account client = isFraud ? new FraudAccount(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues)
+					: new Account(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues);
 
 			int index = this.getClients().size();
 			client.setBranch(this.branches.get(index % this.numBranches));

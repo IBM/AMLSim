@@ -56,6 +56,11 @@ public class CycleTransactionModel extends FraudTransactionModel {
     }
 
     @Override
+    public int getNumTransactions() {
+        return alert.getMembers().size();  // The number of transactions is the same as the number of members
+    }
+
+    @Override
     public String getType() {
         return "CycleFraud";
     }
@@ -81,43 +86,5 @@ public class CycleTransactionModel extends FraudTransactionModel {
                 sendTransaction(step, amount, src, dst, isFraud, alertID);
             }
         }
-
-//        if(alert.isFraud()) {  // Fraud
-//            int interval = (endStep - startStep) / length;
-//
-//            int subjectIndex = alert.getSubjectIndex();
-//            float amount = getAmount();
-//
-//            for(int i=0; i<length; i++){
-//                int srcIdx = (i + subjectIndex) % length;
-//                int dstIdx = (srcIdx + 1) % length;
-//                AMLClient src = alert.getMembers().get(srcIdx);
-//                AMLClient dst = alert.getMembers().get(dstIdx);
-//
-//                long st = step + interval * i;
-//                AMLTransaction tx = sendTransaction(st, amount, src, dst);
-//                tx.setAlertID(alert.getAlertID());
-//                tx.setFraud(true);
-//                txs.add(tx);
-//            }
-//
-//        }else{  // False alert (not fraud)
-//            for(int i=0; i<length; i++){
-//                int srcIdx = i;
-//                int dstIdx = (srcIdx + 1) % length;
-//                AMLClient src = alert.getMembers().get(srcIdx);
-//                AMLClient dst = alert.getMembers().get(dstIdx);
-//
-//                long st = StepCalculator.getStepRange(startStep, endStep);
-//                float amount = (float)src.getBalance();
-//                AMLTransaction tx = sendTransaction(st, amount, src, dst);
-//                tx.setAlertID(alert.getAlertID());
-//                tx.setFraud(false);
-//                txs.add(tx);
-//            }
-//
-//        }
-
-//        return null;
     }
 }

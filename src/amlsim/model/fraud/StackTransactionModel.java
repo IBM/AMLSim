@@ -10,10 +10,18 @@ import amlsim.Account;
  * Stacked bipartite transactions
  */
 public class StackTransactionModel extends FraudTransactionModel {
-
+    
     @Override
     public void setSchedule(int modelID) {
+    }
 
+    @Override
+    public int getNumTransactions() {
+        int total_members = alert.getMembers().size();
+        int orig_members = total_members / 3;  // First 1/3 accounts are sender accounts
+        int mid_members = orig_members;  // Second 1/3 accounts are intermediate accounts
+        int dest_members = total_members - orig_members * 2;  // Rest of accounts are receiver accounts
+        return orig_members * mid_members + mid_members + dest_members;
     }
 
     public StackTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep) {

@@ -66,6 +66,11 @@ public class FanInTransactionModel extends FraudTransactionModel {
     }
 
     @Override
+    public int getNumTransactions() {
+        return alert.getMembers().size() - 1;
+    }
+
+    @Override
     public String getType() {
         return "FanInFraud";
     }

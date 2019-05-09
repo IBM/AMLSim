@@ -52,12 +52,12 @@ public class Account extends Client implements Steppable {
 	 * Constructor of the account object
 	 * @param id Client ID
 	 * @param modelID Transaction model ID (int value)
+     * @param interval Default transaction interval
 	 * @param init_balance Initial account balance
 	 * @param start Start step
 	 * @param end End step
 	 */
-//	public Account(long id, int modelID, float init_balance, long start, long end){
-    public Account(String id, int modelID, float init_balance, long start, long end, Map<String, String> attrs){
+    public Account(String id, int modelID, int interval, float init_balance, long start, long end, Map<String, String> attrs){
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
@@ -73,15 +73,15 @@ public class Account extends Client implements Steppable {
 			default: System.err.println("Unknown model ID: " + modelID); this.model = new EmptyModel(); break;
 		}
 		this.model.setAccount(this);
-		this.model.setParameters(init_balance, start, end);
+		this.model.setParameters(interval, init_balance, start, end);
 
 		this.cashInModel = new CashInModel();
 		this.cashInModel.setAccount(this);
-		this.cashInModel.setParameters(init_balance, start, end);
+		this.cashInModel.setParameters(interval, init_balance, start, end);
 
 		this.cashOutModel = new CashOutModel();
 		this.cashOutModel.setAccount(this);
-		this.cashOutModel.setParameters(init_balance, start, end);
+		this.cashOutModel.setParameters(interval, init_balance, start, end);
 	}
 
 	public String getAttrValue(String name){
@@ -172,19 +172,6 @@ public class Account extends Client implements Steppable {
 		handleAction(state);
 	}
 
-//	/**
-//	 * @deprecated This method is obsolete because of performance overhead
-//	 * @param step Current simulation step
-//	 * @return Transaction list
-//	 */
-//	public List<AMLTransaction> getTransaction(long step){
-//		if(AMLSim.TX_OPT)return null;
-//
-//		List<AMLTransaction> txs =  this.tx_repository.get(step);
-//		this.tx_repository.remove(step);
-//		return txs;
-//	}
-
 
 	public void handleAction(SimState state) {
 		AMLSim amlsim = (AMLSim) state;
@@ -208,53 +195,9 @@ public class Account extends Client implements Steppable {
 		this.cashOutModel.sendTransaction(step);
 	}
 
-//	/**
-//	 * @deprecated This method is obsolete because of performance problem
-//	 * @param amlsim AMLSimulator object
-//	 * @return true
-//	 */
-//	boolean handleTransaction(AMLSim amlsim) {
-//		long step = amlsim.schedule.getSteps();
-//
-//		List<AMLTransaction> txs = this.getTransaction(step);  // Get a registered transaction
-//		if(txs == null) {
-//			txs = this.model.sendTransaction(step);
-//		}
-//		if(txs == null || txs.isEmpty()){
-//			return false;
-//		}
-
-//		for(AMLTransaction tx : txs) {
-//			if(tx == null)continue;
-//
-//			double amount = tx.getAmount();
-//			Account dstBefore = tx.getClientDestBefore();
-//			Account dstAfter = new Account();
-//			dstAfter.setAccount(dstBefore);
-//			dstAfter.deposit(amount);
-//
-//			Account srcBefore = new Account();
-//			srcBefore.setAccount(this);
-//			this.withdraw(amount);
-//			Account srcAfter = new Account();
-//			srcAfter.setAccount(this);
-//			dstAfter.deposit(amount);
-//
-//			long destID = dstBefore.id;
-//			Account dest = dests.get(destID);
-//			this.prevDest = dest;
-//			dest.prevOrig = this;
-//
-//			tx.setClientOrigBefore(srcBefore);
-//			tx.setClientOrigAfter(srcAfter);
-//			tx.setClientDestAfter(dstAfter);
-//			tx.setClientDestBefore(dstBefore);
-//			tx.setFraud(false);
-//			amlsim.getTrans().add(tx);
-//		}
-//		return true;
-//	}
-
+    public AbstractTransactionModel getModel(){
+	    return model;
+    }
 
 	/**
 	 * Get the previous origin (sender) account

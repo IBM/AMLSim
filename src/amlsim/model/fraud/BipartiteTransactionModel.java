@@ -19,6 +19,14 @@ public class BipartiteTransactionModel extends FraudTransactionModel {
 
     }
 
+    @Override
+    public int getNumTransactions() {
+        int numMembers = alert.getMembers().size();
+        int numSenders = numMembers / 2;  // The first half accounts are senders
+        int numReceivers = numMembers - numSenders;
+        return numSenders * numReceivers;  // all-to-all
+    }
+
     public BipartiteTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }

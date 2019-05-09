@@ -19,15 +19,15 @@ public class SingleTransactionModel extends AbstractTransactionModel {
         return "Single";
     }
 
-    public void setParameters(float balance, long start, long end){
-        super.setParameters(balance, start, end);
+    public void setParameters(int interval, float balance, long start, long end){
+        super.setParameters(interval, balance, start, end);
     }
 
     public void sendTransaction(long step){
         List<Account> dests = this.account.getDests();
         int numDests = dests.size();
 
-        if(step < this.startStep || this.endStep < step || dests.isEmpty()){
+        if(step < this.startStep || this.endStep < step || numDests == 0){
             return;
         }
         if(step == this.startStep){
@@ -36,7 +36,8 @@ public class SingleTransactionModel extends AbstractTransactionModel {
 
         if(index >= numDests)return;  // This account has already sent to all neighbors
 
-        float amount = this.balance;
+//        float amount = this.balance;
+        float amount = getTransactionAmount();
         long stepRange = this.endStep - this.startStep + 1;
         int numPerStep = numDests / (int)stepRange;
 

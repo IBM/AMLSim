@@ -7,6 +7,12 @@ import csv
 import json
 import os
 import sys
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 #### Utility functions parsing values

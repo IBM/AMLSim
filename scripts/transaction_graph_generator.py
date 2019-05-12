@@ -87,8 +87,8 @@ class TransactionGenerator:
     self.default_min_amount = parse_amount(self.conf.get("General", "default_min_amount"))
     self.total_step = parse_int(self.conf.get("General", "total_step"))
 
-    schema_json = self.conf.get("InputFile", "schema_file")
-    self.schema = InputSchema(schema_json)
+    # schema_json = self.conf.get("InputFile", "schema_file")
+    # self.schema = InputSchema(schema_json)
     self.input_dir = self.conf.get("InputFile", "directory")
     self.output_dir = self.conf.get("OutputFile", "directory")
 
@@ -240,8 +240,8 @@ class TransactionGenerator:
       if self.conf.has_option("General", "default_model") else 1
 
 
-    self.attr_names.extend(["FIRST_NAME", "LAST_NAME", "STREET_ADDR", "CITY", "STATE", "ZIP",
-                            "GENDER", "PHONE_NUMBER", "BIRTH_DATE", "SSN", "LON", "LAT"])
+    self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
+                            "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
     if acct_file is None:
       acct_file = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
 
@@ -287,9 +287,9 @@ class TransactionGenerator:
         start = start_day + random.randrange(start_range) if (start_day is not None and start_range is not None) else -1
         end = end_day - random.randrange(end_range) if (end_day is not None and end_range is not None) else -1
 
-        attr = {"FIRST_NAME": first_name, "LAST_NAME": last_name, "STREET_ADDR": street_addr,
-                "CITY": city, "STATE": state, "ZIP": zip_code, "GENDER": gender, "PHONE_NUMBER": phone_number,
-                "BIRTH_DATE": birth_date, "SSN": ssn, "LON": lon, "LAT": lat}
+        attr = {"first_name": first_name, "last_name": last_name, "street_addr": street_addr,
+                "city": city, "state": state, "zip": zip_code, "gender": gender, "phone_number": phone_number,
+                "birth_date": birth_date, "ssn": ssn, "lon": lon, "lat": lat}
 
         init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
         self.add_account(aid, init_balance, start, end, default_country, default_acct_type, model, **attr)
@@ -898,7 +898,7 @@ class TransactionGenerator:
 
 if __name__ == "__main__":
   argv = sys.argv
-  if len(argv) < 5:
+  if len(argv) < 6:
     print("Usage: python %s [ConfFile] [AccountFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
     exit(1)
 
@@ -906,16 +906,13 @@ if __name__ == "__main__":
   _acct_file = argv[2]
   _deg_file = argv[3]
   _type_file = argv[4]
+  _alert_file = argv[5]
 
   txg = TransactionGenerator(_conf_file, _type_file)
   txg.load_account_list(_acct_file)  # Load account list CSV file
   txg.generate_normal_transactions(_deg_file)  # Load a parameter CSV file for the base transaction types
   txg.set_subject_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
-  if len(argv) == 5:
-    txg.load_alert_patterns()  # Add alert patterns
-  else:
-    _alert_file = argv[5]
-    txg.load_alert_patterns(_alert_file)
+  txg.load_alert_patterns(_alert_file)
   txg.write_account_list()  # Export accounts to a CSV file
   txg.write_transaction_list()  # Export transactions to a CSV file
   txg.write_alert_members()  # Export alert accounts to a CSV file

@@ -1,4 +1,5 @@
 import csv
+import json
 import sys
 import os
 import datetime
@@ -95,6 +96,202 @@ class FraudGroup:
     return rows
 
 
+class Schema:
+  def __init__(self, json_file):
+    with open(json_file, "r") as rf:
+      self.data = json.load(rf)
+
+      self.acct_num_cols = None
+      self.acct_names = list()
+      self.acct_types = list()
+      self.acct_name2idx = dict()
+      self.acct_id_idx = None
+      self.acct_name_idx = None
+      self.acct_balance_idx = None
+      self.acct_start_idx = None
+      self.acct_end_idx = None
+      self.acct_fraud_idx = None
+      self.acct_model_idx = None
+
+      self.tx_num_cols = None
+      self.tx_names = list()
+      self.tx_types = list()
+      self.tx_name2idx = dict()
+      self.tx_id_idx = None
+      self.tx_time_idx = None
+      self.tx_amount_idx = None
+      self.tx_type_idx = None
+      self.tx_orig_idx = None
+      self.tx_dest_idx = None
+      self.tx_fraud_idx = None
+      self.tx_alert_idx = None
+
+      self.alert_num_cols = None
+      self.alert_names = list()
+      self.alert_types = list()
+      self.alert_name2idx = dict()
+      self.alert_id_idx = None
+      self.alert_type_idx = None
+      self.alert_fraud_idx = None
+      self.alert_tx_idx = None
+      self.alert_orig_idx = None
+      self.alert_dest_idx = None
+      self.alert_tx_type_idx = None
+      self.alert_amount_idx = None
+      self.alert_time_idx = None
+    self._parse()
+
+
+  def _parse(self):
+    acct_data = self.data["account"]
+    tx_data = self.data["transaction"]
+    alert_data = self.data["alert"]
+    self.acct_num_cols = len(acct_data)
+    self.tx_num_cols = len(tx_data)
+    self.alert_num_cols = len(alert_data)
+
+    # Account list
+    for idx, col in enumerate(acct_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.acct_names.append(name)
+      self.acct_types.append(vtype)
+      self.acct_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "account_id":
+        self.acct_id_idx = idx
+      elif dtype == "account_name":
+        self.acct_name_idx = idx
+      elif dtype == "initial_balance":
+        self.acct_balance_idx = idx
+      elif dtype == "start_time":
+        self.acct_start_idx = idx
+      elif dtype == "end_time":
+        self.acct_end_idx = idx
+      elif dtype == "fraud_flag":
+        self.acct_fraud_idx = idx
+      elif dtype == "model_id":
+        self.acct_model_idx = idx
+
+    # Transaction list
+    for idx, col in enumerate(tx_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.tx_names.append(name)
+      self.tx_types.append(vtype)
+      self.tx_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "transaction_id":
+        self.tx_id_idx = idx
+      elif dtype == "timestamp":
+        self.tx_time_idx = idx
+      elif dtype == "amount":
+        self.tx_amount_idx = idx
+      elif dtype == "transaction_type":
+        self.tx_type_idx = idx
+      elif dtype == "orig_id":
+        self.tx_orig_idx = idx
+      elif dtype == "dest_id":
+        self.tx_dest_idx = idx
+      elif dtype == "fraud_flag":
+        self.tx_fraud_idx = idx
+      elif dtype == "alert_id":
+        self.tx_alert_idx = idx
+
+    # Alert list
+    for idx, col in enumerate(alert_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.alert_names.append(name)
+      self.alert_types.append(vtype)
+      self.alert_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "alert_id":
+        self.alert_id_idx = idx
+      elif dtype == "alert_type":
+        self.alert_type_idx = idx
+      elif dtype == "fraud_flag":
+        self.alert_fraud_idx = idx
+      elif dtype == "transaction_id":
+        self.alert_tx_idx = idx
+      elif dtype == "orig_id":
+        self.alert_orig_idx = idx
+      elif dtype == "dest_id":
+        self.alert_dest_idx = idx
+      elif dtype == "transaction_type":
+        self.alert_tx_type_idx = idx
+      elif dtype == "amount":
+        self.alert_amount_idx = idx
+      elif dtype == "timestamp":
+        self.alert_time_idx = idx
+
+
+
+
+  def get_acct_row(self, acct_id, acct_name, init_balance, start, end, is_fraud, model_id, **attr):
+    row = [""] * self.acct_num_cols
+    row[self.acct_id_idx] = acct_id
+    row[self.acct_name_idx] = acct_name
+    row[self.acct_balance_idx] = init_balance
+    row[self.acct_start_idx] = start
+    row[self.acct_end_idx] = end
+    row[self.acct_fraud_idx] = is_fraud
+    row[self.acct_model_idx] = model_id
+    for name, value in attr.iteritems():
+      if name in self.acct_name2idx:
+        idx = self.acct_name2idx[name]
+        row[idx] = value
+    return row
+
+  def get_tx_row(self, _tx_id, _timestamp, _amount, _tx_type, _orig, _dest, _is_fraud, _alert_id, **attr):
+    row = [""] * self.tx_num_cols
+    row[self.tx_id_idx] = _tx_id
+    row[self.tx_time_idx] = _timestamp
+    row[self.tx_amount_idx] = _amount
+    row[self.tx_type_idx] = _tx_type
+    row[self.tx_orig_idx] = _orig
+    row[self.tx_dest_idx] = _dest
+    row[self.tx_fraud_idx] = _is_fraud
+    row[self.tx_alert_idx] = _alert_id
+    for name, value in attr.iteritems():
+      if name in self.tx_name2idx:
+        idx = self.tx_name2idx[name]
+        row[idx] = value
+    return row
+
+  def get_alert_row(self, _alert_id, _alert_type, _is_fraud, _tx_id, _orig, _dest, _tx_type, _amount, _timestamp, **attr):
+    row = [""] * self.alert_num_cols
+
+    row[self.alert_id_idx] = _alert_id
+    row[self.alert_type_idx] = _alert_type
+    row[self.alert_fraud_idx] = _is_fraud
+    row[self.alert_tx_idx] = _tx_id
+    row[self.alert_orig_idx] = _orig
+    row[self.alert_dest_idx] = _dest
+    row[self.alert_tx_type_idx] = _tx_type
+    row[self.alert_amount_idx] = _amount
+    row[self.alert_time_idx] = _timestamp
+    for name, value in attr.iteritems():
+      if name in self.alert_name2idx:
+        idx = self.alert_name2idx[name]
+        row[idx] = value
+    return row
+
+
+
+
 class LogConverter:
 
   def __init__(self, confFile, tx_log):
@@ -107,8 +304,11 @@ class LogConverter:
     self.work_dir = conf.get("General", "work_dir")
     if not os.path.isdir(self.work_dir):
       os.makedirs(self.work_dir)
+    schema_file = conf.get("General", "schema_file")
+    self.schema = Schema(schema_file)
 
-    self.acct_file = conf.get("Input", "acct_file")
+    self.in_acct_file = conf.get("Input", "acct_file")
+    self.out_acct_file = conf.get("Output", "acct_file")
     self.tx_file = conf.get("Output", "tx_file")
     self.cash_tx_file = conf.get("Output", "cash_tx_file")
     self.group_file = conf.get("Input", "alert_member_file")
@@ -121,21 +321,40 @@ class LogConverter:
   def convert_transaction_list(self):
     print("Convert transaction list from %s to %s, %s and %s" % (self.log_file, self.tx_file, self.cash_tx_file, self.alert_tx_file))
 
-
-    af = open(os.path.join(self.work_dir, self.acct_file), "r")
+    af = open(os.path.join(self.work_dir, self.in_acct_file), "r")
     rf = open(self.log_file, "r")
+    of = open(os.path.join(self.work_dir, self.out_acct_file), "w")
     tf = open(os.path.join(self.work_dir, self.tx_file), "w")
     cf = open(os.path.join(self.work_dir, self.cash_tx_file), "w")
     lf = open(os.path.join(self.work_dir, self.alert_tx_file), "w")
 
     reader = csv.reader(af)
+    acct_writer = csv.writer(of)
+    acct_writer.writerow(self.schema.acct_names)  # write header
+
     header = next(reader)
     indices = {name:index for index, name in enumerate(header)}
     id_idx = indices["ACCOUNT_ID"]
+    name_idx = indices["CUSTOMER_ID"]
+    balance_idx = indices["INIT_BALANCE"]
+    start_idx = indices["START_DATE"]
+    end_idx = indices["END_DATE"]
     type_idx = indices["ACCOUNT_TYPE"]
+    fraud_idx = indices["IS_FRAUD"]
+    model_idx = indices["TX_BEHAVIOR_ID"]
+
     for row in reader:
       acct_id = row[id_idx]
+      acct_name = row[name_idx]
+      balance = row[balance_idx]
+      start = row[start_idx]
+      end = row[end_idx]
       acct_type = row[type_idx]
+      acct_fraud = row[fraud_idx]
+      acct_model = row[model_idx]
+      attr = {name: row[index] for name, index in indices.iteritems()}
+      output_row = self.schema.get_acct_row(acct_id, acct_name, balance, start, end, acct_fraud, acct_model, **attr)
+      acct_writer.writerow(output_row)
       self.org_types[acct_id] = acct_type
     af.close()
 
@@ -149,11 +368,17 @@ class LogConverter:
 
     header = next(reader)
     indices = {name:index for index, name in enumerate(header)}
-    columns = len(header)
+    num_columns = len(header)
 
-    tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
-    cash_tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
-    alert_tx_writer.writerow(["ALERT_ID", "ALERT_TYPE", "IS_FRAUD", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
+    tx_header = self.schema.tx_names
+    alert_header = self.schema.alert_names
+    tx_writer.writerow(tx_header)
+    cash_tx_writer.writerow(tx_header)
+    alert_tx_writer.writerow(alert_header)
+
+    # tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
+    # cash_tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
+    # alert_tx_writer.writerow(["ALERT_ID", "ALERT_TYPE", "IS_FRAUD", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
 
     step_idx = indices["step"]
     amt_idx = indices["amount"]
@@ -165,7 +390,7 @@ class LogConverter:
 
     txID = 1
     for row in reader:
-      if len(row) < columns:
+      if len(row) < num_columns:
         continue
       try:
         days = int(row[step_idx])
@@ -184,19 +409,26 @@ class LogConverter:
       except ValueError:
         continue
 
+      attr = {name: row[index] for name, index in indices.iteritems()}
       if ttype in CASH_TYPES:
         cash_tx = (origID, destID, ttype, amount, date_str)
         if cash_tx not in cash_tx_set:
-          cash_tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
+          # cash_tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
           cash_tx_set.add(cash_tx)
+          output_row = self.schema.get_tx_row(txID, date_str, amount, ttype, origID, destID, is_fraud, alertID, **attr)
+          cash_tx_writer.writerow(output_row)
       else:
         tx = (origID, destID, ttype, amount, date_str)
         if tx not in tx_set:
-          tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
+          # tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
+          output_row = self.schema.get_tx_row(txID, date_str, amount, ttype, origID, destID, is_fraud, alertID, **attr)
+          tx_writer.writerow(output_row)
           tx_set.add(tx)
       if is_alert:
         alert_type = self.frauds.get(alertID).get_reason()
-        alert_tx_writer.writerow([alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str])
+        # alert_tx_writer.writerow([alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str])
+        alert_row = self.schema.get_alert_row(alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str, **attr)
+        alert_tx_writer.writerow(alert_row)
 
       txID += 1
 

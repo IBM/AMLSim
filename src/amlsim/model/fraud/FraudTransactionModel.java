@@ -48,7 +48,6 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
             case DENSE: model = new RandomTransactionModel(minAmount, maxAmount, startStep, endStep); break;
             default: throw new IllegalArgumentException("Unknown fraud model ID: " + modelID);
         }
-//        int interval = model.getValidSteps() / model.getNumTransactions();  // In default
         model.setParameters(minAmount, startStep, endStep);
         return model;
     }
@@ -86,7 +85,7 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
 
     /**
      * Common constructor of fraud transaction
-     * @param minAmount Mininum transaction amount
+     * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
      * @param startStep Start simulation step (any transactions cannot be carried out before this step)
      * @param maxStep End simulation step (any transactions cannot be carried out after this step)

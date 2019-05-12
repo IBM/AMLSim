@@ -2,8 +2,8 @@
   "account": [
     {
       "name": "acct_id",
-      "dataType": "string",
-      "graphType": "vertex_id"
+      "valueType": "string",
+      "dataType": "account_id"
     },
     {
       "name": "tax_id"
@@ -13,19 +13,21 @@
     },
     {
       "name": "dsply_nm",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "account_name"
     }, 
     {
       "name": "type",
-      "dataType": "string"
+      "valueType": "string"
     }, 
     {
       "name": "initial_deposit",
-      "dataType": "float"
+      "valueType": "float",
+      "dataType": "initial_balance"
     }, 
     {
       "name": "balance",
-      "dataType": "float"
+      "valueType": "float"
     }, 
     {
       "name": "net_wrth_prd_end"
@@ -35,29 +37,31 @@
     }, 
     {
       "name": "acct_rptng_crncy",
-      "dataType": "string"
+      "valueType": "string"
     }, 
     {
       "name": "branch_id",
-      "dataType": "string"
+      "valueType": "string"
     }, 
     {
       "name": "relationship_mgr_id"
     }, 
     {
       "name": "open_dt",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "start_time"
     }, 
     {
       "name": "close_dt",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "end_time"
     }, 
     {
       "name": "close_reason"
     }, 
     {
       "name": "acct_stat",
-      "dataType": "string"
+      "valueType": "string"
     }, 
     {
       "name": "acct_stat_dt"
@@ -94,66 +98,68 @@
     }, 
     {
       "name": "is_sar",
-      "dataType": "boolean"
+      "valueType": "boolean",
+      "dataType": "fraud_flag"
     },
     {
       "name": "tx_behavior_id",
-      "dataType": "int"
+      "valueType": "int",
+      "dataType": "model_id"
     },
     {
       "name": "first_name",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "last_name",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "street_addr",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "city",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "state",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "country",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "zip",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "gender",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "birth_date",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "ssn",
-      "dataType": "string"
+      "valueType": "string"
     },
     {
       "name": "lon",
-      "dataType": "float"
+      "valueType": "float"
     },
     {
       "name": "lat",
-      "dataType": "float"
+      "valueType": "float"
     }
   ], 
   "transaction": [
     {
       "name": "tran_id",
-      "dataType": "string",
-      "graphType": "edge_id"
+      "valueType": "string",
+      "dataType": "transaction_id"
     }, 
     {
       "name": "reference_source"
@@ -169,7 +175,8 @@
     }, 
     {
       "name": "tran_timestamp",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "timestamp"
     }, 
     {
       "name": "post_timestamp"
@@ -179,11 +186,13 @@
     }, 
     {
       "name": "base_amt",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "amount"
     }, 
     {
       "name": "tx_type",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "transaction_type"
     }, 
     {
       "name": "paymt_method"
@@ -220,8 +229,8 @@
     }, 
     {
       "name": "orig_acct",
-      "dataType": "string",
-      "graphType": "orig_id"
+      "valueType": "string",
+      "dataType": "orig_id"
     }, 
     {
       "name": "orig_inst_id"
@@ -267,8 +276,8 @@
     }, 
     {
       "name": "bene_acct",
-      "dataType": "string",
-      "graphType": "dest_id"
+      "valueType": "string",
+      "dataType": "dest_id"
     }, 
     {
       "name": "bene_inst_id"
@@ -290,7 +299,7 @@
     }, 
     {
       "name": "intermediary1_display_nm"
-    }, 
+    },
     {
       "name": "intermediary1_ctry"
     }, 
@@ -341,49 +350,62 @@
     },
     {
       "name": "is_fraud",
-      "dataType": "boolean"
+      "valueType": "boolean",
+      "dataType": "fraud_flag"
     },
     {
       "name": "alert_id",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "alert_id"
     }
   ],
   "alert": [
     {
       "name": "alert_id",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "alert_id"
     },
     {
       "name": "alert_type",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "alert_type"
     },
     {
       "name": "is_fraud",
-      "dataType": "boolean"
+      "valueType": "boolean",
+      "dataType": "fraud_flag"
     },
     {
       "name": "tran_id",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "transaction_id"
     },
     {
       "name": "orig_acct",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "orig_id"
     },
     {
       "name": "bene_acct",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "dest_id"
     },
     {
       "name": "tx_type",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "transaction_type"
     },
     {
       "name": "base_amt",
-      "dataType": "float"
+      "valueType": "float",
+      "dataType": "amount"
     },
     {
       "name": "tran_timestamp",
-      "dataType": "string"
+      "valueType": "string",
+      "dataType": "timestamp"
     }
   ]
 }
+
+

@@ -5,7 +5,6 @@ Plot statistical distributions from the transaction graph.
 import os
 import sys
 import csv
-import json
 from ConfigParser import ConfigParser
 from collections import Counter, defaultdict
 import networkx as nx
@@ -18,37 +17,21 @@ import matplotlib.pyplot as plt
 
 CASH_TYPE = {"CASH-IN", "CASH-OUT"}
 
-def load_csv(tx_csv, schema_json):
+def load_csv(tx_csv):
   """Load transaction CSV file and create Graph
   :param tx_csv: Input transaction CSV file (e.g. tx.csv)
-  :param schema_json: Schema JSON file (e.g. paramFiles/schema.json)
   :return: Transaction Graph
   :rtype: nx.Graph
   """
-  with open(schema_json, "r") as rf:
-    tx_data = json.load(rf)["transaction"]
-
   g = nx.DiGraph()
   with open(tx_csv, "r") as rf:
     reader = csv.reader(rf)
     header = next(reader)
-    # indices = {name:index for index, name in enumerate(header)}
-    # src_idx = indices["SENDER_ACCOUNT_ID"]
-    # dst_idx = indices["RECEIVER_ACCOUNT_ID"]
-    # type_idx = indices["TX_TYPE"]
-    # time_idx = indices["TIMESTAMP"]
-    for idx, tx_col in enumerate(tx_data):
-      data_type = tx_col.get("dataType")
-      if data_type is None:
-        continue
-      if data_type == "orig_id":
-        src_idx = idx
-      elif data_type == "dest_id":
-        dst_idx = idx
-      elif data_type == "transaction_type":
-        type_idx = idx
-      elif data_type == "timestamp":
-        time_idx = idx
+    indices = {name:index for index, name in enumerate(header)}
+    src_idx = indices["SENDER_ACCOUNT_ID"]
+    dst_idx = indices["RECEIVER_ACCOUNT_ID"]
+    type_idx = indices["TX_TYPE"]
+    time_idx = indices["TIMESTAMP"]
 
     for row in reader:
       src = row[src_idx]
@@ -247,21 +230,20 @@ def plot_diameter(dia_csv, plot_img):
 if __name__ == "__main__":
   argv = sys.argv
 
-  if len(argv) < 4:
-    print("Usage: python %s [TxCSV] [PropINI] [AlertCSV]" % argv[0])
+  if len(argv) < 3:
+    print("Usage: python %s [TxCSV] [PropINI] [AMLRuleCSV]" % argv[0])
     exit(1)
 
   tx_file = argv[1]
   conf_file = argv[2]
-  alert_file = argv[3]
 
   if not os.path.exists(tx_file):
     print("Transaction file %s not found." % tx_file)
     exit(1)
+  g = load_csv(tx_file)
   prop = ConfigParser()
   prop.read(conf_file)
 
-  schema_file = prop.get("InputFile", "schema_file")
   output_dir = prop.get("OutputFile", "directory")
 
   deg_plot = prop.get("PlotFile", "degree")
@@ -271,13 +253,12 @@ if __name__ == "__main__":
   cc_plot = prop.get("PlotFile", "clustering")
   dia_plot = prop.get("PlotFile", "diameter")
 
-  g = load_csv(tx_file, schema_file)
-
   plot_degree_distribution(g, os.path.join(output_dir, deg_plot))
   plot_wcc_distribution(g, os.path.join(output_dir, wcc_plot))
 
   param_dir = prop.get("InputFile", "directory")
-  plot_aml_rule(alert_file, os.path.join(output_dir, alert_plot))
+  amlrule = os.path.join(param_dir, prop.get("InputFile", "amlrule")) if len(argv) == 3 else argv[3]
+  plot_aml_rule(amlrule, os.path.join(output_dir, alert_plot))
 
   tx_count = prop.get("OutputFile", "counter_log")
   plot_tx_count(os.path.join(output_dir, tx_count), os.path.join(output_dir, count_plot))

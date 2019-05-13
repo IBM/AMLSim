@@ -433,13 +433,25 @@ class Schema:
     return dt.isoformat() + "Z" # UTC
 
 
-  def get_acct_row(self, acct_id, acct_name, init_balance, start, end, is_fraud, model_id, **attr):
+  def get_acct_row(self, acct_id, acct_name, init_balance, start_str, end_str, is_fraud, model_id, **attr):
     row = list(self.acct_defaults)
     row[self.acct_id_idx] = acct_id
     row[self.acct_name_idx] = acct_name
     row[self.acct_balance_idx] = init_balance
-    row[self.acct_start_idx] = start
-    row[self.acct_end_idx] = end
+    try:
+      start = int(start_str)
+      if start >= 0:
+        row[self.acct_start_idx] = start
+    except ValueError:  # If failed, keep the default value
+      pass
+
+    try:
+      end = int(end_str)
+      if end > 0:
+        row[self.acct_end_idx] = end
+    except ValueError:  # If failed, keep the default value
+      pass
+
     row[self.acct_fraud_idx] = is_fraud
     row[self.acct_model_idx] = model_id
 

@@ -34,12 +34,14 @@
     {
       "name": "open_dt",
       "valueType": "date",
-      "dataType": "start_time"
+      "dataType": "start_time",
+      "defaultValue": 0
     },
     {
       "name": "close_dt",
       "valueType": "date",
-      "dataType": "end_time"
+      "dataType": "end_time",
+      "defaultValue": 1000000
     },
     {
       "name": "prior_sar_count",
@@ -207,10 +209,10 @@
     {"name": "acct_name", "dataType": "account_name"},
     {"name": "is_subject", "dataType": "subject_flag"},
     {"name": "model_id", "dataType": "model_id"},
-    {"name": "min_amount"},
+    {"name": "min_amount", "dataType": "float", "defaultValue": 0.0},
     {"name": "max_amount"},
-    {"name": "start"},
-    {"name": "end"},
+    {"name": "start", "dataType": "date", "defaultValue": 0},
+    {"name": "end", "dataType": "date", "defaultValue": 1000000},
     {"name": "schedule_id", "dataType": "schedule_id"}
   ],
   "party_individual": [

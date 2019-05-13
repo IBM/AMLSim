@@ -13,28 +13,32 @@
     {
       "name": "type",
       "valueType": "string",
-      "dataType": "account_type"
+      "dataType": "account_type",
+      "defaultValue": "SAV"
     },
     {
       "name": "acct_stat",
-      "valueType": "string"
+      "valueType": "string",
+      "defaultValue": "A"
     },
     {
       "name": "acct_rptng_crncy",
-      "valueType": "string"
+      "valueType": "string",
+      "defaultValue": "USD"
     },
     {
       "name": "branch_id",
-      "valueType": "string"
+      "valueType": "int",
+      "defaultValue": 1
     },
     {
       "name": "open_dt",
-      "valueType": "string",
+      "valueType": "date",
       "dataType": "start_time"
     },
     {
       "name": "close_dt",
-      "valueType": "string",
+      "valueType": "date",
       "dataType": "end_time"
     },
     {
@@ -74,7 +78,8 @@
     },
     {
       "name": "country",
-      "valueType": "string"
+      "valueType": "string",
+      "defaultValue": "US"
     },
     {
       "name": "zip",
@@ -86,7 +91,7 @@
     },
     {
       "name": "birth_date",
-      "valueType": "string"
+      "valueType": "date"
     },
     {
       "name": "ssn",
@@ -109,7 +114,7 @@
     }, 
     {
       "name": "tran_timestamp",
-      "valueType": "string",
+      "valueType": "date",
       "dataType": "timestamp"
     }, 
     {
@@ -191,7 +196,7 @@
     },
     {
       "name": "tran_timestamp",
-      "valueType": "string",
+      "valueType": "date",
       "dataType": "timestamp"
     }
   ],
@@ -209,11 +214,11 @@
     {"name": "schedule_id", "dataType": "schedule_id"}
   ],
   "party_individual": [
-    {"name": "birthPlaceCountry"},
-    {"name": "countryofResidency"},
+    {"name": "birthPlaceCountry", "valueType": "string", "defaultValue": "US"},
+    {"name": "countryofResidency", "valueType": "string", "defaultValue": "US"},
     {"name": "deathTime"},
     {"name": "firstName"},
-    {"name": "isActive"},
+    {"name": "isActive", "valueType": "int", "defaultValue": 1},
     {"name": "lastName"},
     {"name": "legalName"},
     {"name": "listedCompany"},
@@ -221,11 +226,11 @@
     {"name": "middleName"},
     {"name": "name"},
     {"name": "nameAlias"},
-    {"name": "nationality"},
+    {"name": "nationality", "valueType": "string", "defaultValue": "US"},
     {"name": "occupation"},
     {"name": "organizationSymbol"},
     {"name": "partyId", "valueType": "int", "dataType": "party_id"},
-    {"name": "partyType"},
+    {"name": "partyType", "valueType": "string", "defaultValue": "Individual"},
     {"name": "sourceOfIncome"},
     {"name": "title"},
     {"name": "website"},
@@ -242,9 +247,9 @@
     {"name": "isIndividual"}
   ],
   "party_organization": [
-    {"name": "birthPlaceCountry"},
-    {"name": "countryOfIncorporation"},
-    {"name": "countryOfResidency"},
+    {"name": "birthPlaceCountry", "valueType": "string", "defaultValue": "US"},
+    {"name": "countryOfIncorporation", "valueType": "string", "defaultValue": "US"},
+    {"name": "countryOfResidency", "valueType": "string", "defaultValue": "US"},
     {"name": "deathTime"},
     {"name": "firstName"},
     {"name": "isActive"},
@@ -255,11 +260,11 @@
     {"name": "middleName"},
     {"name": "name"},
     {"name": "nameAlias"},
-    {"name": "nationality"},
+    {"name": "nationality", "valueType": "string", "defaultValue": "US"},
     {"name": "occupation"},
     {"name": "organizationSymbol"},
     {"name": "partyId", "valueType": "int", "dataType": "party_id"},
-    {"name": "partyType"},
+    {"name": "partyType", "valueType": "string", "defaultValue": "Organization"},
     {"name": "sourceOfIncome"},
     {"name": "title"},
     {"name": "website"},
@@ -273,15 +278,15 @@
     {"name": "companyEmail"},
     {"name": "personalEmail"},
     {"name": "workEmail"},
-    {"name": "isIndividual"}
+    {"name": "isIndividual", "valueType": "boolean", "defaultValue": false}
   ],
   "account_mapping": [
     {"name": "cust_acct_mapping_id", "valueType": "int", "dataType": "mapping_id"},
     {"name": "acct_id", "valueType": "int", "dataType": "account_id"},
     {"name": "cust_id", "valueType": "int", "dataType": "party_id"},
-    {"name": "cust_acct_role"},
-    {"name": "src_sys"},
-    {"name": "data_dump_dt"}
+    {"name": "cust_acct_role", "valueType": "string", "defaultValue": "Primary"},
+    {"name": "src_sys", "valueType": "string", "defaultValue": "1"},
+    {"name": "data_dump_dt", "valueType": "date", "defaultValue": 1}
   ],
   "resolved_entities": [
     {"name": "entityrefid", "valueType": "int", "dataType": "ref_id"},
@@ -290,8 +295,8 @@
     {"name": "partyid2", "valueType": "int", "dataType": "second_id"},
     {"name": "partyid1entitytype"},
     {"name": "partyid2entitytype"},
-    {"name": "score", "valueType": "int"},
-    {"name": "reason"}
+    {"name": "score", "valueType": "int", "defaultValue": 180},
+    {"name": "reason", "defaultValue": "same"}
   ]
 }
 

@@ -3,6 +3,7 @@ import json
 import sys
 import os
 import datetime
+from dateutil.parser import parse
 from ConfigParser import ConfigParser
 from random import random
 
@@ -24,13 +25,6 @@ def get_bank(acctID):
   return "Bank" + str(acctID)
 
 
-def days2date(days):
-  """Get date as ISO 8601 format form days from epoch
-  :param days: Days from epoch
-  :return:
-  """
-  dt = datetime.datetime(1970, 1, 1) + datetime.timedelta(days)
-  return dt.isoformat() + "Z" # UTC
 
 
 CASH_TYPES = {"CASH-IN", "CASH-OUT"}
@@ -107,12 +101,15 @@ class FraudGroup:
 
 
 class Schema:
-  def __init__(self, json_file):
+  def __init__(self, json_file, base_date):
+    self._base_date = base_date
+
     with open(json_file, "r") as rf:
       self.data = json.load(rf)
 
       self.acct_num_cols = None
       self.acct_names = list()
+      self.acct_defaults = list()
       self.acct_types = list()
       self.acct_name2idx = dict()
       self.acct_id_idx = None
@@ -125,6 +122,7 @@ class Schema:
 
       self.tx_num_cols = None
       self.tx_names = list()
+      self.tx_defaults = list()
       self.tx_types = list()
       self.tx_name2idx = dict()
       self.tx_id_idx = None
@@ -138,6 +136,7 @@ class Schema:
 
       self.alert_acct_num_cols = None
       self.alert_acct_names = list()
+      self.alert_acct_defaults = list()
       self.alert_acct_types = list()
       self.alert_acct_name2idx = dict()
       self.alert_acct_alert_idx = None
@@ -150,6 +149,7 @@ class Schema:
 
       self.alert_tx_num_cols = None
       self.alert_tx_names = list()
+      self.alert_tx_defaults = list()
       self.alert_tx_types = list()
       self.alert_tx_name2idx = dict()
       self.alert_tx_id_idx = None
@@ -164,18 +164,21 @@ class Schema:
 
       self.party_ind_num_cols = None
       self.party_ind_names = list()
+      self.party_ind_defaults = list()
       self.party_ind_types = list()
       self.party_ind_name2idx = dict()
       self.party_ind_id_idx = None
 
       self.party_org_num_cols = None
       self.party_org_names = list()
+      self.party_org_defaults = list()
       self.party_org_types = list()
       self.party_org_name2idx = dict()
       self.party_org_id_idx = None
 
       self.acct_party_num_cols = None
       self.acct_party_names = list()
+      self.acct_party_defaults = list()
       self.acct_party_types = list()
       self.acct_party_name2idx = dict()
       self.acct_party_mapping_idx = None
@@ -184,6 +187,7 @@ class Schema:
 
       self.party_party_num_cols = None
       self.party_party_names = list()
+      self.party_party_defaults = list()
       self.party_party_types = list()
       self.party_party_name2idx = dict()
       self.party_party_ref_idx = None
@@ -216,8 +220,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.acct_names.append(name)
+      self.acct_defaults.append(default)
       self.acct_types.append(vtype)
       self.acct_name2idx[name] = idx
 
@@ -243,8 +249,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.tx_names.append(name)
+      self.tx_defaults.append(default)
       self.tx_types.append(vtype)
       self.tx_name2idx[name] = idx
 
@@ -273,8 +281,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.alert_acct_names.append(name)
+      self.alert_acct_defaults.append(default)
       self.alert_acct_types.append(vtype)
       self.alert_acct_name2idx[name] = idx
 
@@ -301,8 +311,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.alert_tx_names.append(name)
+      self.alert_tx_defaults.append(default)
       self.alert_tx_types.append(vtype)
       self.alert_tx_name2idx[name] = idx
 
@@ -333,8 +345,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.party_ind_names.append(name)
+      self.party_ind_defaults.append(default)
       self.party_ind_types.append(vtype)
       self.party_ind_name2idx[name] = idx
 
@@ -349,8 +363,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.party_org_names.append(name)
+      self.party_org_defaults.append(default)
       self.party_org_types.append(vtype)
       self.party_org_name2idx[name] = idx
 
@@ -365,8 +381,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.acct_party_names.append(name)
+      self.acct_party_defaults.append(default)
       self.acct_party_types.append(vtype)
       self.acct_party_name2idx[name] = idx
 
@@ -385,8 +403,10 @@ class Schema:
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
+      default = col.get("defaultValue", "")
 
       self.party_party_names.append(name)
+      self.party_party_defaults.append(default)
       self.party_party_types.append(vtype)
       self.party_party_name2idx[name] = idx
 
@@ -400,10 +420,21 @@ class Schema:
         self.party_party_second_idx = idx
 
 
+  def days2date(self, _days):
+    """Get date as ISO 8601 format from days from the "base_date". If failed, return an empty string.
+    :param _days: Days from the "base_date"
+    :return: Date as ISO 8601 format
+    """
+    try:
+      num_days = int(_days)
+    except ValueError:
+      return ""
+    dt = self._base_date + datetime.timedelta(num_days)
+    return dt.isoformat() + "Z" # UTC
 
 
   def get_acct_row(self, acct_id, acct_name, init_balance, start, end, is_fraud, model_id, **attr):
-    row = [""] * self.acct_num_cols
+    row = list(self.acct_defaults)
     row[self.acct_id_idx] = acct_id
     row[self.acct_name_idx] = acct_name
     row[self.acct_balance_idx] = init_balance
@@ -411,14 +442,20 @@ class Schema:
     row[self.acct_end_idx] = end
     row[self.acct_fraud_idx] = is_fraud
     row[self.acct_model_idx] = model_id
+
     for name, value in attr.iteritems():
       if name in self.acct_name2idx:
         idx = self.acct_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.acct_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
+
   def get_tx_row(self, _tx_id, _timestamp, _amount, _tx_type, _orig, _dest, _is_fraud, _alert_id, **attr):
-    row = [""] * self.tx_num_cols
+    row = list(self.tx_defaults)
     row[self.tx_id_idx] = _tx_id
     row[self.tx_time_idx] = _timestamp
     row[self.tx_amount_idx] = _amount
@@ -427,14 +464,20 @@ class Schema:
     row[self.tx_dest_idx] = _dest
     row[self.tx_fraud_idx] = _is_fraud
     row[self.tx_alert_idx] = _alert_id
+
     for name, value in attr.iteritems():
       if name in self.tx_name2idx:
         idx = self.tx_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.tx_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
+
   def get_alert_acct_row(self, _alert_id, _reason, _acct_id, _acct_name, _is_subject, _model_id, _schedule_id, **attr):
-    row = [""] * self.alert_acct_num_cols
+    row = list(self.alert_acct_defaults)
     row[self.alert_acct_alert_idx] = _alert_id
     row[self.alert_acct_reason_idx] = _reason
     row[self.alert_acct_id_idx] = _acct_id
@@ -442,14 +485,20 @@ class Schema:
     row[self.alert_acct_subject_idx] = _is_subject
     row[self.alert_acct_model_idx] = _model_id
     row[self.alert_acct_schedule_idx] = _schedule_id
+
     for name, value in attr.iteritems():
       if name in self.alert_acct_name2idx:
         idx = self.alert_acct_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.alert_acct_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
+
   def get_alert_tx_row(self, _alert_id, _alert_type, _is_fraud, _tx_id, _orig, _dest, _tx_type, _amount, _timestamp, **attr):
-    row = [""] * self.alert_tx_num_cols
+    row = list(self.alert_tx_defaults)
     row[self.alert_tx_id_idx] = _alert_id
     row[self.alert_tx_type_idx] = _alert_type
     row[self.alert_tx_fraud_idx] = _is_fraud
@@ -459,51 +508,80 @@ class Schema:
     row[self.alert_tx_tx_type_idx] = _tx_type
     row[self.alert_tx_amount_idx] = _amount
     row[self.alert_tx_time_idx] = _timestamp
+
     for name, value in attr.iteritems():
       if name in self.alert_tx_name2idx:
         idx = self.alert_tx_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.alert_tx_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
 
+
   def get_party_ind_row(self, _party_id, **attr):
-    row = [""] * self.party_ind_num_cols
+    row = list(self.party_ind_defaults)
     row[self.party_ind_id_idx] = _party_id
+
     for name, value in attr.iteritems():
       if name in self.party_ind_name2idx:
         idx = self.party_ind_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.party_ind_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
+
   def get_party_org_row(self, _party_id, **attr):
-    row = [""] * self.party_org_num_cols
+    row = list(self.party_org_defaults)
     row[self.party_org_id_idx] = _party_id
+
     for name, value in attr.iteritems():
       if name in self.party_org_name2idx:
         idx = self.party_org_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.party_org_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
+
   def get_acct_party_row(self, _mapping_id, _acct_id, _party_id, **attr):
-    row = [""] * self.acct_party_num_cols
+    row = list(self.acct_party_defaults)
     row[self.acct_party_mapping_idx] = _mapping_id
     row[self.acct_party_acct_idx] = _acct_id
     row[self.acct_party_party_idx] = _party_id
+
     for name, value in attr.iteritems():
       if name in self.acct_party_name2idx:
         idx = self.acct_party_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.acct_party_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
+
   def get_party_party_row(self, _ref_id, _first_id, _second_id, **attr):
-    row = [""] * self.party_party_num_cols
+    row = list(self.party_party_defaults)
     row[self.party_party_ref_idx] = _ref_id
     row[self.party_party_first_idx] = _first_id
     row[self.party_party_second_idx] = _second_id
+
     for name, value in attr.iteritems():
       if name in self.party_party_name2idx:
         idx = self.party_party_name2idx[name]
         row[idx] = value
+
+    for idx, vtype in enumerate(self.party_party_types):
+      if vtype == "date":
+        row[idx] = self.days2date(row[idx])  # convert days to date
     return row
 
 
@@ -521,7 +599,9 @@ class LogConverter:
     if not os.path.isdir(self.work_dir):
       os.makedirs(self.work_dir)
     schema_file = conf.get("General", "schema_file")
-    self.schema = Schema(schema_file)
+    base_date_str = conf.get("General", "base_date")
+    base_date = parse(base_date_str)
+    self.schema = Schema(schema_file, base_date)
 
     self.in_acct_file = conf.get("Input", "acct_file")
     self.out_acct_file = conf.get("Output", "acct_file")

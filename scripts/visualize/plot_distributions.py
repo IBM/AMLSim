@@ -18,36 +18,31 @@ import matplotlib.pyplot as plt
 
 CASH_TYPE = {"CASH-IN", "CASH-OUT"}
 
-def load_csv(tx_csv, schema_json):
+def load_csv(tx_log, schema_json):
   """Load transaction CSV file and create Graph
-  :param tx_csv: Input transaction CSV file (e.g. tx.csv)
+  :param tx_log: Input transaction CSV file (e.g. output/sample/sample_log.csv)
   :param schema_json: Schema JSON file (e.g. paramFiles/schema.json)
   :return: Transaction Graph
   :rtype: nx.Graph
   """
-  with open(schema_json, "r") as rf:
-    tx_data = json.load(rf)["transaction"]
+  # with open(schema_json, "r") as rf:
+  #   tx_data = json.load(rf)["transaction"]
 
   g = nx.DiGraph()
-  with open(tx_csv, "r") as rf:
+  with open(tx_log, "r") as rf:
     reader = csv.reader(rf)
     header = next(reader)
-    # indices = {name:index for index, name in enumerate(header)}
-    # src_idx = indices["SENDER_ACCOUNT_ID"]
-    # dst_idx = indices["RECEIVER_ACCOUNT_ID"]
-    # type_idx = indices["TX_TYPE"]
-    # time_idx = indices["TIMESTAMP"]
-    for idx, tx_col in enumerate(tx_data):
-      data_type = tx_col.get("dataType")
-      if data_type is None:
-        continue
-      if data_type == "orig_id":
+    for idx, col in enumerate(header):
+      # data_type = tx_col.get("dataType")
+      # if data_type is None:
+      #   continue
+      if col == "nameOrig":
         src_idx = idx
-      elif data_type == "dest_id":
+      elif col == "nameDest":
         dst_idx = idx
-      elif data_type == "transaction_type":
+      elif col == "type":
         type_idx = idx
-      elif data_type == "timestamp":
+      elif col == "step":
         time_idx = idx
 
     for row in reader:
@@ -248,15 +243,15 @@ if __name__ == "__main__":
   argv = sys.argv
 
   if len(argv) < 4:
-    print("Usage: python %s [TxCSV] [PropINI] [AlertCSV]" % argv[0])
+    print("Usage: python %s [TxLog] [PropINI] [AlertCSV]" % argv[0])
     exit(1)
 
-  tx_file = argv[1]
+  tx_log = argv[1]
   conf_file = argv[2]
   alert_file = argv[3]
 
-  if not os.path.exists(tx_file):
-    print("Transaction file %s not found." % tx_file)
+  if not os.path.exists(tx_log):
+    print("Transaction file %s not found." % tx_log)
     exit(1)
   prop = ConfigParser()
   prop.read(conf_file)
@@ -271,7 +266,7 @@ if __name__ == "__main__":
   cc_plot = prop.get("PlotFile", "clustering")
   dia_plot = prop.get("PlotFile", "diameter")
 
-  g = load_csv(tx_file, schema_file)
+  g = load_csv(tx_log, schema_file)
 
   plot_degree_distribution(g, os.path.join(output_dir, deg_plot))
   plot_wcc_distribution(g, os.path.join(output_dir, wcc_plot))

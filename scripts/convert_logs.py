@@ -4,6 +4,7 @@ import sys
 import os
 import datetime
 from ConfigParser import ConfigParser
+from random import random
 
 
 def days_to_date(days):
@@ -21,6 +22,15 @@ def get_name(acctID):
 
 def get_bank(acctID):
   return "Bank" + str(acctID)
+
+
+def days2date(days):
+  """Get date as ISO 8601 format form days from epoch
+  :param days: Days from epoch
+  :return:
+  """
+  dt = datetime.datetime(1970, 1, 1) + datetime.timedelta(days)
+  return dt.isoformat() + "Z" # UTC
 
 
 CASH_TYPES = {"CASH-IN", "CASH-OUT"}
@@ -43,8 +53,8 @@ class FraudGroup:
     if isSubject:
       self.subject = member
 
-  def add_transaction(self, txID, amount, days, origAcct, destAcct, origName, destName):
-    self.transactions[txID] = (amount, days, origAcct, destAcct, origName, destName)
+  def add_transaction(self, txID, amount, days, origAcct, destAcct, origName, destName, attr):
+    self.transactions[txID] = (amount, days, origAcct, destAcct, origName, destName, attr)
     self.total_amount += amount
     self.count += 1
 
@@ -126,29 +136,80 @@ class Schema:
       self.tx_fraud_idx = None
       self.tx_alert_idx = None
 
-      self.alert_num_cols = None
-      self.alert_names = list()
-      self.alert_types = list()
-      self.alert_name2idx = dict()
-      self.alert_id_idx = None
-      self.alert_type_idx = None
-      self.alert_fraud_idx = None
-      self.alert_tx_idx = None
-      self.alert_orig_idx = None
-      self.alert_dest_idx = None
+      self.alert_acct_num_cols = None
+      self.alert_acct_names = list()
+      self.alert_acct_types = list()
+      self.alert_acct_name2idx = dict()
+      self.alert_acct_alert_idx = None
+      self.alert_acct_reason_idx = None
+      self.alert_acct_id_idx = None
+      self.alert_acct_name_idx = None
+      self.alert_acct_subject_idx = None
+      self.alert_acct_model_idx = None
+      self.alert_acct_schedule_idx = None
+
+      self.alert_tx_num_cols = None
+      self.alert_tx_names = list()
+      self.alert_tx_types = list()
+      self.alert_tx_name2idx = dict()
+      self.alert_tx_id_idx = None
       self.alert_tx_type_idx = None
-      self.alert_amount_idx = None
-      self.alert_time_idx = None
+      self.alert_tx_fraud_idx = None
+      self.alert_tx_idx = None
+      self.alert_tx_orig_idx = None
+      self.alert_tx_dest_idx = None
+      self.alert_tx_tx_type_idx = None
+      self.alert_tx_amount_idx = None
+      self.alert_tx_time_idx = None
+
+      self.party_ind_num_cols = None
+      self.party_ind_names = list()
+      self.party_ind_types = list()
+      self.party_ind_name2idx = dict()
+      self.party_ind_id_idx = None
+
+      self.party_org_num_cols = None
+      self.party_org_names = list()
+      self.party_org_types = list()
+      self.party_org_name2idx = dict()
+      self.party_org_id_idx = None
+
+      self.acct_party_num_cols = None
+      self.acct_party_names = list()
+      self.acct_party_types = list()
+      self.acct_party_name2idx = dict()
+      self.acct_party_mapping_idx = None
+      self.acct_party_acct_idx = None
+      self.acct_party_party_idx = None
+
+      self.party_party_num_cols = None
+      self.party_party_names = list()
+      self.party_party_types = list()
+      self.party_party_name2idx = dict()
+      self.party_party_ref_idx = None
+      self.party_party_first_idx = None
+      self.party_party_second_idx = None
     self._parse()
 
 
   def _parse(self):
     acct_data = self.data["account"]
     tx_data = self.data["transaction"]
-    alert_data = self.data["alert"]
+    alert_tx_data = self.data["alert_tx"]
+    alert_acct_data = self.data["alert_member"]
+    party_ind_data = self.data["party_individual"]
+    party_org_data = self.data["party_organization"]
+    acct_party_data = self.data["account_mapping"]
+    party_party_data = self.data["resolved_entities"]
+
     self.acct_num_cols = len(acct_data)
     self.tx_num_cols = len(tx_data)
-    self.alert_num_cols = len(alert_data)
+    self.alert_tx_num_cols = len(alert_tx_data)
+    self.alert_acct_num_cols = len(alert_acct_data)
+    self.party_ind_num_cols = len(party_ind_data)
+    self.party_org_num_cols = len(party_org_data)
+    self.acct_party_num_cols = len(acct_party_data)
+    self.party_party_num_cols = len(party_party_data)
 
     # Account list
     for idx, col in enumerate(acct_data):
@@ -206,36 +267,137 @@ class Schema:
       elif dtype == "alert_id":
         self.tx_alert_idx = idx
 
-    # Alert list
-    for idx, col in enumerate(alert_data):
+
+    # Alert member list
+    for idx, col in enumerate(alert_acct_data):
       name = col["name"]
       vtype = col.get("valueType", "string")
       dtype = col.get("dataType")
 
-      self.alert_names.append(name)
-      self.alert_types.append(vtype)
-      self.alert_name2idx[name] = idx
+      self.alert_acct_names.append(name)
+      self.alert_acct_types.append(vtype)
+      self.alert_acct_name2idx[name] = idx
 
       if dtype is None:
         continue
       if dtype == "alert_id":
-        self.alert_id_idx = idx
+        self.alert_acct_alert_idx = idx
       elif dtype == "alert_type":
-        self.alert_type_idx = idx
+        self.alert_acct_reason_idx = idx
+      elif dtype == "account_id":
+        self.alert_acct_id_idx = idx
+      elif dtype == "account_name":
+        self.alert_acct_name_idx = idx
+      elif dtype == "subject_flag":
+        self.alert_acct_subject_idx = idx
+      elif dtype == "model_id":
+        self.alert_acct_model_idx = idx
+      elif dtype == "schedule_id":
+        self.alert_acct_schedule_idx = idx
+
+
+    # Alert transaction list
+    for idx, col in enumerate(alert_tx_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.alert_tx_names.append(name)
+      self.alert_tx_types.append(vtype)
+      self.alert_tx_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "alert_id":
+        self.alert_tx_id_idx = idx
+      elif dtype == "alert_type":
+        self.alert_tx_type_idx = idx
       elif dtype == "fraud_flag":
-        self.alert_fraud_idx = idx
+        self.alert_tx_fraud_idx = idx
       elif dtype == "transaction_id":
         self.alert_tx_idx = idx
       elif dtype == "orig_id":
-        self.alert_orig_idx = idx
+        self.alert_tx_orig_idx = idx
       elif dtype == "dest_id":
-        self.alert_dest_idx = idx
+        self.alert_tx_dest_idx = idx
       elif dtype == "transaction_type":
-        self.alert_tx_type_idx = idx
+        self.alert_tx_tx_type_idx = idx
       elif dtype == "amount":
-        self.alert_amount_idx = idx
+        self.alert_tx_amount_idx = idx
       elif dtype == "timestamp":
-        self.alert_time_idx = idx
+        self.alert_tx_time_idx = idx
+
+
+    # Individual party list
+    for idx, col in enumerate(party_ind_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.party_ind_names.append(name)
+      self.party_ind_types.append(vtype)
+      self.party_ind_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "party_id":
+        self.party_ind_id_idx = idx
+
+
+    # Individual party list
+    for idx, col in enumerate(party_org_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.party_org_names.append(name)
+      self.party_org_types.append(vtype)
+      self.party_org_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "party_id":
+        self.party_org_id_idx = idx
+
+
+    # Account-Party list
+    for idx, col in enumerate(acct_party_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.acct_party_names.append(name)
+      self.acct_party_types.append(vtype)
+      self.acct_party_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "mapping_id":
+        self.acct_party_mapping_idx = idx
+      elif dtype == "account_id":
+        self.acct_party_acct_idx = idx
+      elif dtype == "party_id":
+        self.acct_party_party_idx = idx
+
+
+    # Party-Party list
+    for idx, col in enumerate(party_party_data):
+      name = col["name"]
+      vtype = col.get("valueType", "string")
+      dtype = col.get("dataType")
+
+      self.party_party_names.append(name)
+      self.party_party_types.append(vtype)
+      self.party_party_name2idx[name] = idx
+
+      if dtype is None:
+        continue
+      if dtype == "ref_id":
+        self.party_party_ref_idx = idx
+      elif dtype == "first_id":
+        self.party_party_first_idx = idx
+      elif dtype == "second_id":
+        self.party_party_second_idx = idx
 
 
 
@@ -271,24 +433,78 @@ class Schema:
         row[idx] = value
     return row
 
-  def get_alert_row(self, _alert_id, _alert_type, _is_fraud, _tx_id, _orig, _dest, _tx_type, _amount, _timestamp, **attr):
-    row = [""] * self.alert_num_cols
-
-    row[self.alert_id_idx] = _alert_id
-    row[self.alert_type_idx] = _alert_type
-    row[self.alert_fraud_idx] = _is_fraud
-    row[self.alert_tx_idx] = _tx_id
-    row[self.alert_orig_idx] = _orig
-    row[self.alert_dest_idx] = _dest
-    row[self.alert_tx_type_idx] = _tx_type
-    row[self.alert_amount_idx] = _amount
-    row[self.alert_time_idx] = _timestamp
+  def get_alert_acct_row(self, _alert_id, _reason, _acct_id, _acct_name, _is_subject, _model_id, _schedule_id, **attr):
+    row = [""] * self.alert_acct_num_cols
+    row[self.alert_acct_alert_idx] = _alert_id
+    row[self.alert_acct_reason_idx] = _reason
+    row[self.alert_acct_id_idx] = _acct_id
+    row[self.alert_acct_name_idx] = _acct_name
+    row[self.alert_acct_subject_idx] = _is_subject
+    row[self.alert_acct_model_idx] = _model_id
+    row[self.alert_acct_schedule_idx] = _schedule_id
     for name, value in attr.iteritems():
-      if name in self.alert_name2idx:
-        idx = self.alert_name2idx[name]
+      if name in self.alert_acct_name2idx:
+        idx = self.alert_acct_name2idx[name]
         row[idx] = value
     return row
 
+  def get_alert_tx_row(self, _alert_id, _alert_type, _is_fraud, _tx_id, _orig, _dest, _tx_type, _amount, _timestamp, **attr):
+    row = [""] * self.alert_tx_num_cols
+    row[self.alert_tx_id_idx] = _alert_id
+    row[self.alert_tx_type_idx] = _alert_type
+    row[self.alert_tx_fraud_idx] = _is_fraud
+    row[self.alert_tx_idx] = _tx_id
+    row[self.alert_tx_orig_idx] = _orig
+    row[self.alert_tx_dest_idx] = _dest
+    row[self.alert_tx_tx_type_idx] = _tx_type
+    row[self.alert_tx_amount_idx] = _amount
+    row[self.alert_tx_time_idx] = _timestamp
+    for name, value in attr.iteritems():
+      if name in self.alert_tx_name2idx:
+        idx = self.alert_tx_name2idx[name]
+        row[idx] = value
+    return row
+
+
+  def get_party_ind_row(self, _party_id, **attr):
+    row = [""] * self.party_ind_num_cols
+    row[self.party_ind_id_idx] = _party_id
+    for name, value in attr.iteritems():
+      if name in self.party_ind_name2idx:
+        idx = self.party_ind_name2idx[name]
+        row[idx] = value
+    return row
+
+  def get_party_org_row(self, _party_id, **attr):
+    row = [""] * self.party_org_num_cols
+    row[self.party_org_id_idx] = _party_id
+    for name, value in attr.iteritems():
+      if name in self.party_org_name2idx:
+        idx = self.party_org_name2idx[name]
+        row[idx] = value
+    return row
+
+  def get_acct_party_row(self, _mapping_id, _acct_id, _party_id, **attr):
+    row = [""] * self.acct_party_num_cols
+    row[self.acct_party_mapping_idx] = _mapping_id
+    row[self.acct_party_acct_idx] = _acct_id
+    row[self.acct_party_party_idx] = _party_id
+    for name, value in attr.iteritems():
+      if name in self.acct_party_name2idx:
+        idx = self.acct_party_name2idx[name]
+        row[idx] = value
+    return row
+
+  def get_party_party_row(self, _ref_id, _first_id, _second_id, **attr):
+    row = [""] * self.party_party_num_cols
+    row[self.party_party_ref_idx] = _ref_id
+    row[self.party_party_first_idx] = _first_id
+    row[self.party_party_second_idx] = _second_id
+    for name, value in attr.iteritems():
+      if name in self.party_party_name2idx:
+        idx = self.party_party_name2idx[name]
+        row[idx] = value
+    return row
 
 
 
@@ -314,11 +530,17 @@ class LogConverter:
     self.group_file = conf.get("Input", "alert_member_file")
     self.case_file = conf.get("Output", "case_file")
     self.alert_tx_file = conf.get("Output", "alert_tx_file")
+    self.alert_acct_file = conf.get("Output", "alert_member_file")
     self.subject_file = conf.get("Output", "subject_file")
 
+    self.party_individual_file = conf.get("Output", "party_individual_file")
+    self.party_organization_file = conf.get("Output", "party_organization_file")
+    self.account_mapping_file = conf.get("Output", "account_mapping")
+    self.resolved_entities_file = conf.get("Output", "resolved_entities")
 
 
-  def convert_transaction_list(self):
+
+  def convert_acct_tx(self):
     print("Convert transaction list from %s to %s, %s and %s" % (self.log_file, self.tx_file, self.cash_tx_file, self.alert_tx_file))
 
     af = open(os.path.join(self.work_dir, self.in_acct_file), "r")
@@ -328,9 +550,23 @@ class LogConverter:
     cf = open(os.path.join(self.work_dir, self.cash_tx_file), "w")
     lf = open(os.path.join(self.work_dir, self.alert_tx_file), "w")
 
+    pif = open(os.path.join(self.work_dir, self.party_individual_file), "w")
+    pof = open(os.path.join(self.work_dir, self.party_organization_file), "w")
+    amf = open(os.path.join(self.work_dir, self.account_mapping_file), "w")
+    ref = open(os.path.join(self.work_dir, self.resolved_entities_file), "w")
+
     reader = csv.reader(af)
     acct_writer = csv.writer(of)
     acct_writer.writerow(self.schema.acct_names)  # write header
+
+    pi_writer = csv.writer(pif)
+    pi_writer.writerow(self.schema.party_ind_names)
+    po_writer = csv.writer(pof)
+    po_writer.writerow(self.schema.party_org_names)
+    am_writer = csv.writer(amf)
+    am_writer.writerow(self.schema.acct_party_names)
+    re_writer = csv.writer(ref)
+    re_writer.writerow(self.schema.party_party_names)
 
     header = next(reader)
     indices = {name:index for index, name in enumerate(header)}
@@ -343,7 +579,11 @@ class LogConverter:
     fraud_idx = indices["IS_FRAUD"]
     model_idx = indices["TX_BEHAVIOR_ID"]
 
+
+    mapping_id = 1  # Mapping ID for account-alert mapping list
+
     for row in reader:
+      # Write an account row
       acct_id = row[id_idx]
       acct_name = row[name_idx]
       balance = row[balance_idx]
@@ -356,7 +596,28 @@ class LogConverter:
       output_row = self.schema.get_acct_row(acct_id, acct_name, balance, start, end, acct_fraud, acct_model, **attr)
       acct_writer.writerow(output_row)
       self.org_types[acct_id] = acct_type
+
+      # Write a party row per account
+      is_individual = random() >= 0.5  # 50%: individual, 50%: organization
+      party_id = int(acct_id)
+      if is_individual:  # Individual
+        output_row = self.schema.get_party_ind_row(party_id)
+        pi_writer.writerow(output_row)
+      else:
+        output_row = self.schema.get_party_org_row(party_id)
+        po_writer.writerow(output_row)
+
+      # Write account-party mapping row
+      output_row = self.schema.get_acct_party_row(mapping_id, acct_id, party_id)
+      am_writer.writerow(output_row)
+      mapping_id += 1
+
     af.close()
+    pif.close()
+    pof.close()
+    amf.close()
+    ref.close()
+
 
     tx_set = set()
     cash_tx_set = set()
@@ -371,7 +632,7 @@ class LogConverter:
     num_columns = len(header)
 
     tx_header = self.schema.tx_names
-    alert_header = self.schema.alert_names
+    alert_header = self.schema.alert_tx_names
     tx_writer.writerow(tx_header)
     cash_tx_writer.writerow(tx_header)
     alert_tx_writer.writerow(alert_header)
@@ -427,7 +688,7 @@ class LogConverter:
       if is_alert:
         alert_type = self.frauds.get(alertID).get_reason()
         # alert_tx_writer.writerow([alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str])
-        alert_row = self.schema.get_alert_row(alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str, **attr)
+        alert_row = self.schema.get_alert_tx_row(alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str, **attr)
         alert_tx_writer.writerow(alert_row)
 
       txID += 1
@@ -439,24 +700,36 @@ class LogConverter:
 
 
 
-  def load_fraud_groups(self):
+  def convert_alert_members(self):
     input_file = self.group_file
+    output_file = self.alert_acct_file
 
     print("Load alert groups: %s" % input_file)
     rf = open(os.path.join(self.work_dir, input_file), "r")
+    wf = open(os.path.join(self.work_dir, output_file), "w")
     reader = csv.reader(rf)
     header = next(reader)
     indices = {name:index for index, name in enumerate(header)}
+
+    writer = csv.writer(wf)
+    header = self.schema.alert_acct_names
+    writer.writerow(header)
 
     for row in reader:
       reason = row[indices["reason"]]
       alertID = int(row[indices["alertID"]])
       clientID = row[indices["clientID"]]
       isSubject = row[indices["isSubject"]].lower() == "true"
+      modelID = row[indices["modelID"]]
+      scheduleID = row[indices["scheduleID"]]
 
       if alertID not in self.frauds:
         self.frauds[alertID] = FraudGroup(reason)
       self.frauds[alertID].add_member(clientID, isSubject)
+
+      attr = {name: row[index] for name, index in indices.iteritems()}
+      output_row = self.schema.get_alert_acct_row(alertID, reason, clientID, clientID, isSubject, modelID, scheduleID, **attr)
+      writer.writerow(output_row)
 
 
 
@@ -487,7 +760,8 @@ class LogConverter:
         continue
 
       if alertID >= 0 and alertID in self.frauds:
-        self.frauds[alertID].add_transaction(txID, amount, days, orig, dest, orig_name, dest_name)
+        attr = {name: row[index] for name, index in indices.iteritems()}
+        self.frauds[alertID].add_transaction(txID, amount, days, orig, dest, orig_name, dest_name, attr)
         txID += 1
 
     alerts = set()
@@ -541,8 +815,8 @@ if __name__ == "__main__":
     exit(1)
 
   converter = LogConverter(argv[1], argv[2])
-  converter.load_fraud_groups()
-  converter.convert_transaction_list()
+  converter.convert_alert_members()
+  converter.convert_acct_tx()
   converter.output_fraud_cases()
   converter.output_subject_accounts()
 

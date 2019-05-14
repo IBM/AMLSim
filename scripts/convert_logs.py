@@ -691,7 +691,7 @@ class LogConverter:
 
       # Write a party row per account
       is_individual = random() >= 0.5  # 50%: individual, 50%: organization
-      party_id = int(acct_id)
+      party_id = str(acct_id)
       if is_individual:  # Individual
         output_row = self.schema.get_party_ind_row(party_id)
         pi_writer.writerow(output_row)
@@ -728,10 +728,6 @@ class LogConverter:
     tx_writer.writerow(tx_header)
     cash_tx_writer.writerow(tx_header)
     alert_tx_writer.writerow(alert_header)
-
-    # tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
-    # cash_tx_writer.writerow(["TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP", "IS_FRAUD", "ALERT_ID"])
-    # alert_tx_writer.writerow(["ALERT_ID", "ALERT_TYPE", "IS_FRAUD", "TX_ID", "SENDER_ACCOUNT_ID", "RECEIVER_ACCOUNT_ID", "TX_TYPE", "TX_AMOUNT", "TIMESTAMP"])
 
     step_idx = indices["step"]
     amt_idx = indices["amount"]

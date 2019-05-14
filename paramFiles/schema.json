@@ -209,8 +209,6 @@
     {"name": "acct_name", "dataType": "account_name"},
     {"name": "is_subject", "dataType": "subject_flag"},
     {"name": "model_id", "dataType": "model_id"},
-    {"name": "min_amount", "dataType": "float", "defaultValue": 0.0},
-    {"name": "max_amount"},
     {"name": "start", "dataType": "date", "defaultValue": 0},
     {"name": "end", "dataType": "date", "defaultValue": 1000000},
     {"name": "schedule_id", "dataType": "schedule_id"}

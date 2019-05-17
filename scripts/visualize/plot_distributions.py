@@ -242,46 +242,54 @@ def plot_diameter(dia_csv, plot_img):
 if __name__ == "__main__":
   argv = sys.argv
 
-  if len(argv) < 4:
-    print("Usage: python %s [TxLog] [PropINI] [AlertCSV]" % argv[0])
+  if len(argv) < 2:
+    print("Usage: python %s [ConfJSON]" % argv[0])
     exit(1)
 
-  tx_log = argv[1]
-  conf_file = argv[2]
-  alert_file = argv[3]
+  conf_json = argv[1]
+  with open(conf_json, "r") as rf:
+    conf = json.load(rf)
 
-  if not os.path.exists(tx_log):
-    print("Transaction file %s not found." % tx_log)
+  tmp_dir = conf["temporal"]["directory"]
+  output_dir = conf["output"]["directory"]
+  sim_name = conf["general"]["simulation_name"]
+  tx_log = conf["output"]["transaction_log"]
+  tx_path = os.path.join(tmp_dir, sim_name, tx_log)
+  if not os.path.exists(tx_path):
+    print("Transaction log file %s not found." % tx_path)
     exit(1)
-  prop = ConfigParser()
-  prop.read(conf_file)
 
-  schema_file = prop.get("InputFile", "schema_file")
-  output_dir = prop.get("OutputFile", "directory")
+  schema_file = conf["output"]["schema"]
+  g = load_csv(tx_path, schema_file)
+  output_path = os.path.join(output_dir, sim_name)
+  if os.path.isdir(output_path):
+    print("Warning: this output directory %s already exists." % output_path)
+  else:
+    os.makedirs(output_path)
 
-  deg_plot = prop.get("PlotFile", "degree")
-  wcc_plot = prop.get("PlotFile", "wcc")
-  alert_plot = prop.get("PlotFile", "alert")
-  count_plot = prop.get("PlotFile", "count")
-  cc_plot = prop.get("PlotFile", "clustering")
-  dia_plot = prop.get("PlotFile", "diameter")
+  v_conf = conf["visualizer"]
+  deg_plot = v_conf["degree"]
+  wcc_plot = v_conf["wcc"]
+  alert_plot = v_conf["alert"]
+  count_plot = v_conf["count"]
+  cc_plot = v_conf["clustering"]
+  dia_plot = v_conf["diameter"]
 
-  g = load_csv(tx_log, schema_file)
+  plot_degree_distribution(g, os.path.join(output_path, deg_plot))
+  plot_wcc_distribution(g, os.path.join(output_path, wcc_plot))
 
-  plot_degree_distribution(g, os.path.join(output_dir, deg_plot))
-  plot_wcc_distribution(g, os.path.join(output_dir, wcc_plot))
+  param_dir = conf["input"]["directory"]
+  alert_param = conf["input"]["alert_patterns"]
+  plot_aml_rule(os.path.join(param_dir, alert_param), os.path.join(output_path, alert_plot))
 
-  param_dir = prop.get("InputFile", "directory")
-  plot_aml_rule(alert_file, os.path.join(output_dir, alert_plot))
+  tx_count = conf["output"]["counter_log"]
+  plot_tx_count(os.path.join(tmp_dir, sim_name, tx_count), os.path.join(output_path, count_plot))
 
-  tx_count = prop.get("OutputFile", "counter_log")
-  plot_tx_count(os.path.join(output_dir, tx_count), os.path.join(output_dir, count_plot))
+  plot_clustering_coefficient(g, os.path.join(output_path, cc_plot))
 
-  plot_clustering_coefficient(g, os.path.join(output_dir, cc_plot))
-
-  dia_log = prop.get("OutputFile", "diameter_log")
+  dia_log = conf["output"]["diameter_log"]
   if os.path.exists(dia_log):
-    plot_diameter(os.path.join(output_dir, dia_log), os.path.join(output_dir, dia_plot))
+    plot_diameter(os.path.join(tmp_dir, sim_name, dia_log), os.path.join(output_path, dia_plot))
   else:
     print("Diameter log file %s not found." % dia_log)
 

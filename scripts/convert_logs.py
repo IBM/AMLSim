@@ -600,43 +600,53 @@ class Schema:
 
 class LogConverter:
 
-  def __init__(self, confFile, tx_log):
+  def __init__(self, conf_file):
     self.frauds = dict()
     self.org_types = dict()  # ID, organization type
-    self.log_file = tx_log
-    conf = ConfigParser()
-    conf.read(confFile)
 
-    self.work_dir = conf.get("General", "work_dir")
+    with open(conf_file, "r") as rf:
+      conf = json.load(rf)
+
+    general_conf = conf["general"]
+    input_conf = conf["temporal"]
+    output_conf = conf["output"]
+
+    self.sim_name = general_conf["simulation_name"]
+    self.input_dir = input_conf["directory"]
+    self.work_dir = output_conf["directory"]
     if not os.path.isdir(self.work_dir):
       os.makedirs(self.work_dir)
-    schema_file = conf.get("General", "schema_file")
-    base_date_str = conf.get("General", "base_date")
+
+    param_dir = conf["input"]["directory"]
+    schema_file = output_conf["schema"]
+    base_date_str = general_conf["base_date"]
     base_date = parse(base_date_str)
-    self.schema = Schema(schema_file, base_date)
+    self.schema = Schema(os.path.join(param_dir, schema_file), base_date)
 
-    self.in_acct_file = conf.get("Input", "acct_file")
-    self.out_acct_file = conf.get("Output", "acct_file")
-    self.tx_file = conf.get("Output", "tx_file")
-    self.cash_tx_file = conf.get("Output", "cash_tx_file")
-    self.group_file = conf.get("Input", "alert_member_file")
-    self.case_file = conf.get("Output", "case_file")
-    self.alert_tx_file = conf.get("Output", "alert_tx_file")
-    self.alert_acct_file = conf.get("Output", "alert_member_file")
-    self.subject_file = conf.get("Output", "subject_file")
+    self.log_file = os.path.join(self.input_dir, self.sim_name, output_conf["transaction_log"])
+    self.in_acct_file = input_conf["accounts"]
+    self.group_file = input_conf["alert_members"]
 
-    self.party_individual_file = conf.get("Output", "party_individual_file")
-    self.party_organization_file = conf.get("Output", "party_organization_file")
-    self.account_mapping_file = conf.get("Output", "account_mapping")
-    self.resolved_entities_file = conf.get("Output", "resolved_entities")
+    self.out_acct_file = output_conf["accounts"]
+    self.tx_file = output_conf["transactions"]
+    self.cash_tx_file = output_conf["cash_transactions"]
+    self.fraud_file = output_conf["frauds"]
+    self.alert_tx_file = output_conf["alert_transactions"]
+    self.alert_acct_file = output_conf["alert_members"]
+
+    self.party_individual_file = output_conf["party_individuals"]
+    self.party_organization_file = output_conf["party_organizations"]
+    self.account_mapping_file = output_conf["account_mapping"]
+    self.resolved_entities_file = output_conf["resolved_entities"]
 
 
 
   def convert_acct_tx(self):
     print("Convert transaction list from %s to %s, %s and %s" % (self.log_file, self.tx_file, self.cash_tx_file, self.alert_tx_file))
 
-    af = open(os.path.join(self.work_dir, self.in_acct_file), "r")
+    af = open(os.path.join(self.input_dir, self.in_acct_file), "r")
     rf = open(self.log_file, "r")
+
     of = open(os.path.join(self.work_dir, self.out_acct_file), "w")
     tf = open(os.path.join(self.work_dir, self.tx_file), "w")
     cf = open(os.path.join(self.work_dir, self.cash_tx_file), "w")
@@ -793,7 +803,7 @@ class LogConverter:
     output_file = self.alert_acct_file
 
     print("Load alert groups: %s" % input_file)
-    rf = open(os.path.join(self.work_dir, input_file), "r")
+    rf = open(os.path.join(self.input_dir, input_file), "r")
     wf = open(os.path.join(self.work_dir, output_file), "w")
     reader = csv.reader(rf)
     header = next(reader)
@@ -823,7 +833,7 @@ class LogConverter:
 
   def output_fraud_cases(self):
     input_file = self.log_file
-    fpath = os.path.join(self.work_dir, self.case_file)
+    fpath = os.path.join(self.work_dir, self.fraud_file)
 
     print("Convert fraud cases from %s to %s" % (input_file, fpath))
     rf = open(input_file, "r")
@@ -879,34 +889,34 @@ class LogConverter:
         count += 1
 
 
-  def output_subject_accounts(self):
-    subject_ids = set()
-    for fg in self.frauds.values():
-      subject = fg.subject
-      if subject:
-        subject_ids.add(subject)
-
-    output_file = os.path.join(self.work_dir, self.subject_file)
-    print("Write subject accounts to %s" % output_file)
-    with open(output_file, "w") as wf:
-      writer = csv.writer(wf)
-      for subject in subject_ids:
-          writer.writerow([subject])
+  # def output_subject_accounts(self):
+  #   subject_ids = set()
+  #   for fg in self.frauds.values():
+  #     subject = fg.subject
+  #     if subject:
+  #       subject_ids.add(subject)
+  #
+  #   output_file = os.path.join(self.work_dir, self.subject_file)
+  #   print("Write subject accounts to %s" % output_file)
+  #   with open(output_file, "w") as wf:
+  #     writer = csv.writer(wf)
+  #     for subject in subject_ids:
+  #         writer.writerow([subject])
 
 
 
 if __name__ == "__main__":
   argv = sys.argv
 
-  if len(argv) < 3:
-    print("Usage: python %s [ConfFile] [TxLog]" % argv[0])
+  if len(argv) < 2:
+    print("Usage: python %s [ConfJSON]" % argv[0])
     exit(1)
 
-  converter = LogConverter(argv[1], argv[2])
+  converter = LogConverter(argv[1])
   converter.convert_alert_members()
   converter.convert_acct_tx()
   converter.output_fraud_cases()
-  converter.output_subject_accounts()
+  # converter.output_subject_accounts()
 
 
 

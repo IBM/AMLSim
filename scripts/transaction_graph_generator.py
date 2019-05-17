@@ -1,4 +1,3 @@
-from configparser import ConfigParser
 import networkx as nx
 import numpy as np
 import itertools
@@ -64,10 +63,9 @@ class InputSchema:
 
 class TransactionGenerator:
 
-  def __init__(self, conf_file, type_file):
+  def __init__(self, conf_file):
     """Initialize transaction network from parameter files.
-    :param conf_file: Configuration (ini) file name
-    :param type_file: Transaction type distribution CSV file
+    :param conf_file: JSON file as configurations
     """
     self.g = nx.MultiDiGraph()  # Transaction graph object
     self.num_accounts = 0  # Number of total accounts
@@ -76,24 +74,52 @@ class TransactionGenerator:
     self.subject_candidates = set()
     self.attr_names = list()  # Additional account attribute names
 
-    self.conf = ConfigParser()
-    self.conf.read(conf_file)
-    self.seed = int(self.conf.get("General", "seed"))
+    with open(conf_file, "r") as rf:
+      self.conf = json.load(rf)
+
+    general_conf = self.conf["general"]
+
+    # Set random seed
+    seed = general_conf.get("seed")
+    self.seed = seed if seed is None else int(seed)
     np.random.seed(self.seed)
     random.seed(self.seed)
 
-    self.degree_threshold = int(self.conf.get("Base", "degree_threshold"))
-    self.default_max_amount = parse_amount(self.conf.get("General", "default_max_amount"))
-    self.default_min_amount = parse_amount(self.conf.get("General", "default_min_amount"))
-    self.total_step = parse_int(self.conf.get("General", "total_step"))
+    self.total_steps = parse_int(general_conf["total_steps"])
 
-    # schema_json = self.conf.get("InputFile", "schema_file")
-    # self.schema = InputSchema(schema_json)
-    self.input_dir = self.conf.get("InputFile", "directory")
-    self.output_dir = self.conf.get("OutputFile", "directory")
+    # Set default amounts, steps and model ID
+    default_conf = self.conf["default"]
+    self.default_min_amount = parse_amount(default_conf.get("min_amount"))
+    self.default_max_amount = parse_amount(default_conf.get("max_amount"))
+    self.default_min_balance = parse_amount(default_conf.get("min_balance"))
+    self.default_max_balance = parse_amount(default_conf.get("max_balance"))
+    self.default_start_step = parse_int(default_conf.get("dstart_step"))
+    self.default_end_step = parse_int(default_conf.get("end_step"))
+    self.default_start_range = parse_int(default_conf.get("start_range"))
+    self.default_end_range = parse_int(default_conf.get("end_range"))
+    self.default_model = parse_int(default_conf.get("transaction_model"))
 
-    highrisk_countries_str = self.conf.get("HighRisk", "countries")
-    highrisk_business_str = self.conf.get("HighRisk", "business")
+    # Get input file names and properties
+    input_conf = self.conf["input"]
+    self.input_dir = input_conf["directory"]  # Directory name of input files
+    self.account_file = input_conf["accounts"]  # Account list file
+    self.alert_file = input_conf["alert_patterns"]
+    self.degree_file = input_conf["degree"]
+    self.type_file = input_conf["transaction_type"]
+    self.is_aggregated = input_conf["is_aggregated_accounts"]
+
+    # Get output file names
+    output_conf = self.conf["temporal"]  # The destination directory is temporal
+    self.output_dir = output_conf["directory"]
+    self.out_tx_file = output_conf["transactions"]
+    self.out_account_file = output_conf["accounts"]
+    self.out_alert_file = output_conf["alert_members"]
+
+    # Other properties for the transaction graph generator
+    other_conf = self.conf["graph_generator"]
+    self.degree_threshold = parse_int(other_conf["degree_threshold"])
+    highrisk_countries_str = other_conf.get("high_risk_countries", "")
+    highrisk_business_str = other_conf.get("high_risk_business", "")
     self.highrisk_countries = set(highrisk_countries_str.split(","))
     self.highrisk_business = set(highrisk_business_str.split(","))
 
@@ -115,7 +141,7 @@ class TransactionGenerator:
           ttypes.extend([ttype] * int(row[1]))
       return ttypes
 
-    self.tx_types = get_types(type_file)
+    self.tx_types = get_types(os.path.join(self.input_dir, self.type_file))
 
 
 
@@ -192,58 +218,59 @@ class TransactionGenerator:
     return random.sample(candidates, num)
 
 
-  def load_account_list(self, acct_file):
+  def load_account_list(self):
     """Load and add account vertices from a CSV file
     :return:
     """
-    is_aggregated = self.conf.get("InputFile", "is_aggregated").lower() == "true"
-    if is_aggregated:
+    acct_file = os.path.join(self.input_dir, self.account_file)
+    if self.is_aggregated:
       self.load_account_param(acct_file)
     else:
       self.load_account_raw(acct_file)
 
 
-  def load_account_raw(self, acct_file=None):
+  def load_account_raw(self, acct_file):
     """Load and add account vertices from a CSV file with raw account info
     header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
+    :param acct_file: Account list file path
     :return:
     """
-    if not self.conf.has_option("General", "min_balance"):
-      raise KeyError("Option 'min_balance' is required to load raw account list")
-    min_balance = float(self.conf.get("General", "min_balance"))
+    if self.default_min_balance is None:
+      raise KeyError("Option 'default_min_balance' is required to load raw account list")
+    min_balance = self.default_min_balance
 
-    if not self.conf.has_option("General", "max_balance"):
-      raise KeyError("Option 'max_balance' is required to load raw account list")
-    max_balance = float(self.conf.get("General", "max_balance"))
+    if self.default_max_balance is None:
+      raise KeyError("Option 'default_max_balance' is required to load raw account list")
+    max_balance = self.default_max_balance
 
-    if self.conf.has_option("General", "start_day"):
-      start_day = int(self.conf.get("General", "start_day"))
-    else:
+    if self.default_start_step is None or self.default_start_step < 0:
       start_day = None  # No limitation
-
-    if self.conf.has_option("General", "end_day"):
-      end_day = int(self.conf.get("General", "end_day"))
     else:
+      start_day = self.default_start_step
+
+    if self.default_end_step is None or self.default_end_step <= 0:
       end_day = None  # No limitation
-
-    if self.conf.has_option("General", "start_range"):
-      start_range = int(self.conf.get("General", "start_range"))
     else:
-      start_range = None
+      end_day = self.default_end_step
 
-    if self.conf.has_option("General", "end_range"):
-      end_range = int(self.conf.get("General", "end_range"))
+    if self.default_start_range is None or self.default_start_range <= 0:
+      start_range = None  # No limitation
     else:
-      end_range = None
+      start_range = self.default_start_range
 
-    default_model = int(self.conf.get("General", "default_model")) \
-      if self.conf.has_option("General", "default_model") else 1
+    if self.default_end_range is None or self.default_end_range <= 0:
+      end_range = None  # No limitation
+    else:
+      end_range = self.default_end_range
+
+    if self.default_model is None:
+      default_model = 1
+    else:
+      default_model = self.default_model
 
 
     self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
                             "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
-    if acct_file is None:
-      acct_file = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
 
     with open(acct_file, "r") as rf:
       reader = csv.reader(rf)
@@ -297,14 +324,12 @@ class TransactionGenerator:
 
 
 
-  def load_account_param(self, acct_file=None):
+  def load_account_param(self, acct_file):
     """Load and add account vertices from a CSV file with aggregated parameters
-    Each row can represent two or more accounts
+    Each row may represent two or more accounts
+    :param acct_file: Account parameter file path
     :return:
     """
-
-    if acct_file is None:
-      acct_file = os.path.join(self.input_dir, self.conf.get("InputFile", "account_list"))
 
     idx_num = None  # Number of accounts per row
     idx_min = None  # Minimum initial balance
@@ -364,7 +389,7 @@ class TransactionGenerator:
 
 
   #### Generate base transactions from same degree sequences of transaction CSV
-  def generate_normal_transactions(self, degcsv):
+  def generate_normal_transactions(self):
 
     def get_degrees(deg_csv, num_v):
       """
@@ -415,10 +440,9 @@ class TransactionGenerator:
       assert sum(in_deg) == sum(out_deg), "Sequences must have equal sums."
       return in_deg, out_deg
 
-
-    in_deg, out_deg = get_degrees(degcsv, self.num_accounts)
-    # print(sum(in_deg), sum(out_deg))
-    g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg, seed=0)  # Generate a directed graph from degree sequences (not transaction graph)
+    deg_file = os.path.join(self.input_dir, self.degree_file)
+    in_deg, out_deg = get_degrees(deg_file, self.num_accounts)
+    g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg, seed=self.seed)  # Generate a directed graph from degree sequences (not transaction graph)
 
     print("Add %d base transactions" % g.number_of_edges())
     nodes = self.g.nodes()
@@ -495,14 +519,11 @@ class TransactionGenerator:
 
 
 
-  def load_alert_patterns(self, alert_file=None):
+  def load_alert_patterns(self):
     """Load an alert (fraud) parameter CSV file
     :return:
     """
-    if alert_file:
-      csv_name = alert_file
-    else:
-      csv_name = os.path.join(self.input_dir, self.conf.get("InputFile", "alertPattern"))
+    alert_file = os.path.join(self.input_dir, self.alert_file)
 
     idx_num = None
     idx_type = None
@@ -520,7 +541,7 @@ class TransactionGenerator:
     idx_bene_business = None
     idx_fraud = None
 
-    with open(csv_name, "r") as rf:
+    with open(alert_file, "r") as rf:
       reader = csv.reader(rf)
 
       ## Parse header
@@ -572,7 +593,7 @@ class TransactionGenerator:
         aggregated_amount = parse_amount(row[idx_aggregated])
         transaction_count = parse_int(row[idx_count])
         amount_difference = parse_amount(row[idx_difference])
-        period = parse_int(row[idx_period]) if idx_period is not None else self.total_step
+        period = parse_int(row[idx_period]) if idx_period is not None else self.total_steps
         amount_rounded = parse_amount(row[idx_rounded]) if idx_rounded is not None else 0.0
         orig_country = parse_flag(row[idx_orig_country]) if idx_orig_country is not None else False
         bene_country = parse_flag(row[idx_bene_country]) if idx_bene_country is not None else False
@@ -632,7 +653,7 @@ class TransactionGenerator:
       aggregated_amount = 0
 
     start_day = 0
-    end_day = self.total_step
+    end_day = self.total_steps
 
 
     ## Create subgraph structure with transaction attributes
@@ -822,7 +843,7 @@ class TransactionGenerator:
   def write_account_list(self):
     """Write all account list
     """
-    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "accounts"))
+    fname = os.path.join(self.output_dir, self.out_account_file)
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
       base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY", "ACCOUNT_TYPE", "IS_FRAUD", "TX_BEHAVIOR_ID"]
@@ -847,7 +868,7 @@ class TransactionGenerator:
 
 
   def write_transaction_list(self):
-    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "transactions"))
+    fname = os.path.join(self.output_dir, self.out_tx_file)
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
       writer.writerow(["id", "src", "dst", "ttype"])
@@ -868,7 +889,7 @@ class TransactionGenerator:
       return [v for k, v in nx.get_edge_attributes(g, name).iteritems() if (k[0] == vid or k[1] == vid)]
 
     acct_count = 0
-    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alert_members"))
+    fname = os.path.join(self.output_dir, self.out_alert_file)
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
       base_attrs = ["alertID", "reason", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep", "scheduleID"]
@@ -898,21 +919,21 @@ class TransactionGenerator:
 
 if __name__ == "__main__":
   argv = sys.argv
-  if len(argv) < 6:
-    print("Usage: python %s [ConfFile] [AccountFile] [DegreeFile] [TypeFile] [AlertFile]" % argv[0])
+  if len(argv) < 2:
+    print("Usage: python %s [ConfJSON]" % argv[0])
     exit(1)
 
   _conf_file = argv[1]
-  _acct_file = argv[2]
-  _deg_file = argv[3]
-  _type_file = argv[4]
-  _alert_file = argv[5]
+  # _acct_file = argv[2]
+  # _deg_file = argv[3]
+  # _type_file = argv[4]
+  # _alert_file = argv[5]
 
-  txg = TransactionGenerator(_conf_file, _type_file)
-  txg.load_account_list(_acct_file)  # Load account list CSV file
-  txg.generate_normal_transactions(_deg_file)  # Load a parameter CSV file for the base transaction types
+  txg = TransactionGenerator(_conf_file)
+  txg.load_account_list()  # Load account list CSV file
+  txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
   txg.set_subject_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
-  txg.load_alert_patterns(_alert_file)
+  txg.load_alert_patterns()
   txg.write_account_list()  # Export accounts to a CSV file
   txg.write_transaction_list()  # Export transactions to a CSV file
   txg.write_alert_members()  # Export alert accounts to a CSV file

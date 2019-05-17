@@ -17,6 +17,7 @@ import java.util.logging.*;
  */
 public class AMLSim extends ParameterizedPaySim {
 
+    private static SimProperties simProp;
 	public static final boolean TX_OPT = true;  // Optimized transaction
 	public static final int TX_SIZE = 10000000;  // Transaction buffer size
 	private static TransactionRepository txs = new TransactionRepository(TX_SIZE);
@@ -24,7 +25,6 @@ public class AMLSim extends ParameterizedPaySim {
 	private Handler handler = new ConsoleHandler();
 	private java.util.logging.Formatter formatter = new SimpleFormatter();
 
-//	private Map<Long, Integer> idMap = new HashMap<>();  // Account ID --> Index
     private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
 	private Map<Long, Alert> alertGroups = new HashMap<>();
 	private int numBranches = 0;
@@ -36,7 +36,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private ArrayList<String> actions = new ArrayList<>();
 	private BufferedWriter bufWriter;
 	private static long numOfSteps = 1;  // Number of simulation steps
-	private int numOfRepeat = 0;    // Number of simulation iterations
+	private int numOfRepeat = 1;    // Number of simulation iterations
 	private static int currentLoop = 0;  // Simulation iteration counter
 	public static String txLogFileName = "";
 
@@ -55,6 +55,7 @@ public class AMLSim extends ParameterizedPaySim {
 		super.setTagName("1");
         logger.addHandler(handler);
         handler.setFormatter(formatter);
+        simulatorName = simProp.getSimName();
 	}
 
 	public static Logger getLogger(){
@@ -67,34 +68,41 @@ public class AMLSim extends ParameterizedPaySim {
 	
 	//Parse the arguments
 	public void parseArgs(String[] args){
+	    String paysimPropFile = "paramFiles/paysim.properties";  // TODO: to be removed with the PaySim dependency
+        super.setPropertiesFile(paysimPropFile);
+        logger.info("PaySim Properties File: " + paysimPropFile);
+
+        numOfSteps = simProp.getSteps();
+        logger.info("Simulation Steps: " + numOfSteps);
+
 		//Parse the arguments given
-		for (int x = 0; x < args.length - 1; x++){
-			switch (args[x]) {
-				case "-file":
-					String filePath = args[x + 1];
-					super.setPropertiesFile(filePath);
-					logger.info("Properties File: " + filePath);
-					break;
-				case "-for":  //Gets the number of steps
-					numOfSteps = Long.parseLong(args[x + 1]);
-					this.setNrOfSteps(numOfSteps);
-                    logger.info("Simulation Steps: " + numOfSteps);
-					break;
-				case "-r":  //Gets the number of repetitions
-					numOfRepeat = Integer.parseInt(args[x + 1]);
-                    logger.info("Simulation Repeats: " + numOfRepeat);
-					break;
-				case "-inc":  //Gets the number of incrementations for each repetition
-					double incRepeat = Double.parseDouble(args[x + 1]);
-					break;
-				case "-name":  // Simulation name (optional)
-					simulatorName = args[x + 1];
-                    logger.info("Simulator Name: " + simulatorName);
-					break;
-			}
-		}
+//		for (int x = 0; x < args.length - 1; x++){
+//			switch (args[x]) {
+//				case "-file":
+//					String filePath = args[x + 1];
+//					super.setPropertiesFile(filePath);
+//					logger.info("Properties File: " + filePath);
+//					break;
+//				case "-for":  //Gets the number of steps
+//					numOfSteps = Long.parseLong(args[x + 1]);
+//					this.setNrOfSteps(numOfSteps);
+//                    logger.info("Simulation Steps: " + numOfSteps);
+//					break;
+//				case "-r":  //Gets the number of repetitions
+//					numOfRepeat = Integer.parseInt(args[x + 1]);
+//                    logger.info("Simulation Repeats: " + numOfRepeat);
+//					break;
+//				case "-inc":  //Gets the number of incrementations for each repetition
+//					double incRepeat = Double.parseDouble(args[x + 1]);
+//					break;
+//				case "-name":  // Simulation name (optional)
+//					simulatorName = args[x + 1];
+//                    logger.info("Simulator Name: " + simulatorName);
+//					break;
+//			}
+//		}
 	}
-	
+
 	public void runSimulation(String[] args){
 		parseArgs(args);
 		numOfRepeat = 1;
@@ -133,7 +141,7 @@ public class AMLSim extends ParameterizedPaySim {
 		try{
 			loadAlertFile(this.alertFile);
 		}catch(IOException e){
-			System.err.println("Cannot load fraud file: " + this.alertFile);
+			System.err.println("Cannot load alert file: " + this.alertFile);
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -143,37 +151,39 @@ public class AMLSim extends ParameterizedPaySim {
 
 	public void loadParametersFromFile(){
 		super.loadParametersFromFile();
-        Properties prop = this.getParamters();
+//        Properties prop = this.getParamters();
 
         // Default transaction interval for accounts
-        this.defaultInterval = Integer.parseInt(prop.getProperty("transactionInterval"));
+//        this.defaultInterval = Integer.parseInt(prop.getProperty("transactionInterval"));
+        this.defaultInterval = simProp.getTransactionInterval();
 
 		// Number of transaction limit
-        int transactionLimit = Integer.parseInt(prop.getProperty("transactionLimit"));
+//        int transactionLimit = Integer.parseInt(prop.getProperty("transactionLimit"));
+        int transactionLimit = simProp.getTransactionLimit();
         if(transactionLimit > 0){
             txs.setLimit(transactionLimit);
         }
 
 		// Parameters of Cash Transactions
-		int norm_in_int = Integer.parseInt(prop.getProperty("normal_cash_in_interval"));  // Interval of cash-in transactions for normal account
-		int fraud_in_int = Integer.parseInt(prop.getProperty("fraud_cash_in_interval"));  // Interval of cash-in transactions for suspicious account
-		float norm_in_min = Float.parseFloat(prop.getProperty("normal_cash_in_min"));  // Minimum amount of cash-in transactions for normal account
-		float norm_in_max = Float.parseFloat(prop.getProperty("normal_cash_in_max"));  // Maximum amount of cash-in transactions for normal account
-		float fraud_in_min = Float.parseFloat(prop.getProperty("fraud_cash_in_min"));  // Minimum amount of cash-in transactions for suspicious account
-		float fraud_in_max = Float.parseFloat(prop.getProperty("fraud_cash_in_max"));  // Maximum amount of cash-in transactions for suspicious account
+		int norm_in_int = simProp.getCashTxInterval(true, false);  // Interval of cash-in transactions for normal account
+		int fraud_in_int = simProp.getCashTxInterval(true, true);  // Interval of cash-in transactions for suspicious account
+		float norm_in_min = simProp.getCashTxMinAmount(true, false);  // Minimum amount of cash-in transactions for normal account
+		float norm_in_max = simProp.getCashTxMaxAmount(true, false);  // Maximum amount of cash-in transactions for normal account
+		float fraud_in_min = simProp.getCashTxMinAmount(true, true);  // Minimum amount of cash-in transactions for suspicious account
+		float fraud_in_max = simProp.getCashTxMaxAmount(true, true);  // Maximum amount of cash-in transactions for suspicious account
 		CashInModel.setParam(norm_in_int, fraud_in_int, norm_in_min, norm_in_max, fraud_in_min, fraud_in_max);
 
-		int norm_out_int = Integer.parseInt(prop.getProperty("normal_cash_out_interval"));  // Interval of cash-out transactions for normal account
-		int fraud_out_int = Integer.parseInt(prop.getProperty("fraud_cash_out_interval"));  // Interval of cash-out transactions for suspicious account
-		float norm_out_min = Float.parseFloat(prop.getProperty("normal_cash_out_min"));  // Minimum amount of cash-out transactions for normal account
-		float norm_out_max = Float.parseFloat(prop.getProperty("normal_cash_out_max"));  // Maximum amount of cash-out transactions for normal account
-		float fraud_out_min = Float.parseFloat(prop.getProperty("fraud_cash_out_min"));  // Minimum amount of cash-out transactions for suspicious account
-		float fraud_out_max = Float.parseFloat(prop.getProperty("fraud_cash_out_max"));  // Maximum amount of cash-out transactions for suspicious account
+		int norm_out_int = simProp.getCashTxInterval(false, false);  // Interval of cash-out transactions for normal account
+		int fraud_out_int = simProp.getCashTxInterval(false, true);  // Interval of cash-out transactions for suspicious account
+		float norm_out_min = simProp.getCashTxMinAmount(false, false);  // Minimum amount of cash-out transactions for normal account
+		float norm_out_max = simProp.getCashTxMaxAmount(false, false);  // Maximum amount of cash-out transactions for normal account
+		float fraud_out_min = simProp.getCashTxMinAmount(false, true);  // Minimum amount of cash-out transactions for suspicious account
+		float fraud_out_max = simProp.getCashTxMaxAmount(false, true);  // Maximum amount of cash-out transactions for suspicious account
 		CashOutModel.setParam(norm_out_int, fraud_out_int, norm_out_min, norm_out_max, fraud_out_min, fraud_out_max);
 
 
 		// Create branches (for cash transactions)
-		this.numBranches = Integer.parseInt(this.getParamters().getProperty("numBranches"));
+		this.numBranches = simProp.getNumBranches();
 		if(this.numBranches <= 0){
 			throw new IllegalStateException("The numBranches must be positive");
 		}
@@ -181,12 +191,17 @@ public class AMLSim extends ParameterizedPaySim {
 			this.branches.add(new Branch(i));
 		}
 
-		this.accountFile = this.getParamters().getProperty("accountFile");
-		this.transactionFile = this.getParamters().getProperty("transactionFile");
-		this.alertFile = this.getParamters().getProperty("alertFile");
-		this.counterFile = this.getParamters().getProperty("counterLog");
-		this.diameterFile = this.getParamters().getProperty("diameterLog");
-        this.computeDiameter = Boolean.parseBoolean(this.getParamters().getProperty("computeDiameter"));
+//		this.accountFile = this.getParamters().getProperty("accountFile");
+//		this.transactionFile = this.getParamters().getProperty("transactionFile");
+//		this.alertFile = this.getParamters().getProperty("alertFile");
+//		this.counterFile = this.getParamters().getProperty("counterLog");
+//		this.diameterFile = this.getParamters().getProperty("diameterLog");
+        this.accountFile = simProp.getInputAcctFile();
+        this.transactionFile = simProp.getInputTxFile();
+        this.alertFile = simProp.getInputAlertFile();
+        this.counterFile = simProp.getCounterLogFile();
+        this.diameterFile = simProp.getDiameterLogFile();
+        this.computeDiameter = simProp.isComputeDiameter();
 
         if(computeDiameter && diameterFile != null){
             try{
@@ -337,7 +352,8 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 		logger.info("Simulator Name: " + AMLSim.simulatorName);
 
-		String dirPath = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName;
+//		String dirPath = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName;
+        String dirPath = simProp.getOutputDir();
 		File f = new File(dirPath);
 		if(f.exists()){
             logger.warning("Output log directory already exists: " + dirPath);
@@ -383,7 +399,8 @@ public class AMLSim extends ParameterizedPaySim {
 		loadAggregatedFile();
 
 		//Initiate the dumpfile output writer
-		txLogFileName = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName + "//" + AMLSim.simulatorName + "_log.csv";
+//		txLogFileName = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName + "//" + AMLSim.simulatorName + "_log.csv";
+        txLogFileName = simProp.getOutputTxLogFile();
 		initBufWriter(txLogFileName);
 
 		//add the param list to the object
@@ -441,14 +458,12 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 
 	public static void handleTransaction(long step, String desc, float amt, Account orig, Account dest, boolean fraud, long aid){
-//		long origID = orig.getID();
         String origID = orig.getID();
 
 		float origBefore = (float)orig.getBalance();
 		orig.withdraw(amt);
 		float origAfter = (float)orig.getBalance();
 
-//		long destID = dest.getID();
         String destID = dest.getID();
 
 		float destBefore = (float)dest.getBalance();
@@ -480,18 +495,34 @@ public class AMLSim extends ParameterizedPaySim {
 
 
 	public static void main(String[] args){
-		if(args.length < 6){
-			System.err.println("Usage: java amlsim.AMLSim -file [PropertyFile] -for [Steps] -r [Repeats] [-name [SimulatorName]]");
-			System.exit(1);
-		}
+//		if(args.length < 6){
+//			System.err.println("Usage: java amlsim.AMLSim -file [PropertyFile] -for [Steps] -r [Repeats] [-name [SimulatorName]]");
+//			System.exit(1);
+//		}
+        if(args.length < 1){
+            System.err.println("Usage: java amlsim.AMLSim [ConfFile]");
+            System.exit(1);
+        }
 
-		int nrOfTimesRepeat = Integer.parseInt(args[5]);
-		
-		for(int i=0; i<nrOfTimesRepeat; i++){
-			AMLSim p = new AMLSim(1);
-			p.setCurrentLoop(i);
-			p.runSimulation(args);
-		}
+        String propFile = args[0];
+        try {
+            simProp = new SimProperties(propFile);
+        }catch (IOException e){
+            System.err.println("Cannot load JSON file: " + propFile);
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+//		int nrOfTimesRepeat = Integer.parseInt(args[5]);
+//		for(int i=0; i<nrOfTimesRepeat; i++){
+//			AMLSim p = new AMLSim(1);
+//			p.setCurrentLoop(i);
+//			p.runSimulation(args);
+//		}
+        int seed = simProp.getSeed();
+        AMLSim sim = new AMLSim(seed);
+        sim.setCurrentLoop(0);
+        sim.runSimulation(args);
 	}
 }
 

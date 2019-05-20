@@ -1,3 +1,6 @@
+"""
+
+"""
 from configparser import ConfigParser
 import networkx as nx
 import numpy as np
@@ -139,7 +142,7 @@ class TransactionGenerator:
       candidates = set()
       while len(candidates) < num:  # Get sufficient alert members
         hub = random.choice(self.hubs)
-        candidates.update([hub]+self.g.adj[hub].keys())
+        candidates.update([hub]+list(self.g.adj[hub].keys()))
       members = np.random.choice(list(candidates), num, False)
       candidates_set = set(members) & self.subject_candidates
       if not candidates_set:
@@ -373,20 +376,22 @@ class TransactionGenerator:
         out_deg = out_tmp
       else:  # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
         repeats = num_v / total_v  # Number of repetitions of degree sequences
-        # print(len(in_deg), len(out_deg), repeats)
-        in_deg = in_deg * repeats
-        out_deg = out_deg * repeats
+        #print(len(in_deg), len(out_deg), repeats)
+        #print(in_deg, repeats)
+        in_deg = np.dot(in_deg , repeats).tolist()
+        out_deg = np.dot(out_deg , repeats).tolist()
         # print(len(in_deg))
         remain = num_v - total_v * repeats  # Number of extra accounts
-        in_deg.extend([1] * remain)  # Add 1-degree account vertices
-        out_deg.extend([1] * remain)
+        in_deg.extend(np.dot([1] , remain).tolist())  # Add 1-degree account vertices
+        out_deg.extend(np.dot([1] , remain).tolist())
 
       assert sum(in_deg) == sum(out_deg), "Sequences must have equal sums."
       return in_deg, out_deg
 
-
     in_deg, out_deg = get_degrees(degcsv, self.num_accounts)
-    # print(sum(in_deg), sum(out_deg))
+    #print(sum(in_deg), sum(out_deg))
+    in_deg = [int(x) for x in in_deg]
+    out_deg = [int(x) for x in out_deg]
     g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg, seed=0)  # Generate a directed graph from degree sequences (not transaction graph)
 
     print("Add %d base transactions" % g.number_of_edges())
@@ -839,14 +844,14 @@ class TransactionGenerator:
     """Write alert account list
     """
     def get_outEdge_attrs(g, vid, name):
-      return [v for k, v in nx.get_edge_attributes(g, name).iteritems() if (k[0] == vid or k[1] == vid)]
+      return [v for k, v in nx.get_edge_attributes(g, name).items() if (k[0] == vid or k[1] == vid)]
 
     fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alertgroup"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
       base_attrs = ["alertID", "reason", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep", "scheduleID"]
       writer.writerow(base_attrs + self.attr_names)
-      for gid, sub_g in self.alert_groups.iteritems():
+      for gid, sub_g in self.alert_groups.items():
         modelID = sub_g.graph["modelID"]
         scheduleID = sub_g.graph["scheduleID"]
         reason = sub_g.graph["reason"]

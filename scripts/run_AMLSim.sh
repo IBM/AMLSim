@@ -11,5 +11,5 @@ MAX_HEAP=4g
 NAME=$1
 STEP=$2
 
-java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xms${MIN_HEAP} -Xmx${MIN_HEAP} -cp "jars/*:bin" amlsim.AMLSim -file amlsim.properties -for ${STEP} -r 1 -name ${NAME}
+java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xms${MIN_HEAP} -Xmx${MIN_HEAP} -cp "target/amlsim-1.0-SNAPSHOT.jar" com.ibm.amlsim.AMLSim -file amlsim.properties -for ${STEP} -r 1 -name ${NAME}
 

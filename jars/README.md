@@ -1,4 +1,18 @@
 # External jar files
+
+# UPDATE the basepath to your local one
+
+mvn install:install-file  \
+ -Dfile={basepath}/jars/paysim.jar \
+ -DgroupId=org.paysim \
+ -DartifactId=paysim \
+ -Dversion=2.0.0 \
+ -Dpackaging=jar \
+ -DgeneratePom=true
+
+
+
+
 Please download external jar files from the following sites.
 
 - [MASON](https://cs.gmu.edu/~eclab/projects/mason/)

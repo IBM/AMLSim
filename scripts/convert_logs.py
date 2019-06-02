@@ -191,9 +191,8 @@ class LogConverter:
           cash_tx_set.add(cash_tx)
       else:
         tx = (origID, destID, ttype, amount, date_str)
-        if tx not in tx_set:
-          tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
-          tx_set.add(tx)
+        tx_writer.writerow([txID, origID, destID, ttype, amount, date_str, is_fraud, alertID])
+        tx_set.add(tx)
       if is_alert:
         alert_type = self.frauds.get(alertID).get_reason()
         alert_writer.writerow([alertID, alert_type, is_fraud, txID, origID, destID, ttype, amount, date_str])

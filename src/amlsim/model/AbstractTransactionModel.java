@@ -18,6 +18,7 @@ public abstract class AbstractTransactionModel {
     public static final int PERIODICAL = 5;
 
     private static Random rand = new Random();
+    private static final int DEFAULT_INTERVAL = 10;  // Default transaction interval
     private static final int FLUCTUATION = 2;  // Fluctuation of the transaction interval TODO: Enable users to specify this value
 
     protected Account account;  // Account object
@@ -48,6 +49,10 @@ public abstract class AbstractTransactionModel {
     protected static int generateDiff(){
         int t = rand.nextInt(FLUCTUATION * 2 + 1);
         return t - FLUCTUATION;
+    }
+
+    public static int generateStartStep(){
+        return rand.nextInt(DEFAULT_INTERVAL);
     }
 
     /**

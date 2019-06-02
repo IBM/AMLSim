@@ -12,7 +12,6 @@ public class FraudAccount extends Account {
 
 	private int count = 0;
 
-//	FraudAccount(long id, int modelID, float init_balance, int start, int end){
     FraudAccount(String id, int modelID, float init_balance, int start, int end, Map<String, String> attrs){
 		super(id, modelID, init_balance, start, end, attrs);
 	}
@@ -27,7 +26,7 @@ public class FraudAccount extends Account {
 		long step = state.schedule.getSteps();
 
 		for(Alert ag : alerts){
-			ag.registerTransactions(state.schedule.getSteps());
+			ag.registerTransactions(state.schedule.getSteps(), this);
 		}
 
 		this.model.sendTransaction(step);

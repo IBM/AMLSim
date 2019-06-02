@@ -26,7 +26,7 @@ public class StackTransactionModel extends FraudTransactionModel {
     }
 
     @Override
-    public void sendTransactions(long step) {
+    public void sendTransactions(long step, Account acct) {
 
         int total_members = alert.getMembers().size();
         int orig_members = total_members / 3;  // First 1/3 accounts are sender accounts
@@ -39,6 +39,9 @@ public class StackTransactionModel extends FraudTransactionModel {
 
         for(int i=0; i<orig_members; i++){  // Sender accounts --> Intermediate accounts
             Account orig = alert.getMembers().get(i);
+            if(!orig.getID().equals(acct.getID())){
+                continue;
+            }
 
             for(int j=orig_members; j<(orig_members+mid_members); j++){
                 Account dest = alert.getMembers().get(j);
@@ -48,6 +51,9 @@ public class StackTransactionModel extends FraudTransactionModel {
 
         for(int i=orig_members; i<(orig_members+mid_members); i++){   // Intermediate accounts --> Receiver accounts
             Account orig = alert.getMembers().get(i);
+            if(!orig.getID().equals(acct.getID())){
+                continue;
+            }
 
             for(int j=(orig_members+mid_members); j<total_members; j++){
                 Account dest = alert.getMembers().get(j);

@@ -29,13 +29,16 @@ public class BipartiteTransactionModel extends FraudTransactionModel {
     }
 
     @Override
-    public void sendTransactions(long step) {
+    public void sendTransactions(long step, Account acct) {
         float amount = getAmount();  // The amount of each transaction
         List<Account> members = alert.getMembers();  // Fraud members
 
         int last_orig_index = members.size() / 2;  // The first half accounts are senders
         for(int i=0; i<last_orig_index; i++){
             Account orig = members.get(i);
+            if(!orig.getID().equals(acct.getID())){
+                continue;
+            }
 
             for(int j=last_orig_index; j<members.size(); j++){
                 Account dest = members.get(j);  // The second half accounts are receivers

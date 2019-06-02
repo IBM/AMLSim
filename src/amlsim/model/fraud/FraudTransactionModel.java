@@ -12,6 +12,7 @@
 
 package amlsim.model.fraud;
 
+import amlsim.Account;
 import amlsim.Alert;
 import amlsim.model.AbstractTransactionModel;
 
@@ -136,6 +137,6 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     public final void sendTransaction(long step) {
     }
 
-    public abstract void sendTransactions(long step);
+    public abstract void sendTransactions(long step, Account acct);
 
 }

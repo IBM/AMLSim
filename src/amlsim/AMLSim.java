@@ -209,13 +209,10 @@ public class AMLSim extends ParameterizedPaySim {
 
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
-//			long accountID = Long.parseLong(elements[columnIndex.get("ACCOUNT_ID")]);
             String accountID = elements[columnIndex.get("ACCOUNT_ID")];
 			boolean isFraud = elements[columnIndex.get("IS_FRAUD")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
 			float init_balance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
-//			int start_step = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
-//			int end_step = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
 
 			Map<String, String> extraValues = new HashMap<>();
 			for(String column : extraColumns){
@@ -223,8 +220,6 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-//			Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, start_step, end_step, extraValues)
-//					: new Account(accountID, modelID, init_balance, start_step, end_step, extraValues);
             Account client = isFraud ? new FraudAccount(accountID, modelID, init_balance, extraValues)
                     : new Account(accountID, modelID, init_balance, extraValues);
 

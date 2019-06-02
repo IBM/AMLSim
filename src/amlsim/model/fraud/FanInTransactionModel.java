@@ -17,8 +17,6 @@ public class FanInTransactionModel extends FraudTransactionModel {
     private Account dest;  // The destination (receiver) account
     private List<Account> origs = new ArrayList<>();  // The origin (sender) accounts
 
-    // Transaction schedule
-    private int schedule_mode;
     private long[] steps;
     public static final int SIMULTANEOUS = 1;
     public static final int FIXED_INTERVAL = 2;
@@ -30,7 +28,7 @@ public class FanInTransactionModel extends FraudTransactionModel {
     }
 
     public void setSchedule(int modelID){
-        this.schedule_mode = modelID;
+        // Transaction schedule
 
         // Set alert members
         List<Account> members = alert.getMembers();
@@ -42,10 +40,10 @@ public class FanInTransactionModel extends FraudTransactionModel {
         // Set transaction schedule
         int numOrigs = origs.size();
         steps = new long[numOrigs];
-        if(schedule_mode == SIMULTANEOUS){
+        if(modelID == SIMULTANEOUS){
             long step = getRandomStep();
             Arrays.fill(steps, step);
-        }else if(schedule_mode == FIXED_INTERVAL){
+        }else if(modelID == FIXED_INTERVAL){
             long range = endStep - startStep + 1;
             if(numOrigs < range){
                 long interval = range / numOrigs;
@@ -58,7 +56,7 @@ public class FanInTransactionModel extends FraudTransactionModel {
                     steps[i] = startStep + i/batch;
                 }
             }
-        }else if(schedule_mode == RANDOM_RANGE){
+        }else if(modelID == RANDOM_RANGE){
             for(int i=0; i<numOrigs; i++){
                 steps[i] = getRandomStep();
             }
@@ -70,7 +68,7 @@ public class FanInTransactionModel extends FraudTransactionModel {
         return "FanInFraud";
     }
 
-    public void sendTransactions(long step){
+    public void sendTransactions(long step, Account acct){
         long alertID = alert.getAlertID();
         boolean isFraud = alert.isFraud();
         float amount = getAmount() / origs.size();
@@ -78,40 +76,10 @@ public class FanInTransactionModel extends FraudTransactionModel {
         for(int i=0; i<origs.size(); i++){
             if(steps[i] == step){
                 Account orig = origs.get(i);
-                sendTransaction(step, amount, orig, dest, isFraud, alertID);
+                if(orig.getID().equals(acct.getID())) {
+                    sendTransaction(step, amount, orig, dest, isFraud, alertID);
+                }
             }
         }
     }
-
-//    @Override
-//    public Collection<AMLTransaction> sendTransactions(long step) {
-//        ArrayList<AMLTransaction> txs = new ArrayList<>();
-//        List<AMLClient> members = this.alert.getMembers();
-//
-//        AMLClient dest = members.get(0);
-//        if(alert.isFraud()) {    // Fraud alert
-//            dest = this.alert.getSubjectAccount();
-//        }else{    // Alert alert (not fraud)
-//            int max_degree = 0;
-//            for(AMLClient c : members){
-//                int degree = c.getOrigs().size();
-//                if(degree > max_degree){
-//                    dest = c;
-//                    max_degree = degree;
-//                }
-//            }
-//        }
-//        List<AMLClient> origs = dest.getOrigs();
-//        long alertID = alert.getAlertID();
-//        boolean isFraud = alert.isFraud();
-//        for(AMLClient orig : origs){
-//            float amount = getAmount();
-//            AMLTransaction tx = sendTransaction(step, amount, orig, dest);
-//            tx.setAlertID(alertID);
-//            tx.setFraud(isFraud);
-//            txs.add(tx);
-//        }
-//
-//        return txs;
-//    }
 }

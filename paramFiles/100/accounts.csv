@@ -1,0 +1,6 @@
+count,min_balance,max_balance,country,business_type,model
+20,100,200,US,I,1
+20,200,400,US,I,1
+20,400,600,US,I,1
+20,100,200,US,I,1
+20,200,400,US,I,1

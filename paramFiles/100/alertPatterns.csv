@@ -1,0 +1,3 @@
+count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,orig_country,bene_country,orig_business,bene_business,is_fraud
+2,fan_in,2,5,10,100,5,20,30,0.5,True,True,True,True,True
+2,cycle,2,5,10,100,5,20,30,0.5,True,True,True,True,True

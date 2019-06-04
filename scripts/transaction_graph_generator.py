@@ -602,10 +602,11 @@ class TransactionGenerator:
     if aggregated_amount is None:
       aggregated_amount = 0
 
-    start_day = random.randint(0, self.total_step)
     if period is None:
+      start_day = random.randint(0, self.total_step)
       end_day = start_day + self.total_step
     else:
+      start_day = random.randint(-period, self.total_step)
       end_day = start_day + period
 
 

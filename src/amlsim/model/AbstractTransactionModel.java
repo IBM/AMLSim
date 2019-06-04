@@ -52,7 +52,7 @@ public abstract class AbstractTransactionModel {
     }
 
     public static int generateStartStep(){
-        return rand.nextInt(DEFAULT_INTERVAL) - DEFAULT_INTERVAL / 2;
+        return rand.nextInt(DEFAULT_INTERVAL) - DEFAULT_INTERVAL;
     }
 
     /**

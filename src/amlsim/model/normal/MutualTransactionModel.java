@@ -10,6 +10,7 @@ import java.util.List;
  */
 public class MutualTransactionModel extends AbstractTransactionModel {
 
+    private static final int INTERVAL = 10;
 
     @Override
     public String getType() {
@@ -18,6 +19,10 @@ public class MutualTransactionModel extends AbstractTransactionModel {
 
     @Override
     public void sendTransaction(long step) {
+        if((step - this.account.getStartStep()) % INTERVAL == 0){
+            return;
+        }
+
         Account counterpart = this.account.getPrevOrig();
         if(counterpart == null){
             List<Account> origs = this.account.getOrigs();

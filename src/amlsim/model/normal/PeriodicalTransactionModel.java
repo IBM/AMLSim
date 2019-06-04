@@ -11,7 +11,7 @@ import amlsim.model.AbstractTransactionModel;
 public class PeriodicalTransactionModel extends AbstractTransactionModel {
 
     private int index = 0;
-    private final int PERIOD = 5;  // TODO: accept user-defined periods from configurations
+    private final int PERIOD = 10;  // TODO: accept user-defined periods from configurations
 
     @Override
     public String getType() {

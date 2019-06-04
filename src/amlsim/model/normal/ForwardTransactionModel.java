@@ -26,7 +26,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
         if(numDests == 0){
             return;
         }
-        if(step % INTERVAL != this.account.getStartStep() % INTERVAL){
+        if((step - this.account.getStartStep()) % INTERVAL != 0){
             return;
         }
 

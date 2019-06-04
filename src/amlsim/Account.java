@@ -87,7 +87,7 @@ public class Account extends Client implements Steppable {
 	public Account(String id, int modelID, float initBalance, Map<String, String> attrs){
         this(id, modelID, initBalance, 0, AMLSim.getNumOfSteps(), attrs);
         if(RANDOM_STEP_RANGE){
-            this.startStep += AbstractTransactionModel.generateStartStep();
+            this.startStep = AbstractTransactionModel.generateStartStep();
         }
     }
 

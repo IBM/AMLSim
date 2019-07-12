@@ -175,7 +175,7 @@ public class Account extends Client implements Steppable {
 		long step = state.schedule.getSteps();
 		for(Alert ag : alerts){
             if(this == ag.getPrimaryAccount()){
-                ag.registerTransactions(step);
+                ag.registerTransactions(step, this);
             }
 		}
 

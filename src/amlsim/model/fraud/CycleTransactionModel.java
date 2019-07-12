@@ -32,7 +32,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
         int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
 
-        int totalStep = endStep - startStep + 1;
+        int totalStep = (int)(endStep - startStep + 1);
         int defaultInterval = totalStep / length;
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
 

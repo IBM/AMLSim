@@ -23,7 +23,7 @@ public class FraudAccount extends Account {
 
 		for(Alert ag : alerts){
             if(this == ag.getPrimaryAccount()){
-                ag.registerTransactions(step);
+                ag.registerTransactions(step, this);
             }
 		}
 

@@ -35,7 +35,7 @@ public class RandomTransactionModel extends FraudTransactionModel {
         return "DenseFraud";
     }
 
-    public void sendTransactions(long step){
+    public void sendTransactions(long step, Account acct){
         boolean isFraud = alert.isFraud();
         long alertID = alert.getAlertID();
         if(!isValidStep(step))return;

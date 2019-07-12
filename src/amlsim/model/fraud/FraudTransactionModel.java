@@ -85,8 +85,8 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     }
 
 
-    public long getStepRange(){
-        return endStep - startStep + 1;
+    public int getStepRange(){
+        return (int)(endStep - startStep + 1);
     }
 
     /**

@@ -1,3 +1,5 @@
+**Important: Please use the "master" branch for the practical use and testing. Other branches such as "new-schema" are outdated and unstable. [Wiki pages](https://github.com/IBM/AMLSim/wiki/) are still under construction and some of them do not catch up with the latest implementations. Please refer this README.md instead.**
+
 # AMLSim
 This project aims at building a multi-agent simulator of anti-money laundering - namely AML, and sharing synthetically generated data so that researchers can design and implement their new algorithms over the unified data.
 

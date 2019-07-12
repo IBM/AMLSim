@@ -4,7 +4,6 @@ import sys
 import os
 import datetime
 from dateutil.parser import parse
-from ConfigParser import ConfigParser
 from random import random
 
 
@@ -79,7 +78,7 @@ class FraudGroup:
                      "amount", "value_date"])
 
     ## Write transactions
-    for txid, tx in self.transactions.iteritems():
+    for txid, tx in self.transactions.items():
       amount = tx[0]
       date = days_to_date(tx[1])
       origAcct = tx[2]
@@ -92,7 +91,7 @@ class FraudGroup:
 
   def get_alerts(self):
     rows = list()
-    for tx_id, tx in self.transactions.iteritems():
+    for tx_id, tx in self.transactions.items():
       origAcct = str(tx[2])
       origName = str(tx[4])
       date = days_to_date(tx[1])
@@ -455,7 +454,7 @@ class Schema:
     row[self.acct_fraud_idx] = is_fraud
     row[self.acct_model_idx] = model_id
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.acct_name2idx:
         idx = self.acct_name2idx[name]
         row[idx] = value
@@ -477,7 +476,7 @@ class Schema:
     row[self.tx_fraud_idx] = _is_fraud
     row[self.tx_alert_idx] = _alert_id
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.tx_name2idx:
         idx = self.tx_name2idx[name]
         row[idx] = value
@@ -498,7 +497,7 @@ class Schema:
     row[self.alert_acct_model_idx] = _model_id
     row[self.alert_acct_schedule_idx] = _schedule_id
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.alert_acct_name2idx:
         idx = self.alert_acct_name2idx[name]
         row[idx] = value
@@ -521,7 +520,7 @@ class Schema:
     row[self.alert_tx_amount_idx] = _amount
     row[self.alert_tx_time_idx] = _timestamp
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.alert_tx_name2idx:
         idx = self.alert_tx_name2idx[name]
         row[idx] = value
@@ -537,7 +536,7 @@ class Schema:
     row = list(self.party_ind_defaults)
     row[self.party_ind_id_idx] = _party_id
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.party_ind_name2idx:
         idx = self.party_ind_name2idx[name]
         row[idx] = value
@@ -552,7 +551,7 @@ class Schema:
     row = list(self.party_org_defaults)
     row[self.party_org_id_idx] = _party_id
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.party_org_name2idx:
         idx = self.party_org_name2idx[name]
         row[idx] = value
@@ -569,7 +568,7 @@ class Schema:
     row[self.acct_party_acct_idx] = _acct_id
     row[self.acct_party_party_idx] = _party_id
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.acct_party_name2idx:
         idx = self.acct_party_name2idx[name]
         row[idx] = value
@@ -586,7 +585,7 @@ class Schema:
     row[self.party_party_first_idx] = _first_id
     row[self.party_party_second_idx] = _second_id
 
-    for name, value in attr.iteritems():
+    for name, value in attr.items():
       if name in self.party_party_name2idx:
         idx = self.party_party_name2idx[name]
         row[idx] = value
@@ -607,6 +606,7 @@ class LogConverter:
     with open(conf_file, "r") as rf:
       conf = json.load(rf)
 
+    param_conf = conf["input"]
     general_conf = conf["general"]
     input_conf = conf["temporal"]
     output_conf = conf["output"]
@@ -617,8 +617,8 @@ class LogConverter:
     if not os.path.isdir(self.work_dir):
       os.makedirs(self.work_dir)
 
-    param_dir = conf["input"]["directory"]
-    schema_file = output_conf["schema"]
+    param_dir = param_conf["directory"]
+    schema_file = param_conf["schema"]
     base_date_str = general_conf["base_date"]
     base_date = parse(base_date_str)
     self.schema = Schema(os.path.join(param_dir, schema_file), base_date)
@@ -694,7 +694,7 @@ class LogConverter:
       acct_type = row[type_idx]
       acct_fraud = row[fraud_idx]
       acct_model = row[model_idx]
-      attr = {name: row[index] for name, index in indices.iteritems()}
+      attr = {name: row[index] for name, index in indices.items()}
       output_row = self.schema.get_acct_row(acct_id, acct_name, balance, start, end, acct_fraud, acct_model, **attr)
       acct_writer.writerow(output_row)
       self.org_types[acct_id] = acct_type
@@ -768,7 +768,7 @@ class LogConverter:
       except ValueError:
         continue
 
-      attr = {name: row[index] for name, index in indices.iteritems()}
+      attr = {name: row[index] for name, index in indices.items()}
       if ttype in CASH_TYPES:
         cash_tx = (origID, destID, ttype, amount, date_str)
         if cash_tx not in cash_tx_set:
@@ -825,7 +825,7 @@ class LogConverter:
         self.frauds[alertID] = FraudGroup(reason)
       self.frauds[alertID].add_member(clientID, isSubject)
 
-      attr = {name: row[index] for name, index in indices.iteritems()}
+      attr = {name: row[index] for name, index in indices.items()}
       output_row = self.schema.get_alert_acct_row(alertID, reason, clientID, clientID, isSubject, modelID, scheduleID, **attr)
       writer.writerow(output_row)
 
@@ -858,14 +858,14 @@ class LogConverter:
         continue
 
       if alertID >= 0 and alertID in self.frauds:
-        attr = {name: row[index] for name, index in indices.iteritems()}
+        attr = {name: row[index] for name, index in indices.items()}
         self.frauds[alertID].add_transaction(txID, amount, days, orig, dest, orig_name, dest_name, attr)
         txID += 1
 
     alerts = set()
     count = 0
     frauds = len(self.frauds)
-    for fraud_id, fg in self.frauds.iteritems():
+    for fraud_id, fg in self.frauds.items():
       if fg.count == 0:
         continue
       data = fg.get_alerts()

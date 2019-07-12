@@ -35,6 +35,7 @@
   },
   "input": {
     "directory": "paramFiles/1K",
+    "schema": "schema.json",
     "accounts": "accounts.csv",
     "alert_patterns": "alertPatterns.csv",
     "degree": "degree.csv",
@@ -49,7 +50,6 @@
   },
   "output": {
     "directory": "outputs",
-    "schema": "schema.json",
     "accounts": "accounts.csv",
     "transactions": "transactions.csv",
     "cash_transactions": "cash_tx.csv",

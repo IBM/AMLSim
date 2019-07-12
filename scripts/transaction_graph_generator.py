@@ -22,7 +22,7 @@ def parse_int(value):
   """
   try:
     return int(value)
-  except ValueError:
+  except (ValueError, TypeError):
     return None
 
 
@@ -33,7 +33,7 @@ def parse_amount(value):
   """
   try:
     return float(value)
-  except ValueError:
+  except (ValueError, TypeError):
     return None
 
 
@@ -42,7 +42,7 @@ def parse_flag(value):
   :param value: string value
   :return: True if the value is equal to "true" (case insensitive), otherwise False
   """
-  return value is not None and value.lower() == "true"
+  return type(value) == str and value.lower() == "true"
 
 
 
@@ -93,7 +93,7 @@ class TransactionGenerator:
     self.default_max_amount = parse_amount(default_conf.get("max_amount"))
     self.default_min_balance = parse_amount(default_conf.get("min_balance"))
     self.default_max_balance = parse_amount(default_conf.get("max_balance"))
-    self.default_start_step = parse_int(default_conf.get("dstart_step"))
+    self.default_start_step = parse_int(default_conf.get("start_step"))
     self.default_end_step = parse_int(default_conf.get("end_step"))
     self.default_start_range = parse_int(default_conf.get("start_range"))
     self.default_end_range = parse_int(default_conf.get("end_range"))
@@ -190,7 +190,7 @@ class TransactionGenerator:
       candidates = set()
       while len(candidates) < num:  # Get sufficient alert members
         hub = random.choice(self.hubs)
-        candidates.update([hub]+self.g.adj[hub].keys())
+        candidates.update([hub] + list(self.g.adj[hub].keys()))
       members = np.random.choice(list(candidates), num, False)
       candidates_set = set(members) & self.subject_candidates
       if not candidates_set:
@@ -886,7 +886,7 @@ class TransactionGenerator:
     """Write alert account list
     """
     def get_outEdge_attrs(g, vid, name):
-      return [v for k, v in nx.get_edge_attributes(g, name).iteritems() if (k[0] == vid or k[1] == vid)]
+      return [v for k, v in nx.get_edge_attributes(g, name).items() if (k[0] == vid or k[1] == vid)]
 
     acct_count = 0
     fname = os.path.join(self.output_dir, self.out_alert_file)
@@ -894,7 +894,7 @@ class TransactionGenerator:
       writer = csv.writer(wf)
       base_attrs = ["alertID", "reason", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep", "scheduleID"]
       writer.writerow(base_attrs + self.attr_names)
-      for gid, sub_g in self.alert_groups.iteritems():
+      for gid, sub_g in self.alert_groups.items():
         modelID = sub_g.graph["modelID"]
         scheduleID = sub_g.graph["scheduleID"]
         reason = sub_g.graph["reason"]

@@ -4,7 +4,7 @@ Please download external jar files from the following sites.
 - [MASON](https://cs.gmu.edu/~eclab/projects/mason/)
   - Download "mason18.zip" from the homepage and extract it.
 - [PaySim](https://github.com/EdgarLopezPhD/PaySim)
-  - Compile Java source files and generate a jar file.
+  - Please use `paysim.jar` already generated.
 - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) 3.6.1
   - Download "commons-math3-3.6.1-bin.tar.gz" and extract the following jar files.
     - commons-math3-3.6.1.jar
@@ -12,8 +12,8 @@ Please download external jar files from the following sites.
     - commons-math3-3.6.1-tools.jar
 - [JSON in Java](https://mvnrepository.com/artifact/org.json/json) 20180813
     - Download the latest jar file from [here](https://github.com/stleary/JSON-java)
-- dsiutils-2.4.2.jar
-- fastutil-8.1.0.jar
+- dsiutils-2.5.4.jar
+- fastutil-8.2.3.jar
 - jsap-2.1.jar
 - mysql-connector-java-5.1.46-bin.jar
 - slf4j-api-1.7.25.jar

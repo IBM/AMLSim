@@ -1,5 +1,5 @@
 numpy
-networkx==1.10
+networkx==1.11
 matplotlib
 powerlaw
 datetime

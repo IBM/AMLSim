@@ -9,9 +9,6 @@ import csv
 import sys
 
 
-
-
-
 def kronecker_generator(scale, edgefactor):
   """Kronecker graph generator
   Ported from octave code in https://graph500.org/?page_id=12#alg:generator

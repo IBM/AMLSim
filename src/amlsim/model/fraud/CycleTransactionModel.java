@@ -76,20 +76,21 @@ public class CycleTransactionModel extends FraudTransactionModel {
      * @param step Current simulation step
      */
     @Override
-    public void sendTransactions(long step) {
+    public void sendTransactions(long step, Account acct) {
         int length = alert.getMembers().size();
         long alertID = alert.getAlertID();
         boolean isFraud = alert.isFraud();
         float amount = getAmount();
 
-//        System.out.println(alertID + " " + Arrays.toString(steps));
         // Create cycle transactions
         for(int i=0; i<length; i++){
             if(steps[i] == step){
                 int j = (i+1) % length;  // i, j: index of the previous, next account
                 Account src = alert.getMembers().get(i);  // The previous account
                 Account dst = alert.getMembers().get(j);  // The next account
-                sendTransaction(step, amount, src, dst, isFraud, alertID);
+                if(src.getID().equals(acct.getID())) {
+                    sendTransaction(step, amount, src, dst, isFraud, alertID);
+                }
             }
         }
     }

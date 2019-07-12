@@ -30,9 +30,9 @@ public class Alert {
      * Add transactions
      * @param step Current simulation step
      */
-    public void registerTransactions(long step){
+    public void registerTransactions(long step, Account acct){
         if(model.isValidStep(step)){
-            model.sendTransactions(step);
+            model.sendTransactions(step, acct);
         }
     }
 

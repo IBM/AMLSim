@@ -5,13 +5,14 @@
 // - Unusually large deposits, deposits in round numbers or deposits in repeated amounts that are not attributable to legitimate sources of income.
 // - Multiple deposits made under reportable thresholds.
 // - The timing of deposits. This is particularly important when dates of illegal payments are known.
-// - Checks written for unusually large amounts (in relation to the suspect’s known practices).
+// - Checks written for unusually large amounts (in relation to the suspect's known practices).
 // - A lack of account activity. This might indicate transactions in currency or the existence of other unknown bank accounts.
 //
 // Note: No specific bank models are used for this fraud transaction model class.
 
 package amlsim.model.fraud;
 
+import amlsim.Account;
 import amlsim.Alert;
 import amlsim.model.AbstractTransactionModel;
 
@@ -55,8 +56,8 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     Alert alert;
     protected float minAmount;
     protected float maxAmount;
-    protected int startStep;
-    protected int endStep;
+    protected long startStep;
+    protected long endStep;
 
     public abstract void setSchedule(int modelID);
 
@@ -83,12 +84,17 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
         return startStep <= step && step <= endStep;
     }
 
+
+    public long getStepRange(){
+        return endStep - startStep + 1;
+    }
+
     /**
      * Common constructor of fraud transaction
      * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
-     * @param startStep Start simulation step (any transactions cannot be carried out before this step)
-     * @param maxStep End simulation step (any transactions cannot be carried out after this step)
+     * @param startStep Start simulation step of alert transactions (any transactions cannot be carried out before this step)
+     * @param maxStep End simulation step of alert transactions (any transactions cannot be carried out after this step)
      */
     public FraudTransactionModel(float minAmount, float maxAmount, int startStep, int maxStep){
         this.minAmount = minAmount;
@@ -124,14 +130,10 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
      * @return A simulation step within startStep and endStep
      */
     protected long getRandomStep(){
-        return alert.getSimulator().random.nextInt(endStep - startStep + 1) + startStep;
+        return alert.getSimulator().random.nextLong(getStepRange()) + startStep;
     }
 
 
-    /**
-     *
-     * @return
-     */
     @Override
     public String getType() {
         return "Fraud";
@@ -141,6 +143,6 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     public final void sendTransaction(long step) {
     }
 
-    public abstract void sendTransactions(long step);
+    public abstract void sendTransactions(long step, Account acct);
 
 }

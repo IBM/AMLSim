@@ -13,6 +13,7 @@ logs/
 
 # Package Files #
 *.jar
+!paysim.jar
 *.war
 *.ear
 *.zip
@@ -31,7 +32,7 @@ tmp/
 # Param files for testing
 paramFiles/*_*/
 
-sample/20K_*/
+sample/*_*/
 
 # Output CSV, Log(txt) and image files
 outputs/*.csv

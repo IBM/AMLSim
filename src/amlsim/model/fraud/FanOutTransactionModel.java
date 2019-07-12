@@ -78,7 +78,10 @@ public class FanOutTransactionModel extends FraudTransactionModel {
     }
 
     @Override
-    public void sendTransactions(long step) {
+    public void sendTransactions(long step, Account acct) {
+        if(!orig.getID().equals(acct.getID())){
+            return;
+        }
         long alertID = alert.getAlertID();
         boolean isFraud = alert.isFraud();
         float amount = getAmount() / dests.size();

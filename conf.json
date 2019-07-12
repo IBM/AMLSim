@@ -34,7 +34,7 @@
     }
   },
   "input": {
-    "directory": "paramFiles",
+    "directory": "paramFiles/1K",
     "accounts": "accounts.csv",
     "alert_patterns": "alertPatterns.csv",
     "degree": "degree.csv",

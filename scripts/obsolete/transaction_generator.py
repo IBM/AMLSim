@@ -748,12 +748,12 @@ class TransactionGenerator:
 
 
 
-  def write_alertgroup_list(self):
+  def write_alert_members_list(self):
 
     def get_outEdge_attrs(g, vid, name):
       return [v for k, v in nx.get_edge_attributes(g, name).iteritems() if (k[0] == vid or k[1] == vid)]
 
-    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alertgroup"))
+    fname = os.path.join(self.output_dir, self.conf.get("OutputFile", "alert_members"))
     with open(fname, "w") as wf:
       writer = csv.writer(wf)
       writer.writerow(["alertID", "clientID", "isSubject", "modelID", "minAmount", "maxAmount", "startStep", "endStep"])
@@ -785,6 +785,6 @@ if __name__ == "__main__":
   txg.load_aml_rule()
   txg.write_account_list()
   txg.write_transaction_list()
-  txg.write_alertgroup_list()
+  txg.write_alert_members_list()
 
 

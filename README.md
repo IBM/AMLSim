@@ -1,6 +1,26 @@
 # AMLSim
 This project aims at building a multi-agent simulator of anti-money laundering - namely AML, and sharing synthetically generated data so that researchers can design and implement their new algorithms over the unified data.
 
+
+# Dependencies
+- Java 8
+  - commons-math 3.6.1
+  - dsiutils 2.4.2
+  - fastutil-8.1.0
+  - jsap 2.1
+  - json
+  - mason
+  - mysql-connector 5.1.46
+  - PaySim
+  - slf4j
+  - sux4j
+  - WebGraph 3.6.1
+- Python 2.7
+  - networkx 1.10 (2.* will not work)
+  - matplotlib
+  - powerlaw
+
+
 # Directory Structure
 See Wiki page [Directory Structure](https://github.com/IBM/AMLSim/wiki/Directory-Structure) for details.
 
@@ -29,7 +49,6 @@ Before running the Python script, please check and edit configuration file `prop
 ```ini
 [InputFile]
 directory = paramFiles/1K
-account_list = accounts.csv
 alertPattern = alertPatterns.csv
 ```
 

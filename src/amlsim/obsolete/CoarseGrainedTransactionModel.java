@@ -19,29 +19,26 @@ public class CoarseGrainedTransactionModel extends AbstractTransactionModel {
 
     @Override
     public void sendTransaction(long step) {
-        if(step < this.startStep || this.endStep < step || this.account.getDests().isEmpty()){
+//        if(step < this.startStep || this.endStep < step || this.account.getDests().isEmpty()){
+//            return;
+//        }
+        if(this.account.getDests().isEmpty()){
             return;
         }
         float amount = this.balance;
 
         int numDests = this.account.getDests().size();
-        int numPerStep = max(numDests / ((int)this.endStep - (int)this.startStep + 1), 1);
-        int start = numPerStep * (int)(step - this.startStep);
-        int end = min(numPerStep * (int)(step - this.startStep + 1), numDests);
-
-//        List<AMLTransaction> txs = new ArrayList<>();
+//        int numPerStep = max(numDests / ((int)this.endStep - (int)this.startStep + 1), 1);
+//        int start = numPerStep * (int)(step - this.startStep);
+//        int end = min(numPerStep * (int)(step - this.startStep + 1), numDests);
+        int numPerStep = max(numDests / (int)AMLSim.getNumOfSteps(), 1);
+        int start = numPerStep * (int)step;
+        int end = min(numPerStep * (int)(step + 1), numDests);
 
         for(int i=start; i<end; i++) {
             Account dest = this.account.getDests().get(i);
             this.sendTransaction(step, amount, dest);
-//            txs.add(tx);
         }
-//        return txs;
     }
-
-//    @Override
-//    public void sent() {
-//
-//    }
 }
 

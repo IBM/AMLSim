@@ -889,34 +889,15 @@ class LogConverter:
         count += 1
 
 
-  # def output_subject_accounts(self):
-  #   subject_ids = set()
-  #   for fg in self.frauds.values():
-  #     subject = fg.subject
-  #     if subject:
-  #       subject_ids.add(subject)
-  #
-  #   output_file = os.path.join(self.work_dir, self.subject_file)
-  #   print("Write subject accounts to %s" % output_file)
-  #   with open(output_file, "w") as wf:
-  #     writer = csv.writer(wf)
-  #     for subject in subject_ids:
-  #         writer.writerow([subject])
-
-
-
 if __name__ == "__main__":
   argv = sys.argv
 
   if len(argv) < 2:
-    print("Usage: python %s [ConfJSON]" % argv[0])
+    print("Usage: python3 %s [ConfJSON]" % argv[0])
     exit(1)
 
   converter = LogConverter(argv[1])
   converter.convert_alert_members()
   converter.convert_acct_tx()
   converter.output_fraud_cases()
-  # converter.output_subject_accounts()
-
-
 

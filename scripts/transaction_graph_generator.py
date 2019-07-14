@@ -428,7 +428,7 @@ class TransactionGenerator:
         in_deg = in_tmp
         out_deg = out_tmp
       else:  # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
-        repeats = num_v / total_v  # Number of repetitions of degree sequences
+        repeats = num_v // total_v  # Number of repetitions of degree sequences
         # print(len(in_deg), len(out_deg), repeats)
         in_deg = in_deg * repeats
         out_deg = out_deg * repeats
@@ -702,8 +702,8 @@ class TransactionGenerator:
 
 
     elif pattern_type == "bipartite":  # bipartite (some accounts --> other accounts)
-      src_list = members[:(num_members/2)]  # The first half members are source accounts
-      dst_list = members[(num_members/2):]  # The last half members are destination accounts
+      src_list = members[:(num_members // 2)]  # The first half members are source accounts
+      dst_list = members[(num_members // 2):]  # The last half members are destination accounts
 
       if transaction_freq is None:  # Number of transactions
         transaction_freq = len(src_list) * len(dst_list)
@@ -723,8 +723,8 @@ class TransactionGenerator:
     elif pattern_type == "mixed":  # fan_out -> bipartite -> fan_in
       src = members[0]  # Source account
       dst = members[num_members-1]  # Destination account
-      src_list = members[1:(num_members/2)]  # First intermediate accounts
-      dst_list = members[(num_members/2):num_members-1]  # Second intermediate accounts
+      src_list = members[1:(num_members // 2)]  # First intermediate accounts
+      dst_list = members[(num_members // 2):num_members-1]  # Second intermediate accounts
 
       if transaction_freq is None:
         transaction_freq = len(src_list) + len(dst_list) + len(src_list) * len(dst_list)
@@ -758,9 +758,9 @@ class TransactionGenerator:
 
 
     elif pattern_type == "stack":  # two dense bipartite layers
-      src_list = members[:num_members/3]  # First 1/3 of members are source accounts
-      mid_list = members[num_members/3:num_members*2/3]  # Second 1/3 of members are intermediate accounts
-      dst_list = members[num_members*2/3:]  # Last 1/3 of members are destination accounts
+      src_list = members[:num_members // 3]  # First 1/3 of members are source accounts
+      mid_list = members[num_members // 3:num_members*2 // 3]  # Second 1/3 of members are intermediate accounts
+      dst_list = members[num_members*2 // 3:]  # Last 1/3 of members are destination accounts
 
       if transaction_freq is None:  # Total number of transactions
         transaction_freq = len(src_list) * len(mid_list) + len(mid_list) * len(dst_list)
@@ -920,14 +920,10 @@ class TransactionGenerator:
 if __name__ == "__main__":
   argv = sys.argv
   if len(argv) < 2:
-    print("Usage: python %s [ConfJSON]" % argv[0])
+    print("Usage: python3 %s [ConfJSON]" % argv[0])
     exit(1)
 
   _conf_file = argv[1]
-  # _acct_file = argv[2]
-  # _deg_file = argv[3]
-  # _type_file = argv[4]
-  # _alert_file = argv[5]
 
   txg = TransactionGenerator(_conf_file)
   txg.load_account_list()  # Load account list CSV file

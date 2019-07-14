@@ -31,7 +31,7 @@ tmp/
 
 # Param files for testing
 paramFiles/*_*/
-
+paramFiles/city*/
 sample/*_*/
 
 # Output CSV, Log(txt) and image files

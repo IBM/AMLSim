@@ -48,7 +48,7 @@ def kronecker_generator_general(N, M):
   a_norm = A/(A + B)
   tmp = N
   while tmp > 0:
-    tmp /= 2
+    tmp //= 2
     ii_bit = (np.random.rand(1, M) > ab).astype(int)
     ac = c_norm * ii_bit + a_norm * (1 - ii_bit)
     jj_bit = (np.random.rand(1, M) > ac).astype(int)

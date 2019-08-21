@@ -26,7 +26,10 @@ hs_err_pid*
 # IntelliJ IDEA
 .idea/
 *.iml
+
+# Temporal files
 tmp/
+__pycache__/
 
 
 # Param files for testing

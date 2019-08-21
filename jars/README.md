@@ -1,7 +1,7 @@
 # External jar files
-Please download external jar files from the following sites.
+Please download external jar files (except paysim.jar) from the following sites and put them just under this directory.
 
-- [MASON](https://cs.gmu.edu/~eclab/projects/mason/)
+- [MASON](https://cs.gmu.edu/~eclab/projects/mason/) 18
   - Download "mason18.zip" from the homepage and extract it.
 - [PaySim](https://github.com/EdgarLopezPhD/PaySim)
   - Please use `paysim.jar` already generated.
@@ -11,7 +11,7 @@ Please download external jar files from the following sites.
     - commons-math3-3.6.1-tests.jar
     - commons-math3-3.6.1-tools.jar
 - [JSON in Java](https://mvnrepository.com/artifact/org.json/json) 20180813
-    - Download the latest jar file from [here](https://github.com/stleary/JSON-java)
+    - The latest jar file is available from [here](https://github.com/stleary/JSON-java)
 - dsiutils-2.5.4.jar
 - fastutil-8.2.3.jar
 - jsap-2.1.jar

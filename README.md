@@ -10,16 +10,16 @@ This project aims at building a multi-agent simulator of anti-money laundering -
   - dsiutils 2.5.4
   - fastutil-8.2.3
   - jsap 2.1
-  - json
-  - mason
+  - JSON in Java 20180813
+  - mason 18
   - mysql-connector 5.1.46
   - PaySim (jar file already exists)
   - slf4j
   - sux4j
   - WebGraph 3.6.1
-- Python 3.7 (You can install the following packages with `pip3 install -r requirements.txt`)
+- Python 3.7 (The following packages can be installed with `pip3 install -r requirements.txt`)
   - NumPy
-  - networkx 1.11 (2.* will not work)
+  - networkx 1.11 (We do not support 2.* due to performance issues)
   - matplotlib
   - powerlaw
   - python-dateutil

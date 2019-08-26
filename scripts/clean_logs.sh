@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
-DIR=./outputs
+OUTPUT=./outputs
+TMP=./tmp
 
-rm -rf ${DIR}/*/
-rm -f ${DIR}/*.txt
-rm -f ${DIR}/*.csv
-rm -f ${DIR}/*.png
-rm -f ${DIR}/*.gif
+rm -rf ${OUTPUT:?}/*/
+rm -f ${OUTPUT}/*.txt
+rm -f ${OUTPUT}/*.csv
+rm -f ${OUTPUT}/*.png
+rm -f ${OUTPUT}/*.gif
+
+rm -f ${TMP}/*.csv
+

@@ -74,7 +74,7 @@ class TransactionGenerator:
         general_conf = self.conf["general"]
 
         # Set random seed
-        seed = general_conf.get("seed")
+        seed = general_conf.get("random_seed")
         self.seed = seed if seed is None else int(seed)
         np.random.seed(self.seed)
         random.seed(self.seed)
@@ -371,16 +371,15 @@ class TransactionGenerator:
         self.num_accounts = aid
         print("Created %d accounts." % self.num_accounts)
 
-    #### Generate base transactions from same degree sequences of transaction CSV
+    # Generate base transactions from same degree sequences of transaction CSV
     def generate_normal_transactions(self):
 
         def get_degrees(deg_csv, num_v):
             """
-
-      :param deg_csv: Degree distribution parameter CSV file
-      :param num_v: Number of total account vertices
-      :return: In-degree and out-degree sequence list
-      """
+            :param deg_csv: Degree distribution parameter CSV file
+            :param num_v: Number of total account vertices
+            :return: In-degree and out-degree sequence list
+            """
             in_deg = list()  # In-degree sequence
             out_deg = list()  # Out-degree sequence
             with open(deg_csv, "r") as rf:  # Load in/out-degree sequences from parameter CSV file for each account
@@ -396,21 +395,26 @@ class TransactionGenerator:
             # print(len(in_deg), len(out_deg))
             assert len(in_deg) == len(out_deg), "In/Out-degree Sequences must have equal length."
             total_v = len(in_deg)
-            if total_v > num_v:  # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
+
+            # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
+            if total_v > num_v:
                 diff = total_v - num_v  # The number of extra accounts to be removed
                 in_tmp = list()
                 out_tmp = list()
                 for i in range(total_v):
                     num_in = in_deg[i]
                     num_out = out_deg[i]
-                    if num_in == num_out and diff > 0:  # Remove element from in/out-degree sequences with the same number
+                    # Remove element from in/out-degree sequences with the same number
+                    if num_in == num_out and diff > 0:
                         diff -= 1
                     else:
                         in_tmp.append(num_in)
                         out_tmp.append(num_out)
                 in_deg = in_tmp
                 out_deg = out_tmp
-            else:  # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
+
+            # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
+            else:
                 repeats = num_v // total_v  # Number of repetitions of degree sequences
                 # print(len(in_deg), len(out_deg), repeats)
                 in_deg = in_deg * repeats
@@ -423,61 +427,113 @@ class TransactionGenerator:
             assert sum(in_deg) == sum(out_deg), "Sequences must have equal sums."
             return in_deg, out_deg
 
+        def _directed_configuration_model(_in_deg, _out_deg, seed=0):
+            """Return a directed_random graph with the given degree sequences without self loop.
+            Based on nx.generators.degree_seq.directed_configuration_model
+            :param _in_deg: Each list entry corresponds to the in-degree of a node.
+            :param _out_deg: Each list entry corresponds to the out-degree of a node.
+            :param seed: Seed for random number generator
+            :return: MultiDiGraph without self loop
+            """
+            if not sum(_in_deg) == sum(_out_deg):
+                raise nx.NetworkXError('Invalid degree sequences. Sequences must have equal sums.')
+
+            random.seed(seed)
+            n_in = len(_in_deg)
+            n_out = len(_out_deg)
+            if n_in < n_out:
+                _in_deg.extend((n_out - n_in) * [0])
+            else:
+                _out_deg.extend((n_in - n_out) * [0])
+
+            num_nodes = len(_in_deg)
+            _g = nx.empty_graph(num_nodes, nx.MultiDiGraph())
+            if num_nodes == 0 or max(_in_deg) == 0:
+                return _g  # No edges
+
+            in_stublist = list()
+            out_stublist = list()
+            for n in _g.nodes():
+                in_stublist.extend(_in_deg[n] * [n])
+                out_stublist.extend(_out_deg[n] * [n])
+            random.shuffle(in_stublist)
+            random.shuffle(out_stublist)
+
+            num_edges = len(in_stublist)
+            for i in range(num_edges):
+                _src = out_stublist[i]
+                _dst = in_stublist[i]
+                if _src == _dst:  # ID conflict causes self-loop
+                    for j in range(i+1, num_edges):
+                        # print("Conflict ID %d at %d" % (_src, i))
+                        if _src != in_stublist[j]:
+                            # print("Swap %d (%d) and %d (%d)" % (in_stublist[i], i, in_stublist[j], j))
+                            in_stublist[i], in_stublist[j] = in_stublist[j], in_stublist[i]  # Swap ID
+                            break
+
+            _g.add_edges_from(zip(out_stublist, in_stublist))
+            for idx, (_src, _dst) in enumerate(_g.edges()):
+                if _src == _dst:
+                    print("Self loop from/to %d at %d" % (_src, idx))
+            return _g
+
         deg_file = os.path.join(self.input_dir, self.degree_file)
         in_deg, out_deg = get_degrees(deg_file, self.num_accounts)
-        g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg,
-                                                                  seed=self.seed)  # Generate a directed graph from degree sequences (not transaction graph)
+        # Generate a directed graph from degree sequences (not transaction graph)
+        g = _directed_configuration_model(in_deg, out_deg, self.seed)
+        # g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg, seed=self.seed)
 
         print("Add %d base transactions" % g.number_of_edges())
         nodes = self.g.nodes()
         for src_i, dst_i in g.edges():
+            assert(src_i != dst_i)
             src = nodes[src_i]
             dst = nodes[dst_i]
             self.add_transaction(src, dst)  # Add edges to transaction graph
 
-    def add_account(self, aid, init_balance, start, end, country, business, modelID, **attr):
+    def add_account(self, aid, init_balance, start, end, country, business, model_id, **attr):
         """Add an account vertex
-    :param aid: Account ID
-    :param init_balance: Initial amount
-    :param start: The day when the account opened
-    :param end: The day when the account closed
-    :param country: Country
-    :param business: business type
-    :param modelID: Remittance model ID
-    :param attr: Optional attributes
-    :return:
-    """
-        if self.check_account_absent(
-                aid):  # Add an account vertex with an ID and attributes if an account with the same ID is not yet added
+        :param aid: Account ID
+        :param init_balance: Initial amount
+        :param start: The day when the account opened
+        :param end: The day when the account closed
+        :param country: Country
+        :param business: business type
+        :param model_id: Remittance model ID
+        :param attr: Optional attributes
+        :return:
+        """
+        # Add an account vertex with an ID and attributes if and only if an account with the same ID is not yet added
+        if self.check_account_absent(aid):
             self.g.add_node(aid, label="account", init_balance=init_balance, start=start, end=end, country=country,
-                            business=business, isFraud=False, modelID=modelID, **attr)
+                            business=business, isFraud=False, modelID=model_id, **attr)
 
     def add_transaction(self, src, dst, amount=None, date=None, ttype=None, **attr):
         """Add a transaction edge
-    :param src: Source account ID
-    :param dst: Destination account ID
-    :param amount: Transaction amount
-    :param date: Transaction date
-    :param ttype: Transaction type description
-    :param attr: Optional attributes
-    :return:
-    """
+        :param src: Source account ID
+        :param dst: Destination account ID
+        :param amount: Transaction amount
+        :param date: Transaction date
+        :param ttype: Transaction type description
+        :param attr: Optional attributes
+        :return:
+        """
         self.check_account_exist(src)  # Ensure the source and destination accounts exist
         self.check_account_exist(dst)
+        if src == dst:
+            raise ValueError("Self loop from/to %s is not allowed for transaction networks" % str(src))
         self.g.add_edge(src, dst, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=ttype)
         self.tx_id += 1
         if self.tx_id % 1000000 == 0:
             print("Added %d transactions" % self.tx_id)
 
-    #### Load Custom Topology Files
-
+    # Load Custom Topology Files
     def add_subgraph(self, members, topology):
         """Add subgraph from exisiting account vertices and given graph topology
-
-    :param members: Account vertex list
-    :param topology: Topology graph
-    :return:
-    """
+        :param members: Account vertex list
+        :param topology: Topology graph
+        :return:
+        """
         if len(members) != topology.number_of_nodes():
             raise nx.NetworkXError("The number of account vertices does not match")
 

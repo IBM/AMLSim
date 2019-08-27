@@ -6,23 +6,23 @@ This project aims at building a multi-agent simulator of anti-money laundering -
 
 # Dependencies
 - Java 8 (Download and copy all jar files to `jars` directory: See also `jars/README.md`)
-  - commons-math 3.6.1
-  - dsiutils 2.5.4
-  - fastutil-8.2.3
-  - jsap 2.1
-  - JSON in Java 20180813
-  - mason 18
-  - mysql-connector 5.1.46
-  - PaySim (jar file already exists)
-  - slf4j
-  - sux4j
-  - WebGraph 3.6.1
+    - [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 18
+    - [PaySim](https://github.com/EdgarLopezPhD/PaySim) (jar file already exists)
+    - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) version 3.6.1
+    - [JSON in Java](https://jar-download.com/artifacts/org.json/json/20180813) version 20180813
+    - [WebGraph](http://webgraph.di.unimi.it/) version 3.6.1
+    - [DSI Utilities](http://dsiutils.di.unimi.it/) version 2.5.4
+    - [fastutil](http://fastutil.di.unimi.it/) version 8.2.3
+    - [Sux for Java](http://sux.di.unimi.it/) version 4.2.0
+    - [JSAP](http://www.martiansoftware.com/jsap/) version 2.1
+    - [SLF4J](https://www.slf4j.org/download.html) version 1.7.25
+    - [MySQL Connector for Java](https://dev.mysql.com/downloads/connector/j/5.1.html) version 5.1
 - Python 3.7 (The following packages can be installed with `pip3 install -r requirements.txt`)
-  - NumPy
-  - networkx 1.11 (We do not support 2.* due to performance issues)
-  - matplotlib
-  - powerlaw
-  - python-dateutil
+    - NumPy
+    - networkx 1.11 (We do not support version 2.* due to performance issues for large graphs)
+    - matplotlib
+    - powerlaw
+    - python-dateutil
 
 
 
@@ -59,7 +59,7 @@ python3 scripts/transaction_graph_generator.py conf.json
 ```
 
 ## 2. Build and launch the transaction simulator (Java)
-Parameters for the simulator are defined at "general" section of `conf.json`. 
+Parameters for the simulator are defined at the "general" section of `conf.json`. 
 
 ```json5
 {
@@ -67,7 +67,7 @@ Parameters for the simulator are defined at "general" section of `conf.json`.
       "random_seed": 0,  // Seed of random number
       "simulation_name": "sample",  // Simulation name (identifier)
       "total_steps": 720,  // Total simulation steps
-      "base_date": "2017-01-01"  // The date corresponds to the step 0 (beginning of this simulation)
+      "base_date": "2017-01-01"  // The date corresponds to the step 0 (the beginning date of this simulation)
   },
 //...
 }
@@ -81,7 +81,7 @@ sh scripts/run_AMLSim.sh conf.json
 
 
 ## 3. Convert the raw transaction log file
-The file names of the output data are defined at "output" section of `conf.json`.
+The file names of the output data are defined at the "output" section of `conf.json`.
 ```json5
 {
 //...
@@ -92,7 +92,7 @@ The file names of the output data are defined at "output" section of `conf.json`
     "cash_transactions": "cash_tx.csv",  // Cash transaction list CSV
     "alert_members": "alert_accounts.csv",  // Alerted account list CSV
     "alert_transactions": "alert_transactions.csv",  // Alerted transaction list CSV
-    "frauds": "frauds.csv",  // Fraud account list CSV
+    "frauds": "frauds.csv",    // Fraud account list CSV
     "party_individuals": "individuals-bulkload.csv",
     "party_organizations": "organizations-bulkload.csv",
     "account_mapping": "accountMapping.csv",

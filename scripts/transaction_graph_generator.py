@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-#### Utility functions parsing values
+# Utility functions parsing values
 def parse_int(value):
     """ Convert string to int
-  :param value: string value
-  :return: int value if the parameter can be converted to str, otherwise None
-  """
+    :param value: string value
+    :return: int value if the parameter can be converted to str, otherwise None
+    """
     try:
         return int(value)
     except (ValueError, TypeError):
@@ -27,9 +27,9 @@ def parse_int(value):
 
 def parse_amount(value):
     """ Convert string to amount (float)
-  :param value: string value
-  :return: float value if the parameter can be converted to float, otherwise None
-  """
+    :param value: string value
+    :return: float value if the parameter can be converted to float, otherwise None
+    """
     try:
         return float(value)
     except (ValueError, TypeError):
@@ -38,9 +38,9 @@ def parse_amount(value):
 
 def parse_flag(value):
     """ Convert string to boolean (True or false)
-  :param value: string value
-  :return: True if the value is equal to "true" (case insensitive), otherwise False
-  """
+    :param value: string value
+    :return: True if the value is equal to "true" (case insensitive), otherwise False
+    """
     return type(value) == str and value.lower() == "true"
 
 
@@ -59,8 +59,8 @@ class TransactionGenerator:
 
     def __init__(self, conf_file):
         """Initialize transaction network from parameter files.
-    :param conf_file: JSON file as configurations
-    """
+        :param conf_file: JSON file as configurations
+        """
         self.g = nx.MultiDiGraph()  # Transaction graph object
         self.num_accounts = 0  # Number of total accounts
         self.degrees = dict()  # Degree distribution
@@ -124,36 +124,36 @@ class TransactionGenerator:
                             "dense": 6}  # Pattern name and model ID
 
         def get_types(type_csv):
-            ttypes = list()
-            with open(type_csv, "r") as rf:
-                reader = csv.reader(rf)
+            tx_types = list()
+            with open(type_csv, "r") as _rf:
+                reader = csv.reader(_rf)
                 next(reader)
                 for row in reader:
                     if row[0].startswith("#"):
                         continue
                     ttype = row[0]
-                    ttypes.extend([ttype] * int(row[1]))
-            return ttypes
+                    tx_types.extend([ttype] * int(row[1]))
+            return tx_types
 
         self.tx_types = get_types(os.path.join(self.input_dir, self.type_file))
 
     def set_subject_candidates(self):
         """Choose fraud subject candidates
-    Currently, it chooses hub accounts with large degree
-    TODO: More options how to choose fraud accounts
-    """
+        Currently, it chooses hub accounts with large degree
+        TODO: More options how to choose fraud accounts
+        """
         self.degrees = self.g.degree(self.g.nodes())
         self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
         self.subject_candidates = set(self.g.nodes())
 
-    #### Highrisk country and business
+    # Highrisk country and business
     def is_highrisk_country(self, country):
         return country in self.highrisk_countries
 
     def is_highrisk_business(self, business):
         return business in self.highrisk_business
 
-    #### Account existence check
+    # Account existence check
     def check_account_exist(self, aid):
         if not self.g.has_node(aid):
             raise KeyError("Account %s does not exist" % str(aid))
@@ -165,13 +165,12 @@ class TransactionGenerator:
         else:
             return True
 
-    def get_alert_members(self, num, hasSubject):
+    def get_alert_members(self, num, has_subject):
         """Get account vertices randomly (high-degree vertices are likely selected)
-
-    :param num: Number of total account vertices
-    :param hasSubject: Whether it has a subject account
-    :return: Account ID list
-    """
+        :param num: Number of total account vertices
+        :param has_subject: Whether it has a subject account
+        :return: Account ID list
+        """
         found = False
         subject = None
         members = list()
@@ -187,18 +186,17 @@ class TransactionGenerator:
                 continue
             subject = random.choice(list(candidates_set))  # Choose the subject accounts from members randomly
             found = True
-            if hasSubject:
+            if has_subject:
                 self.subject_candidates.remove(subject)
         return subject, members
 
     def get_account_vertices(self, num, suspicious=None):
         """Get account vertices randomly
-
-    :param num: Number of total account vertices
-    :param suspicious: If True, extract only suspicious accounts. If False, extract only non-suspicious accounts.
-    If None (default), extract them from all accounts.
-    :return: Account ID list
-    """
+        :param num: Number of total account vertices
+        :param suspicious: If True, extract only suspicious accounts. If False, extract only non-suspicious accounts.
+        If None (default), extract them from all accounts.
+        :return: Account ID list
+        """
         if suspicious is None:
             candidates = self.g.nodes()
         else:
@@ -207,8 +205,8 @@ class TransactionGenerator:
 
     def load_account_list(self):
         """Load and add account vertices from a CSV file
-    :return:
-    """
+        :return:
+        """
         acct_file = os.path.join(self.input_dir, self.account_file)
         if self.is_aggregated:
             self.load_account_param(acct_file)
@@ -217,10 +215,10 @@ class TransactionGenerator:
 
     def load_account_raw(self, acct_file):
         """Load and add account vertices from a CSV file with raw account info
-    header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
-    :param acct_file: Account list file path
-    :return:
-    """
+        header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
+        :param acct_file: Account list file path
+        :return:
+        """
         if self.default_min_balance is None:
             raise KeyError("Option 'default_min_balance' is required to load raw account list")
         min_balance = self.default_min_balance
@@ -297,7 +295,7 @@ class TransactionGenerator:
                 lat = row[idx_lat]
                 model = default_model
                 start = start_day + random.randrange(start_range) if (
-                            start_day is not None and start_range is not None) else -1
+                        start_day is not None and start_range is not None) else -1
                 end = end_day - random.randrange(end_range) if (end_day is not None and end_range is not None) else -1
 
                 attr = {"first_name": first_name, "last_name": last_name, "street_addr": street_addr,
@@ -310,10 +308,10 @@ class TransactionGenerator:
 
     def load_account_param(self, acct_file):
         """Load and add account vertices from a CSV file with aggregated parameters
-    Each row may represent two or more accounts
-    :param acct_file: Account parameter file path
-    :return:
-    """
+        Each row may represent two or more accounts
+        :param acct_file: Account parameter file path
+        :return:
+        """
 
         idx_num = None  # Number of accounts per row
         idx_min = None  # Minimum initial balance
@@ -326,8 +324,7 @@ class TransactionGenerator:
 
         with open(acct_file, "r") as rf:
             reader = csv.reader(rf)
-
-            ## Parse header
+            # Parse header
             header = next(reader)
             for i, k in enumerate(header):
                 if k == "count":
@@ -380,8 +377,8 @@ class TransactionGenerator:
             :param num_v: Number of total account vertices
             :return: In-degree and out-degree sequence list
             """
-            in_deg = list()  # In-degree sequence
-            out_deg = list()  # Out-degree sequence
+            _in_deg = list()  # In-degree sequence
+            _out_deg = list()  # Out-degree sequence
             with open(deg_csv, "r") as rf:  # Load in/out-degree sequences from parameter CSV file for each account
                 reader = csv.reader(rf)
                 next(reader)
@@ -389,12 +386,12 @@ class TransactionGenerator:
                     if row[0].startswith("#"):
                         continue
                     nv = int(row[0])
-                    in_deg.extend(int(row[1]) * [nv])
-                    out_deg.extend(int(row[2]) * [nv])
+                    _in_deg.extend(int(row[1]) * [nv])
+                    _out_deg.extend(int(row[2]) * [nv])
 
             # print(len(in_deg), len(out_deg))
-            assert len(in_deg) == len(out_deg), "In/Out-degree Sequences must have equal length."
-            total_v = len(in_deg)
+            assert len(_in_deg) == len(_out_deg), "In/Out-degree Sequences must have equal length."
+            total_v = len(_in_deg)
 
             # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
             if total_v > num_v:
@@ -402,30 +399,30 @@ class TransactionGenerator:
                 in_tmp = list()
                 out_tmp = list()
                 for i in range(total_v):
-                    num_in = in_deg[i]
-                    num_out = out_deg[i]
+                    num_in = _in_deg[i]
+                    num_out = _out_deg[i]
                     # Remove element from in/out-degree sequences with the same number
                     if num_in == num_out and diff > 0:
                         diff -= 1
                     else:
                         in_tmp.append(num_in)
                         out_tmp.append(num_out)
-                in_deg = in_tmp
-                out_deg = out_tmp
+                _in_deg = in_tmp
+                _out_deg = out_tmp
 
             # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
             else:
                 repeats = num_v // total_v  # Number of repetitions of degree sequences
                 # print(len(in_deg), len(out_deg), repeats)
-                in_deg = in_deg * repeats
-                out_deg = out_deg * repeats
+                _in_deg = _in_deg * repeats
+                _out_deg = _out_deg * repeats
                 # print(len(in_deg))
                 remain = num_v - total_v * repeats  # Number of extra accounts
-                in_deg.extend([1] * remain)  # Add 1-degree account vertices
-                out_deg.extend([1] * remain)
+                _in_deg.extend([1] * remain)  # Add 1-degree account vertices
+                _out_deg.extend([1] * remain)
 
-            assert sum(in_deg) == sum(out_deg), "Sequences must have equal sums."
-            return in_deg, out_deg
+            assert sum(_in_deg) == sum(_out_deg), "Sequences must have equal sums."
+            return _in_deg, _out_deg
 
         def _directed_configuration_model(_in_deg, _out_deg, seed=0):
             """Return a directed_random graph with the given degree sequences without self loop.
@@ -464,7 +461,7 @@ class TransactionGenerator:
                 _src = out_stublist[i]
                 _dst = in_stublist[i]
                 if _src == _dst:  # ID conflict causes self-loop
-                    for j in range(i+1, num_edges):
+                    for j in range(i + 1, num_edges):
                         # print("Conflict ID %d at %d" % (_src, i))
                         if _src != in_stublist[j]:
                             # print("Swap %d (%d) and %d (%d)" % (in_stublist[i], i, in_stublist[j], j))
@@ -486,7 +483,7 @@ class TransactionGenerator:
         print("Add %d base transactions" % g.number_of_edges())
         nodes = self.g.nodes()
         for src_i, dst_i in g.edges():
-            assert(src_i != dst_i)
+            assert (src_i != dst_i)
             src = nodes[src_i]
             dst = nodes[dst_i]
             self.add_transaction(src, dst)  # Add edges to transaction graph
@@ -508,14 +505,13 @@ class TransactionGenerator:
             self.g.add_node(aid, label="account", init_balance=init_balance, start=start, end=end, country=country,
                             business=business, isFraud=False, modelID=model_id, **attr)
 
-    def add_transaction(self, src, dst, amount=None, date=None, ttype=None, **attr):
+    def add_transaction(self, src, dst, amount=None, date=None, ttype=None):
         """Add a transaction edge
         :param src: Source account ID
         :param dst: Destination account ID
         :param amount: Transaction amount
         :param date: Transaction date
         :param ttype: Transaction type description
-        :param attr: Optional attributes
         :return:
         """
         self.check_account_exist(src)  # Ensure the source and destination accounts exist
@@ -529,7 +525,7 @@ class TransactionGenerator:
 
     # Load Custom Topology Files
     def add_subgraph(self, members, topology):
-        """Add subgraph from exisiting account vertices and given graph topology
+        """Add subgraph from existing account vertices and given graph topology
         :param members: Account vertex list
         :param topology: Topology graph
         :return:
@@ -545,19 +541,18 @@ class TransactionGenerator:
 
     def load_edgelist(self, members, csv_name):
         """Load edgelist and add edges with existing account vertices
-
-    :param members: Account vertex list
-    :param csv_name: Edgelist file name
-    :return:
-    """
+        :param members: Account vertex list
+        :param csv_name: Edgelist file name
+        :return:
+        """
         topology = nx.MultiDiGraph()
         topology = nx.read_edgelist(csv_name, delimiter=",", create_using=topology)
         self.add_subgraph(members, topology)
 
     def load_alert_patterns(self):
         """Load an alert (fraud) parameter CSV file
-    :return:
-    """
+        :return:
+        """
         alert_file = os.path.join(self.input_dir, self.alert_file)
 
         idx_num = None
@@ -578,8 +573,7 @@ class TransactionGenerator:
 
         with open(alert_file, "r") as rf:
             reader = csv.reader(rf)
-
-            ## Parse header
+            # Parse header
             header = next(reader)
             for i, k in enumerate(header):
                 if k == "count":
@@ -615,7 +609,7 @@ class TransactionGenerator:
                 else:
                     print("Warning: unknown key: %s" % k)
 
-            ## Generate transaction set
+            # Generate transaction set
             count = 0
             for row in reader:
                 if row[0].startswith("#"):
@@ -636,51 +630,48 @@ class TransactionGenerator:
                 bene_business = parse_flag(row[idx_bene_business]) if idx_bene_business is not None else False
                 is_fraud = parse_flag(row[idx_fraud])
 
-                if not pattern_type in self.alert_types:
+                if pattern_type not in self.alert_types:
                     print("Warning: pattern type (%s) must be one of %s" % (pattern_type, str(self.alert_types.keys())))
                     continue
 
                 if transaction_count is not None and transaction_count < accounts:
-                    print(
-                        "Warning: number of transactions (%d) must not be smaller than the number of accounts (%d)" % (
-                        transaction_count, accounts))
+                    print("Warning: number of transactions (%d) "
+                          "must not be smaller than the number of accounts (%d)" % (transaction_count, accounts))
                     continue
 
-                # members = self.get_account_vertices(accounts)
                 for i in range(num):
-                    ## Add alert patterns
+                    # Add alert patterns
                     self.add_alert_pattern(is_fraud, pattern_type, accounts, scheduleID, individual_amount,
-                                           aggregated_amount, transaction_count,
-                                           amount_difference, period, amount_rounded, orig_country, bene_country,
-                                           orig_business, bene_business)
+                                           aggregated_amount, transaction_count, amount_difference, period,
+                                           amount_rounded, orig_country, bene_country, orig_business, bene_business)
                     count += 1
                     if count % 1000 == 0:
                         print("Write %d alerts" % count)
 
-    def add_alert_pattern(self, isFraud, pattern_type, accounts, scheduleID=1, individual_amount=None,
-                          aggregated_amount=None,
-                          transaction_freq=None, amount_difference=None, period=None, amount_rounded=None,
+    def add_alert_pattern(self, is_fraud, pattern_type, accounts, schedule_id=1, individual_amount=None,
+                          aggregated_amount=None, transaction_freq=None,
+                          amount_difference=None, period=None, amount_rounded=None,
                           orig_country=False, bene_country=False, orig_business=False, bene_business=False):
         """Add an AML rule transaction set
-    :param isFraud: Whether the trasnsaction set is fraud or alert
-    :param pattern_type: Pattern type ("fan_in", "fan_out", "dense", "mixed" or "stack")
-    :param accounts: Number of transaction members (accounts)
-    :param scheduleID: AML pattern transaction schedule model ID
-    :param individual_amount: Minimum individual amount
-    :param aggregated_amount: Minimum aggregated amount
-    :param transaction_freq: Minimum transaction frequency
-    :param amount_difference: Proportion of maximum transaction difference
-    :param period: Lookback period (days)
-    :param amount_rounded: Proportion of rounded amounts
-    :param orig_country: Whether the originator country is suspicious
-    :param bene_country: Whether the beneficiary country is suspicious
-    :param orig_business: Whether the originator business type is suspicious
-    :param bene_business: Whether the beneficiary business type is suspicious
-    :return:
-    """
-        subject, members = self.get_alert_members(accounts, isFraud)
+        :param is_fraud: Whether the transaction set is fraud or alert
+        :param pattern_type: Pattern type ("fan_in", "fan_out", "dense", "mixed" or "stack")
+        :param accounts: Number of transaction members (accounts)
+        :param schedule_id: AML pattern transaction schedule model ID
+        :param individual_amount: Minimum individual amount
+        :param aggregated_amount: Minimum aggregated amount
+        :param transaction_freq: Minimum transaction frequency
+        :param amount_difference: Proportion of maximum transaction difference
+        :param period: Lookback period (days)
+        :param amount_rounded: Proportion of rounded amounts
+        :param orig_country: Whether the originator country is suspicious
+        :param bene_country: Whether the beneficiary country is suspicious
+        :param orig_business: Whether the originator business type is suspicious
+        :param bene_business: Whether the beneficiary business type is suspicious
+        :return:
+        """
+        subject, members = self.get_alert_members(accounts, is_fraud)
 
-        ## Prepare parameters
+        # Prepare parameters
         if individual_amount is None:
             min_amount = self.default_min_amount
             max_amount = self.default_max_amount
@@ -694,9 +685,9 @@ class TransactionGenerator:
         start_day = 0
         end_day = self.total_steps
 
-        ## Create subgraph structure with transaction attributes
-        modelID = self.alert_types[pattern_type]  ## alert model ID
-        sub_g = nx.MultiDiGraph(modelID=modelID, reason=pattern_type, scheduleID=scheduleID, start=start_day,
+        # Create subgraph structure with transaction attributes
+        modelID = self.alert_types[pattern_type]  # alert model ID
+        sub_g = nx.MultiDiGraph(modelID=modelID, reason=pattern_type, scheduleID=schedule_id, start=start_day,
                                 end=end_day)  # Transaction subgraph for an alert
         num_members = len(members)  # Number of accounts
         total_amount = 0
@@ -705,29 +696,23 @@ class TransactionGenerator:
         if pattern_type == "fan_in":  # fan_in pattern (multiple accounts --> single (subject) account)
             src_list = [n for n in members if n != subject]
             dst = subject
-
             if transaction_freq is None:
                 transaction_freq = num_members - 1
-
             for src in itertools.cycle(src_list):  # Generate transactions for the specified number
                 amount = random.uniform(min_amount, max_amount)
                 date = random.randrange(start_day, end_day)
                 sub_g.add_edge(src, dst, amount=amount, date=date)
                 self.g.add_edge(src, dst, amount=amount, date=date)
-
                 transaction_count += 1
                 total_amount += amount
                 if transaction_count >= transaction_freq and total_amount >= aggregated_amount:
                     break
 
-
         elif pattern_type == "fan_out":  # fan_out pattern (single (subject) account --> multiple accounts)
             src = subject
             dst_list = [n for n in members if n != subject]
-
             if transaction_freq is None:
                 transaction_freq = num_members - 1
-
             for dst in itertools.cycle(dst_list):  # Generate transactions for the specified number
                 amount = random.uniform(min_amount, max_amount)
                 date = random.randrange(start_day, end_day)
@@ -739,16 +724,12 @@ class TransactionGenerator:
                 if transaction_count >= transaction_freq and total_amount >= aggregated_amount:
                     break
 
-
-        elif pattern_type == "bipartite":  # bipartite (some accounts --> other accounts)
-            src_list = members[:(num_members // 2)]  # The first half members are source accounts
-            dst_list = members[(num_members // 2):]  # The last half members are destination accounts
-
+        elif pattern_type == "bipartite":  # bipartite (sender accounts --> all-to-all --> receiver accounts)
+            src_list = members[:(num_members // 2)]  # The former half members are sender accounts
+            dst_list = members[(num_members // 2):]  # The latter half members are receiver accounts
             if transaction_freq is None:  # Number of transactions
                 transaction_freq = len(src_list) * len(dst_list)
-
-            for src, dst in itertools.product(src_list,
-                                              dst_list):  # Each source account makes transactions to destination accounts
+            for src, dst in itertools.product(src_list, dst_list):  # All-to-all transactions
                 amount = random.uniform(min_amount, max_amount)
                 date = random.randrange(start_day, end_day)
                 sub_g.add_edge(src, dst, amount=amount, date=date)
@@ -758,7 +739,6 @@ class TransactionGenerator:
                 total_amount += amount
                 if transaction_count > transaction_freq and total_amount >= aggregated_amount:
                     break
-
 
         elif pattern_type == "mixed":  # fan_out -> bipartite -> fan_in
             src = members[0]  # Source account
@@ -795,18 +775,14 @@ class TransactionGenerator:
                 if transaction_count >= transaction_freq and total_amount >= aggregated_amount:
                     break
 
-
-
         elif pattern_type == "stack":  # two dense bipartite layers
             src_list = members[:num_members // 3]  # First 1/3 of members are source accounts
             mid_list = members[num_members // 3:num_members * 2 // 3]  # Second 1/3 of members are intermediate accounts
             dst_list = members[num_members * 2 // 3:]  # Last 1/3 of members are destination accounts
-
             if transaction_freq is None:  # Total number of transactions
                 transaction_freq = len(src_list) * len(mid_list) + len(mid_list) * len(dst_list)
 
-            for src, dst in itertools.product(src_list,
-                                              mid_list):  # Each source account makes transactions to all intermediate accounts
+            for src, dst in itertools.product(src_list, mid_list):  # all-to-all transactions
                 amount = random.uniform(min_amount, max_amount)
                 date = random.randrange(start_day, end_day)
                 sub_g.add_edge(src, dst, amount=amount, date=date)
@@ -815,9 +791,7 @@ class TransactionGenerator:
                 total_amount += amount
                 if transaction_count > transaction_freq and total_amount >= aggregated_amount:
                     break
-
-            for src, dst in itertools.product(mid_list,
-                                              dst_list):  # Each intermediate account makes transactions to all destination accounts
+            for src, dst in itertools.product(mid_list, dst_list):  # all-to-all transactions
                 amount = random.uniform(min_amount, max_amount)
                 date = random.randrange(start_day, end_day)
                 sub_g.add_edge(src, dst, amount=amount, date=date)
@@ -826,11 +800,9 @@ class TransactionGenerator:
                 total_amount += amount
                 if transaction_count > transaction_freq and total_amount >= aggregated_amount:
                     break
-
 
         elif pattern_type == "dense":  # Dense alert accounts (all-to-all)
             dsts = [n for n in members if n != subject]
-
             for dst in dsts:
                 amount = random.uniform(min_amount, max_amount)
                 date = random.randrange(start_day, end_day)
@@ -850,13 +822,11 @@ class TransactionGenerator:
                     sub_g.add_edge(nb2, dst, amount=amount, date=date)
                     self.g.add_edge(nb2, dst, amount=amount, date=date)
 
-
         elif pattern_type == "cycle":  # Cycle transactions
             subject_index = list(members).index(subject)  # Index of member list indicates the subject account
             num = len(members)  # Number of involved accounts
             amount = random.uniform(min_amount, max_amount)  # Transaction amount
             dates = sorted([random.randrange(start_day, end_day) for _ in range(num)])  # Transaction date (in order)
-
             for i in range(num):
                 src_i = (subject_index + i) % num
                 dst_i = (src_i + 1) % num
@@ -872,12 +842,14 @@ class TransactionGenerator:
             return
 
         # Add the generated transaction edges to whole transaction graph
-        sub_g.graph["subject"] = subject if isFraud else None
+        sub_g.graph["subject"] = subject if is_fraud else None
         self.alert_groups[self.alert_id] = sub_g
 
-        # Add fraud flags to account vertices
-        for n in sub_g.nodes():
-            self.g.node[n]["isFraud"] = True
+        # Add the fraud flag to the subject account vertex
+        if is_fraud:
+            self.g.node[subject]["isFraud"] = True
+        # for n in sub_g.nodes():
+        #     self.g.node[n]["isFraud"] = True
         self.alert_id += 1
 
     def write_account_list(self):

@@ -34,7 +34,7 @@
     }
   },
   "input": {
-    "directory": "paramFiles/small",
+    "directory": "paramFiles/small16",
     "schema": "schema.json",
     "accounts": "accounts.csv",
     "alert_patterns": "alertPatterns.csv",

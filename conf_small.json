@@ -34,7 +34,7 @@
     }
   },
   "input": {
-    "directory": "paramFiles/small16",
+    "directory": "paramFiles/small8",
     "schema": "schema.json",
     "accounts": "accounts.csv",
     "alert_patterns": "alertPatterns.csv",
@@ -65,7 +65,7 @@
     "diameter_log": "diameter.csv"
   },
   "graph_generator": {
-    "degree_threshold": 10,
+    "degree_threshold": 4,
     "high_risk_countries": "",
     "high_risk_business": ""
   },

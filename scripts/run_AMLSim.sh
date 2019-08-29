@@ -10,5 +10,5 @@ MAX_HEAP=4g
 
 CONF_JSON=$1
 
-java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xms${MIN_HEAP} -Xmx${MIN_HEAP} -cp "jars/*:bin" amlsim.AMLSim ${CONF_JSON}
+java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xms${MIN_HEAP} -Xmx${MAX_HEAP} -cp "jars/*:bin" amlsim.AMLSim "${CONF_JSON}"
 

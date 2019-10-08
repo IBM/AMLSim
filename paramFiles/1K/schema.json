@@ -27,6 +27,11 @@
       "defaultValue": "USD"
     },
     {
+      "name": "prior_sar_count",
+      "valueType": "boolean",
+      "dataType": "fraud_flag"
+    },
+    {
       "name": "branch_id",
       "valueType": "int",
       "defaultValue": 1
@@ -42,11 +47,6 @@
       "valueType": "date",
       "dataType": "end_time",
       "defaultValue": 1000000
-    },
-    {
-      "name": "prior_sar_count",
-      "valueType": "boolean",
-      "dataType": "fraud_flag"
     },
     {
       "name": "initial_deposit",
@@ -113,26 +113,6 @@
       "name": "tran_id",
       "valueType": "string",
       "dataType": "transaction_id"
-    }, 
-    {
-      "name": "tran_timestamp",
-      "valueType": "date",
-      "dataType": "timestamp"
-    }, 
-    {
-      "name": "base_amt",
-      "valueType": "string",
-      "dataType": "amount"
-    }, 
-    {
-      "name": "tx_type",
-      "valueType": "string",
-      "dataType": "transaction_type"
-    },
-    {
-      "name": "is_frgn_trxn",
-      "valueType": "boolean",
-      "defaultValue": false
     },
     {
       "name": "orig_acct",
@@ -145,6 +125,21 @@
       "dataType": "dest_id"
     },
     {
+      "name": "tx_type",
+      "valueType": "string",
+      "dataType": "transaction_type"
+    },
+    {
+      "name": "base_amt",
+      "valueType": "string",
+      "dataType": "amount"
+    },
+    {
+      "name": "tran_timestamp",
+      "valueType": "date",
+      "dataType": "timestamp"
+    },
+    {
       "name": "is_fraud",
       "valueType": "boolean",
       "dataType": "fraud_flag"
@@ -153,6 +148,11 @@
       "name": "alert_id",
       "valueType": "string",
       "dataType": "alert_id"
+    },
+    {
+      "name": "is_frgn_trxn",
+      "valueType": "boolean",
+      "defaultValue": false
     }
   ],
   "alert_tx": [

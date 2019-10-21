@@ -259,7 +259,7 @@ if __name__ == "__main__":
     print("Transaction log file %s not found." % tx_path)
     exit(1)
 
-  schema_file = conf["output"]["schema"]
+  schema_file = conf["input"]["schema"]
   g = load_csv(tx_path, schema_file)
   output_path = os.path.join(output_dir, sim_name)
   if os.path.isdir(output_path):

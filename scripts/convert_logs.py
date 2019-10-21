@@ -599,7 +599,7 @@ class LogConverter:
             os.makedirs(self.work_dir)
 
         param_dir = conf["input"]["directory"]
-        schema_file = output_conf["schema"]
+        schema_file = conf["input"]["schema"]
         base_date_str = general_conf["base_date"]
         base_date = parse(base_date_str)
         self.schema = Schema(os.path.join(param_dir, schema_file), base_date)

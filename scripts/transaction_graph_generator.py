@@ -1,3 +1,7 @@
+"""
+Generate a base transaction graph used in the simulator
+"""
+
 import networkx as nx
 import numpy as np
 import itertools
@@ -7,6 +11,7 @@ import json
 import os
 import sys
 import logging
+from collections import Counter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -139,12 +144,33 @@ class TransactionGenerator:
 
     def set_subject_candidates(self):
         """Choose fraud subject candidates
-        Currently, it chooses hub accounts with large degree
-        TODO: More options how to choose fraud accounts
+        Currently, it chooses hub accounts with larger degree than threshold
+        TODO: More options how to choose fraud (subject) accounts
         """
         self.degrees = self.g.degree(self.g.nodes())
         self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
         self.subject_candidates = set(self.g.nodes())
+
+    def count_patterns(self, threshold=2):
+        """Count the number of fan-in and fan-out patterns in the generated transaction graph
+        """
+        in_deg = Counter(self.g.in_degree().values())  # in-degree, count
+        out_deg = Counter(self.g.out_degree().values())  # out-degree, count
+        for th in range(2, threshold+1):
+            num_fan_in = sum([c for d, c in in_deg.items() if d >= th])
+            num_fan_out = sum([c for d, c in out_deg.items() if d >= th])
+            print("\tNumber of fan-in / fan-out patterns with", th, "neighbors:", num_fan_in, "/", num_fan_out)
+
+        subject_in_deg = Counter()
+        subject_out_deg = Counter()
+        for sub_g in self.alert_groups.values():
+            subject = sub_g.graph["subject"]
+            subject_in_deg[self.g.in_degree(subject)] += 1
+            subject_out_deg[self.g.out_degree(subject)] += 1
+        for th in range(2, threshold+1):
+            num_fan_in = sum([c for d, c in subject_in_deg.items() if d >= threshold])
+            num_fan_out = sum([c for d, c in subject_out_deg.items() if d >= threshold])
+            print("\tNumber of alerted fan-in / fan-out patterns with", th, "neighbors", num_fan_in, "/", num_fan_out)
 
     # Highrisk country and business
     def is_highrisk_country(self, country):
@@ -389,8 +415,9 @@ class TransactionGenerator:
                     _in_deg.extend(int(row[1]) * [nv])
                     _out_deg.extend(int(row[2]) * [nv])
 
-            # print(len(in_deg), len(out_deg))
-            assert len(_in_deg) == len(_out_deg), "In/Out-degree Sequences must have equal length."
+            in_len, out_len = len(_in_deg), len(_out_deg)
+            assert in_len == out_len, "In-degree (%d) and Out-degree (%d) Sequences must have equal length." \
+                                      % (in_len, out_len)
             total_v = len(_in_deg)
 
             # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
@@ -401,8 +428,7 @@ class TransactionGenerator:
                 for i in range(total_v):
                     num_in = _in_deg[i]
                     num_out = _out_deg[i]
-                    # Remove element from in/out-degree sequences with the same number
-                    if num_in == num_out and diff > 0:
+                    if num_in == num_out and diff > 0:  # Remove extra elements with the same degree
                         diff -= 1
                     else:
                         in_tmp.append(num_in)
@@ -413,10 +439,8 @@ class TransactionGenerator:
             # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
             else:
                 repeats = num_v // total_v  # Number of repetitions of degree sequences
-                # print(len(in_deg), len(out_deg), repeats)
                 _in_deg = _in_deg * repeats
                 _out_deg = _out_deg * repeats
-                # print(len(in_deg))
                 remain = num_v - total_v * repeats  # Number of extra accounts
                 _in_deg.extend([1] * remain)  # Add 1-degree account vertices
                 _out_deg.extend([1] * remain)
@@ -425,7 +449,7 @@ class TransactionGenerator:
             return _in_deg, _out_deg
 
         def _directed_configuration_model(_in_deg, _out_deg, seed=0):
-            """Return a directed_random graph with the given degree sequences without self loop.
+            """Generate a directed random graph with the given degree sequences without self loop.
             Based on nx.generators.degree_seq.directed_configuration_model
             :param _in_deg: Each list entry corresponds to the in-degree of a node.
             :param _out_deg: Each list entry corresponds to the out-degree of a node.
@@ -614,7 +638,7 @@ class TransactionGenerator:
             for row in reader:
                 if row[0].startswith("#"):
                     continue
-                num = int(row[idx_num])
+                num_patterns = int(row[idx_num])  # Number of alert patterns
                 pattern_type = row[idx_type]
                 accounts = int(row[idx_accts])
                 scheduleID = int(row[idx_schedule])
@@ -639,7 +663,7 @@ class TransactionGenerator:
                           "must not be smaller than the number of accounts (%d)" % (transaction_count, accounts))
                     continue
 
-                for i in range(num):
+                for i in range(num_patterns):
                     # Add alert patterns
                     self.add_alert_pattern(is_fraud, pattern_type, accounts, scheduleID, individual_amount,
                                            aggregated_amount, transaction_count, amount_difference, period,
@@ -842,7 +866,9 @@ class TransactionGenerator:
             return
 
         # Add the generated transaction edges to whole transaction graph
-        sub_g.graph["subject"] = subject if is_fraud else None
+        # sub_g.graph["subject"] = subject if is_fraud else None
+        sub_g.graph["subject"] = subject  # Subject account ID
+        sub_g.graph["isFraud"] = is_fraud  # Fraud flag
         self.alert_groups[self.alert_id] = sub_g
 
         # Add the fraud flag to the subject account vertex
@@ -853,11 +879,9 @@ class TransactionGenerator:
         self.alert_id += 1
 
     def write_account_list(self):
-        """Write all account list
-        """
         os.makedirs(self.output_dir, exist_ok=True)
-        fname = os.path.join(self.output_dir, self.out_account_file)
-        with open(fname, "w") as wf:
+        acct_file = os.path.join(self.output_dir, self.out_account_file)
+        with open(acct_file, "w") as wf:
             writer = csv.writer(wf)
             base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY",
                           "ACCOUNT_TYPE", "IS_FRAUD", "TX_BEHAVIOR_ID"]
@@ -879,7 +903,7 @@ class TransactionGenerator:
                 for attr_name in self.attr_names:
                     values.append(prop[attr_name])
                 writer.writerow(values)
-        print("Exported %d accounts." % self.g.number_of_nodes())
+        print("Exported %d accounts to %s" % (self.g.number_of_nodes(), acct_file))
 
     def write_transaction_list(self):
         tx_file = os.path.join(self.output_dir, self.out_tx_file)
@@ -892,12 +916,9 @@ class TransactionGenerator:
                 tid = e[2]
                 ttype = random.choice(self.tx_types)
                 writer.writerow([tid, src, dst, ttype])
-        print("Exported %d transactions." % self.g.number_of_edges())
+        print("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))
 
     def write_alert_members(self):
-        """Write alert account list
-        """
-
         def get_out_edge_attrs(g, vid, name):
             return [v for k, v in nx.get_edge_attributes(g, name).items() if (k[0] == vid or k[1] == vid)]
 
@@ -909,25 +930,25 @@ class TransactionGenerator:
                           "startStep", "endStep", "scheduleID"]
             writer.writerow(base_attrs + self.attr_names)
             for gid, sub_g in self.alert_groups.items():
-                modelID = sub_g.graph["modelID"]
-                scheduleID = sub_g.graph["scheduleID"]
+                model_id = sub_g.graph["modelID"]
+                schedule_id = sub_g.graph["scheduleID"]
                 reason = sub_g.graph["reason"]
                 start = sub_g.graph["start"]
                 end = sub_g.graph["end"]
                 for n in sub_g.nodes():
-                    isSubject = "true" if (sub_g.graph["subject"] == n) else "false"
-                    minAmount = '{:.2f}'.format(min(get_out_edge_attrs(sub_g, n, "amount")))
-                    maxAmount = '{:.2f}'.format(max(get_out_edge_attrs(sub_g, n, "amount")))
-                    minStep = start
-                    maxStep = end
-                    values = [gid, reason, n, isSubject, modelID, minAmount, maxAmount, minStep, maxStep, scheduleID]
+                    is_subject = "true" if (sub_g.graph["isFraud"] and sub_g.graph["subject"] == n) else "false"
+                    min_amt = '{:.2f}'.format(min(get_out_edge_attrs(sub_g, n, "amount")))
+                    max_amt = '{:.2f}'.format(max(get_out_edge_attrs(sub_g, n, "amount")))
+                    min_step = start
+                    max_step = end
+                    values = [gid, reason, n, is_subject, model_id, min_amt, max_amt, min_step, max_step, schedule_id]
                     prop = self.g.node[n]
                     for attr_name in self.attr_names:
                         values.append(prop[attr_name])
                     writer.writerow(values)
                     acct_count += 1
 
-        print("Exported %d members for %d alerted groups." % (acct_count, len(self.alert_groups)))
+        print("Exported %d members for %d alerted groups to %s" % (acct_count, len(self.alert_groups), alert_file))
 
 
 if __name__ == "__main__":
@@ -938,11 +959,21 @@ if __name__ == "__main__":
 
     _conf_file = argv[1]
 
+    # Validation option for graph contractions
+    deg_param = os.getenv("DEGREE")
+    degree_threshold = 0 if deg_param is None else int(deg_param)
+
     txg = TransactionGenerator(_conf_file)
     txg.load_account_list()  # Load account list CSV file
     txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
+    if degree_threshold > 0:
+        print("Generated normal transaction network")
+        txg.count_patterns(degree_threshold)
     txg.set_subject_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
-    txg.load_alert_patterns()
+    txg.load_alert_patterns()  # Load a parameter CSV file for alert (fraud) pattern subgraphs
+    if degree_threshold > 0:
+        print("Added alert transaction patterns")
+        txg.count_patterns(degree_threshold)
     txg.write_account_list()  # Export accounts to a CSV file
     txg.write_transaction_list()  # Export transactions to a CSV file
     txg.write_alert_members()  # Export alert accounts to a CSV file

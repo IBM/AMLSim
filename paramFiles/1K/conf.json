@@ -1,7 +1,7 @@
 {
   "general": {
     "random_seed": 0,
-    "simulation_name": "sample",
+    "simulation_name": "1K",
     "total_steps": 720,
     "base_date": "2017-01-01"
   },

@@ -498,11 +498,11 @@ class TransactionGenerator:
                     print("Self loop from/to %d at %d" % (_src, idx))
             return _g
 
+        # Generate a directed graph from degree sequences (not transaction graph)
+        # TODO: Add options to call scale-free generator functions directly instead of loading degree CSV files
         deg_file = os.path.join(self.input_dir, self.degree_file)
         in_deg, out_deg = get_degrees(deg_file, self.num_accounts)
-        # Generate a directed graph from degree sequences (not transaction graph)
         g = _directed_configuration_model(in_deg, out_deg, self.seed)
-        # g = nx.generators.degree_seq.directed_configuration_model(in_deg, out_deg, seed=self.seed)
 
         print("Add %d base transactions" % g.number_of_edges())
         nodes = self.g.nodes()

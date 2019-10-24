@@ -1,7 +1,7 @@
 {
   "general": {
     "random_seed": 0,
-    "simulation_name": "10K",
+    "simulation_name": "100K",
     "total_steps": 720,
     "base_date": "2017-01-01"
   },
@@ -34,7 +34,7 @@
     }
   },
   "input": {
-    "directory": "paramFiles/10K",
+    "directory": "paramFiles/100K",
     "schema": "schema.json",
     "accounts": "accounts.csv",
     "alert_patterns": "alertPatterns.csv",

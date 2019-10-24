@@ -627,13 +627,13 @@ class LogConverter:
         print("Convert transaction list from %s to %s, %s and %s" % (
             self.log_file, self.tx_file, self.cash_tx_file, self.alert_tx_file))
 
-        af = open(os.path.join(self.input_dir, self.in_acct_file), "r")  # Input account list file
-        rf = open(self.log_file, "r")  # Transaction log file
+        acct_f = open(os.path.join(self.input_dir, self.in_acct_file), "r")  # Input account list file
+        tx_f = open(self.log_file, "r")  # Transaction log file
 
         of = open(os.path.join(self.work_dir, self.out_acct_file), "w")  # Output account list file
         tf = open(os.path.join(self.work_dir, self.tx_file), "w")  # Output transaction list file
         cf = open(os.path.join(self.work_dir, self.cash_tx_file), "w")  # Output cash transaction list file
-        lf = open(os.path.join(self.work_dir, self.alert_tx_file), "w")
+        lf = open(os.path.join(self.work_dir, self.alert_tx_file), "w")  # Output alert transaction list file
 
         pif = open(os.path.join(self.work_dir, self.party_individual_file), "w")  # Party individuals
         pof = open(os.path.join(self.work_dir, self.party_organization_file), "w")  # Party organizations
@@ -641,7 +641,7 @@ class LogConverter:
         ref = open(os.path.join(self.work_dir, self.resolved_entities_file), "w")  # Resolved entities
 
         # Load account list
-        reader = csv.reader(af)
+        reader = csv.reader(acct_f)
         acct_writer = csv.writer(of)
         acct_writer.writerow(self.schema.acct_names)  # write header
 
@@ -698,7 +698,7 @@ class LogConverter:
             am_writer.writerow(output_row)
             mapping_id += 1
 
-        af.close()
+        acct_f.close()
         pif.close()
         pof.close()
         amf.close()
@@ -709,7 +709,7 @@ class LogConverter:
         cash_tx_set = set()
 
         # Load transaction log
-        reader = csv.reader(rf)
+        reader = csv.reader(tx_f)
         tx_writer = csv.writer(tf)
         cash_tx_writer = csv.writer(cf)
         alert_tx_writer = csv.writer(lf)
@@ -773,7 +773,7 @@ class LogConverter:
                 alert_tx_writer.writerow(alert_row)
             tx_id += 1
 
-        rf.close()
+        tx_f.close()
         tf.close()
         cf.close()
         lf.close()
@@ -829,6 +829,8 @@ class LogConverter:
             writer.writerow(output_row)
 
     def output_fraud_cases(self):
+        """Extract subject account list involved in alert transactions from transaction log file
+        """
         input_file = self.log_file
         output_file = os.path.join(self.work_dir, self.fraud_file)
 
@@ -867,7 +869,7 @@ class LogConverter:
                 continue
             data = fg.get_alerts()
             reason = fg.get_reason()
-            escalated = "YES" if (fg.subject is not None) else "NO"
+            escalated = "YES" if (fg.subject is not None) else "NO"  # Fraud or false alert
             for row in data:
                 acct_id, cust_id, date = row
                 org_type = "INDIVIDUAL" if self.org_types[acct_id] == "I" else "COMPANY"

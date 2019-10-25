@@ -627,35 +627,35 @@ class LogConverter:
         print("Convert transaction list from %s to %s, %s and %s" % (
             self.log_file, self.tx_file, self.cash_tx_file, self.alert_tx_file))
 
-        acct_f = open(os.path.join(self.input_dir, self.in_acct_file), "r")  # Input account list file
-        tx_f = open(self.log_file, "r")  # Transaction log file
+        in_acct_f = open(os.path.join(self.input_dir, self.in_acct_file), "r")  # Input account file
+        in_tx_f = open(self.log_file, "r")  # Transaction log file from the Java simulator
 
-        of = open(os.path.join(self.work_dir, self.out_acct_file), "w")  # Output account list file
-        tf = open(os.path.join(self.work_dir, self.tx_file), "w")  # Output transaction list file
-        cf = open(os.path.join(self.work_dir, self.cash_tx_file), "w")  # Output cash transaction list file
-        lf = open(os.path.join(self.work_dir, self.alert_tx_file), "w")  # Output alert transaction list file
+        out_acct_f = open(os.path.join(self.work_dir, self.out_acct_file), "w")  # Output account file
+        out_tx_f = open(os.path.join(self.work_dir, self.tx_file), "w")  # Output transaction file
+        out_cash_tx_f = open(os.path.join(self.work_dir, self.cash_tx_file), "w")  # Output cash transaction file
+        out_alert_tx_f = open(os.path.join(self.work_dir, self.alert_tx_file), "w")  # Output alert transaction file
 
-        pif = open(os.path.join(self.work_dir, self.party_individual_file), "w")  # Party individuals
-        pof = open(os.path.join(self.work_dir, self.party_organization_file), "w")  # Party organizations
-        amf = open(os.path.join(self.work_dir, self.account_mapping_file), "w")  # Account mappings
-        ref = open(os.path.join(self.work_dir, self.resolved_entities_file), "w")  # Resolved entities
+        out_ind_f = open(os.path.join(self.work_dir, self.party_individual_file), "w")  # Party individuals
+        out_org_f = open(os.path.join(self.work_dir, self.party_organization_file), "w")  # Party organizations
+        out_map_f = open(os.path.join(self.work_dir, self.account_mapping_file), "w")  # Account mappings
+        out_ent_f = open(os.path.join(self.work_dir, self.resolved_entities_file), "w")  # Resolved entities
 
         # Load account list
-        reader = csv.reader(acct_f)
-        acct_writer = csv.writer(of)
+        reader = csv.reader(in_acct_f)
+        acct_writer = csv.writer(out_acct_f)
         acct_writer.writerow(self.schema.acct_names)  # write header
 
-        pi_writer = csv.writer(pif)
-        pi_writer.writerow(self.schema.party_ind_names)
-        po_writer = csv.writer(pof)
-        po_writer.writerow(self.schema.party_org_names)
-        am_writer = csv.writer(amf)
-        am_writer.writerow(self.schema.acct_party_names)
-        re_writer = csv.writer(ref)
-        re_writer.writerow(self.schema.party_party_names)
+        ind_writer = csv.writer(out_ind_f)
+        ind_writer.writerow(self.schema.party_ind_names)
+        org_writer = csv.writer(out_org_f)
+        org_writer.writerow(self.schema.party_org_names)
+        map_writer = csv.writer(out_map_f)
+        map_writer.writerow(self.schema.acct_party_names)
+        ent_writer = csv.writer(out_ent_f)
+        ent_writer.writerow(self.schema.party_party_names)
 
         header = next(reader)
-        indices = {name: index for index, name in enumerate(header)}
+        indices = {name: index for index, name in enumerate(header)}  # Column name and index
         id_idx = indices["ACCOUNT_ID"]
         name_idx = indices["CUSTOMER_ID"]
         balance_idx = indices["INIT_BALANCE"]
@@ -688,31 +688,31 @@ class LogConverter:
             party_id = str(acct_id)
             if is_individual:  # Individual
                 output_row = self.schema.get_party_ind_row(party_id)
-                pi_writer.writerow(output_row)
+                ind_writer.writerow(output_row)
             else:
                 output_row = self.schema.get_party_org_row(party_id)
-                po_writer.writerow(output_row)
+                org_writer.writerow(output_row)
 
             # Write account-party mapping row
             output_row = self.schema.get_acct_party_row(mapping_id, acct_id, party_id)
-            am_writer.writerow(output_row)
+            map_writer.writerow(output_row)
             mapping_id += 1
 
-        acct_f.close()
-        pif.close()
-        pof.close()
-        amf.close()
-        ref.close()
+        in_acct_f.close()
+        out_ind_f.close()
+        out_org_f.close()
+        out_map_f.close()
+        out_ent_f.close()
 
-        # Avoid duplicated transaction CSV rows
+        # Avoid duplicated transaction CSV rows in the log file
         tx_set = set()
         cash_tx_set = set()
 
-        # Load transaction log
-        reader = csv.reader(tx_f)
-        tx_writer = csv.writer(tf)
-        cash_tx_writer = csv.writer(cf)
-        alert_tx_writer = csv.writer(lf)
+        # Load transaction log from the Java simulator
+        reader = csv.reader(in_tx_f)
+        tx_writer = csv.writer(out_tx_f)
+        cash_tx_writer = csv.writer(out_cash_tx_f)
+        alert_tx_writer = csv.writer(out_alert_tx_f)
 
         header = next(reader)
         indices = {name: index for index, name in enumerate(header)}
@@ -773,10 +773,10 @@ class LogConverter:
                 alert_tx_writer.writerow(alert_row)
             tx_id += 1
 
-        tx_f.close()
-        tf.close()
-        cf.close()
-        lf.close()
+        in_tx_f.close()
+        out_tx_f.close()
+        out_cash_tx_f.close()
+        out_alert_tx_f.close()
 
         # Count degrees (fan-in/out patterns)
         deg_param = os.getenv("DEGREE")

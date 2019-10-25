@@ -7,20 +7,20 @@ import networkx as nx
 
 from analytics.network_loader import BaseGraphLoader, ResultGraphLoader
 
-
-class GraphStat:
-
-    def __init__(self, conf_json):
-        with open(conf_json, "r") as rf:
-            self.conf = json.load(rf)
-        output_conf = self.conf["output"]
-
-        # Create a transaction graph from output files
-        self.g = nx.MultiDiGraph()
-        acct_file = output_conf["accounts"]
-        tx_file = output_conf["transactions"]
-        alert_acct_file = output_conf["alert_members"]
-        alert_tx_file = output_conf["alert_transactions"]
+#
+# class GraphStat:
+#
+#     def __init__(self, conf_json):
+#         with open(conf_json, "r") as rf:
+#             self.conf = json.load(rf)
+#         output_conf = self.conf["output"]
+#
+#         # Create a transaction graph from output files
+#         self.g = nx.MultiDiGraph()
+#         acct_file = output_conf["accounts"]
+#         tx_file = output_conf["transactions"]
+#         alert_acct_file = output_conf["alert_members"]
+#         alert_tx_file = output_conf["alert_transactions"]
 
 
 if __name__ == "__main__":
@@ -32,8 +32,8 @@ if __name__ == "__main__":
     conf_json = argv[1]
 
     # Base transaction network (as input of the simulator) analytics
-    bgl = BaseGraphLoader(conf_json)
+    # bgl = BaseGraphLoader(conf_json)
 
-    # Final transaction network analysis
+    # Generated transaction network analysis as the final result
     rgl = ResultGraphLoader(conf_json)
-
+    rgl.count_hub_accounts(5, 25)

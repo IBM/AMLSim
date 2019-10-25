@@ -10,16 +10,19 @@ import networkx as nx
 import json
 
 
-ACCT_SAR = "sar"
+# Account (vertex) and transaction (edge) attribute keys
+ACCT_FRAUD = "sar"
 TX_AMOUNT = "amount"
 TX_DATE = "date"
+
+DEGREE_STEP = 5  # Interval of degrees
 
 
 def load_base_csv(acct_csv, tx_csv, schema_data):
     pass
 
 
-def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.Graph:
+def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
     """Load account list CSV and transaction list CSV from AMLSim and generate transaction graph
     :param acct_csv: Account list CSV
     :param tx_csv: Transaction list CSV
@@ -27,7 +30,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.Graph:
     :return: Transaction network as a NetworkX graph object
     """
     acct_id_idx = None
-    acct_sar_idx = None
+    acct_fraud_idx = None
     tx_src_idx = None
     tx_dst_idx = None
     tx_amt_idx = None
@@ -40,7 +43,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.Graph:
         if data_type == "account_id":
             acct_id_idx = idx
         elif data_type == "fraud_flag":
-            acct_sar_idx = idx
+            acct_fraud_idx = idx
     for idx, col in enumerate(schema_data["transaction"]):
         data_type = col.get("dataType")
         if data_type == "orig_id":
@@ -55,7 +58,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.Graph:
 
     _g = nx.MultiDiGraph()
     num_accts = 0
-    num_sar = 0
+    num_fraud = 0
     num_txs = 0
     # Load account list CSV
     print("Load account list CSV file", acct_csv)
@@ -64,17 +67,17 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.Graph:
         next(reader)  # Skip header
         for row in reader:
             acct_id = row[acct_id_idx]  # ACCOUNT_ID
-            is_sar = row[acct_sar_idx].lower() == "true"  # IS_FRAUD
-            attr = {"sar": is_sar}
+            is_fraud = row[acct_fraud_idx].lower() == "true"  # IS_FRAUD
+            attr = {ACCT_FRAUD: is_fraud}
             _g.add_node(acct_id, **attr)
             num_accts += 1
-            if is_sar:
-                num_sar += 1
+            if is_fraud:
+                num_fraud += 1
     print("Number of total accounts: %d" % num_accts)
-    print("Number of SAR accounts: %d (%.2f%%)" % (num_sar, num_sar/num_accts*100))
+    print("Number of fraud accounts: %d (%.2f%%)" % (num_fraud, num_fraud/num_accts*100))
 
     # Load transaction list CSV
-    print("Load transaction list CSV file", tx_csv)
+    print("Loading transaction list CSV file", tx_csv)
     with open(tx_csv, "r") as rf:
         reader = csv.reader(rf)
         next(reader)  # Skip header
@@ -84,25 +87,27 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.Graph:
             amount = float(row[tx_amt_idx])  # TX_AMOUNT
             date = parse(row[tx_date_idx]) if is_date_type else base_date + timedelta(int(row[tx_date_idx]))
             date_str = date.strftime("%Y-%m-%d")
-            attr = {"amount": amount, "date": date_str}
+            attr = {TX_AMOUNT: amount, TX_DATE: date_str}
             _g.add_edge(src_id, dst_id, **attr)
             num_txs += 1
+            if num_txs % 100000 == 0:
+                print("Loaded %d transactions" % num_txs)
     print("Number of transactions: %d" % num_txs)
     return _g
 
 
-def load_alerts(_g, alert_acct_csv, alert_tx_csv, schema_data):
+def load_alert_csv(_g, alert_acct_csv, alert_tx_csv, schema_data):
     """Load alert member and transaction lists
     """
-    pass
+    acct_id_idx = None
 
 
 class __TransactionGraphLoader:
 
-    def __index__(self, conf_json):
+    def __init__(self, conf_json):
         with open(conf_json, "r") as rf:
             self.conf = json.load(rf)
-        schema_json = self.conf["input"]["schema"]
+        schema_json = os.path.join(self.conf["input"]["directory"], self.conf["input"]["schema"])
         with open(schema_json, "r") as rf:
             self.schema = json.load(rf)
         self.output_conf = self.conf["output"]
@@ -111,15 +116,15 @@ class __TransactionGraphLoader:
     def get_graph(self):
         return self.g
 
-    def count_hub_accounts(self, min_degree=2, max_degree=10):
+    def count_hub_accounts(self, min_degree=DEGREE_STEP, max_degree=10):
         """Count number of "hub" accounts by degree
         """
         in_deg = Counter(self.g.in_degree().values())  # in-degree, count
         out_deg = Counter(self.g.out_degree().values())  # out-degree, count
-        for th in range(min_degree, max_degree + 1):
+        for th in range(min_degree, max_degree + 1, DEGREE_STEP):
             num_fan_in = sum([c for d, c in in_deg.items() if d >= th])
             num_fan_out = sum([c for d, c in out_deg.items() if d >= th])
-            print("\tNumber of fan-in / fan-out patterns with", th, "neighbors:", num_fan_in, "/", num_fan_out)
+            print("\tNumber of fan-in / fan-out patterns with", th, "or more neighbors:", num_fan_in, "/", num_fan_out)
 
 
 class BaseGraphLoader(__TransactionGraphLoader):
@@ -143,8 +148,32 @@ class ResultGraphLoader(__TransactionGraphLoader):
         acct_path = os.path.join(output_dir, acct_file)
         tx_path = os.path.join(output_dir, tx_file)
         self.g = load_result_csv(acct_path, tx_path, self.schema)
-        # TODO: Add alert attributes to account vertices and transaction edges
+        self.num_normal_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_FRAUD).items() if not flag])
+        self.num_fraud_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_FRAUD).items() if flag])
 
-    def count_hub_accounts(self, min_degree=2, max_degree=10):
+    def count_hub_accounts(self, min_degree=DEGREE_STEP, max_degree=10):
         super(ResultGraphLoader, self).count_hub_accounts(min_degree, max_degree)
-        # TODO: Extract the same statistical data for normal and alert account vertices
+
+        # Extract the same statistical data for normal and alert account vertices
+        normal_in_deg = Counter([v for k, v in self.g.in_degree().items() if not self.g.node[k][ACCT_FRAUD]])
+        normal_out_deg = Counter([v for k, v in self.g.out_degree().items() if not self.g.node[k][ACCT_FRAUD]])
+        fraud_in_deg = Counter([v for k, v in self.g.in_degree().items() if self.g.node[k][ACCT_FRAUD]])
+        fraud_out_deg = Counter([v for k, v in self.g.out_degree().items() if self.g.node[k][ACCT_FRAUD]])
+
+        print("Number of fan-in / fan-out patterns for %d normal accounts" % self.num_normal_accts)
+        for th in range(min_degree, max_degree + 1, DEGREE_STEP):
+            num_fan_in = sum([c for d, c in normal_in_deg.items() if d >= th])
+            num_fan_out = sum([c for d, c in normal_out_deg.items() if d >= th])
+            ratio_fan_in = num_fan_in / self.num_normal_accts
+            ratio_fan_out = num_fan_out / self.num_normal_accts
+            print("\tNumber of fan-in / fan-out patterns with %d or more neighbors: %d (%.2f%%)/ %d (%.2f%%)" %
+                  (th, num_fan_in, ratio_fan_in * 100, num_fan_out, ratio_fan_out * 100))
+
+        print("Number of fan-in / fan-out patterns for %d fraud accounts" % self.num_fraud_accts)
+        for th in range(min_degree, max_degree + 1, DEGREE_STEP):
+            num_fan_in = sum([c for d, c in fraud_in_deg.items() if d >= th])
+            num_fan_out = sum([c for d, c in fraud_out_deg.items() if d >= th])
+            ratio_fan_in = num_fan_in / self.num_fraud_accts
+            ratio_fan_out = num_fan_out / self.num_fraud_accts
+            print("\tNumber of fan-in / fan-out patterns with %d or more neighbors: %d (%.2f%%)/ %d (%.2f%%)" %
+                  (th, num_fan_in, ratio_fan_in * 100, num_fan_out, ratio_fan_out * 100))

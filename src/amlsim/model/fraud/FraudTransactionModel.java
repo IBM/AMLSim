@@ -22,8 +22,8 @@ import amlsim.model.AbstractTransactionModel;
 public abstract class FraudTransactionModel extends AbstractTransactionModel {
 
     // Fraud transaction model ID
-    public static final int FAN_OUT = 1;
-    public static final int FAN_IN = 2;
+    public static final int FRAUD_FAN_OUT = 1;
+    public static final int FRAUD_FAN_IN = 2;
     public static final int CYCLE = 3;
     public static final int BIPARTITE = 4;
     public static final int STACK = 5;
@@ -44,8 +44,8 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
                                                  int startStep, int endStep){
         FraudTransactionModel model;
         switch(modelID){
-            case FAN_OUT: model = new FanOutTransactionModel(minAmount, maxAmount, startStep, endStep); break;
-            case FAN_IN: model = new FanInTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case FRAUD_FAN_OUT: model = new FanOutTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case FRAUD_FAN_IN: model = new FanInTransactionModel(minAmount, maxAmount, startStep, endStep); break;
             case CYCLE: model = new CycleTransactionModel(minAmount, maxAmount, startStep, endStep); break;
             case BIPARTITE: model = new BipartiteTransactionModel(minAmount, maxAmount, startStep, endStep); break;
             case STACK: model = new StackTransactionModel(minAmount, maxAmount, startStep, endStep); break;
@@ -64,7 +64,11 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     protected long startStep;
     protected long endStep;
 
-    public abstract void setSchedule(int modelID);
+    /**
+     * Set parameters (timestamps and amounts) of transactions
+     * @param modelID Scheduling model ID
+     */
+    public abstract void setParameters(int modelID);
 
     /**
      * Get the number of total transactions in this alert

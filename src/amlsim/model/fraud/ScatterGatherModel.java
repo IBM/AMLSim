@@ -4,6 +4,9 @@ import amlsim.Account;
 
 import java.util.*;
 
+/**
+ * Scatter-Gather transaction model (Main account -> fan-out -> multiple accounts -> fan-in -> single account)
+ */
 public class ScatterGatherModel extends FraudTransactionModel {
 
     private Account orig = null;  // First sender account (main)
@@ -17,7 +20,7 @@ public class ScatterGatherModel extends FraudTransactionModel {
     }
 
     @Override
-    public void setSchedule(int modelID) {
+    public void setParameters(int modelID) {
         orig = alert.getSubjectAccount();
         for (Account acct : alert.getMembers()) {
             if (acct == orig) {
@@ -39,8 +42,6 @@ public class ScatterGatherModel extends FraudTransactionModel {
             scatterSteps[i] = getRandomStepRange(startStep, middleStep);
             gatherSteps[i] = getRandomStepRange(middleStep, endStep);
         }
-//        System.out.println(Arrays.toString(scatterSteps));
-//        System.out.println(Arrays.toString(gatherSteps));
     }
 
     @Override
@@ -53,15 +54,11 @@ public class ScatterGatherModel extends FraudTransactionModel {
     @Override
     public void sendTransactions(long step, Account acct) {
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isFraud();
-        int totalMembers = alert.getMembers().size();
-        int midMembers = totalMembers - 2;
+        boolean isFraud = alert.isSar();
+        int numTotalMembers = alert.getMembers().size();
+        int numMidMembers = numTotalMembers - 2;
 
-//        float scatterAmount = getAmount();
-//        float margin = (float) (scatterAmount * 0.1);
-//        float gatherAmount = scatterAmount - margin;
-
-        for(int i=0; i<midMembers; i++){
+        for(int i=0; i<numMidMembers; i++){
             if(scatterSteps[i] == step){
                 float amount = getAmount();
                 Account _bene = intermediate.get(i);

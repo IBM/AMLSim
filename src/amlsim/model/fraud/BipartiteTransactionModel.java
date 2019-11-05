@@ -15,7 +15,7 @@ import java.util.*;
 public class BipartiteTransactionModel extends FraudTransactionModel {
 
     @Override
-    public void setSchedule(int modelID) {
+    public void setParameters(int modelID) {
 
     }
 

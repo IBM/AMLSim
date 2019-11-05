@@ -30,10 +30,10 @@ public class FanOutTransactionModel extends FraudTransactionModel {
         return alert.getMembers().size() - 1;
     }
 
-    public void setSchedule(int scheduleID){
+    public void setParameters(int scheduleID){
         // Set members
         List<Account> members = alert.getMembers();
-        orig = alert.isFraud() ? alert.getSubjectAccount() : members.get(0);
+        orig = alert.isSar() ? alert.getSubjectAccount() : members.get(0);
         for(Account dest : members){
             if(orig != dest) dests.add(dest);
         }
@@ -79,7 +79,7 @@ public class FanOutTransactionModel extends FraudTransactionModel {
             return;
         }
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isFraud();
+        boolean isFraud = alert.isSar();
         float amount = getAmount() / dests.size();
 
         for(int i=0; i<dests.size(); i++){

@@ -27,7 +27,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
      * Define schedule of transaction
      * @param modelID Schedule model ID as integer
      */
-    public void setSchedule(int modelID){
+    public void setParameters(int modelID){
         List<Account> members = alert.getMembers();  // All fraud transaction members
         int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
@@ -79,7 +79,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
     public void sendTransactions(long step, Account acct) {
         int length = alert.getMembers().size();
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isFraud();
+        boolean isFraud = alert.isSar();
         float amount = getAmount();
 
         // Create cycle transactions

@@ -641,11 +641,11 @@ class TransactionGenerator:
                     continue
                 num_patterns = int(row[idx_num])  # Number of alert patterns
                 pattern_name = row[idx_type]
-                accounts = int(row[idx_accts])
-                scheduleID = int(row[idx_schedule])
+                num_accounts = int(row[idx_accts])
+                schedule_id = int(row[idx_schedule])
                 individual_amount = parse_amount(row[idx_individual])
                 aggregated_amount = parse_amount(row[idx_aggregated])
-                transaction_count = parse_int(row[idx_count])
+                num_transactions = parse_int(row[idx_count])
                 amount_difference = parse_amount(row[idx_difference])
                 period = parse_int(row[idx_period]) if idx_period is not None else self.total_steps
                 amount_rounded = parse_amount(row[idx_rounded]) if idx_rounded is not None else 0.0
@@ -660,15 +660,15 @@ class TransactionGenerator:
                           % (pattern_name, str(self.alert_types.keys())))
                     continue
 
-                if transaction_count is not None and transaction_count < accounts:
+                if num_transactions is not None and num_transactions < num_accounts:
                     print("Warning: number of transactions (%d) "
-                          "must not be smaller than the number of accounts (%d)" % (transaction_count, accounts))
-                    continue
+                          "is smaller than the number of accounts (%d)" % (num_transactions, num_accounts))
+                    num_transactions = num_accounts
 
                 for i in range(num_patterns):
                     # Add alert patterns
-                    self.add_alert_pattern(is_fraud, pattern_name, accounts, scheduleID, individual_amount,
-                                           aggregated_amount, transaction_count, amount_difference, period,
+                    self.add_alert_pattern(is_fraud, pattern_name, num_accounts, schedule_id, individual_amount,
+                                           aggregated_amount, num_transactions, amount_difference, period,
                                            amount_rounded, orig_country, bene_country, orig_business, bene_business)
                     count += 1
                     if count % 1000 == 0:
@@ -688,7 +688,7 @@ class TransactionGenerator:
         :param aggregated_amount: Minimum aggregated amount
         :param transaction_freq: Minimum transaction frequency
         :param amount_difference: Proportion of maximum transaction difference (currently unused)
-        :param period: Lookback period (days, currently unused)
+        :param period: Overall transaction period (days, currently unused)
         :param amount_rounded: Proportion of number of transactions with rounded amounts (currently unused)
         :param orig_country: Whether the originator country is suspicious (currently unused)
         :param bene_country: Whether the beneficiary country is suspicious (currently unused)
@@ -851,7 +851,7 @@ class TransactionGenerator:
         elif pattern_name == "cycle":  # Cycle transactions
             subject_index = list(members).index(subject)  # Index of member list indicates the subject account
             num = len(members)  # Number of involved accounts
-            amount = random.uniform(min_amount, max_amount)  # Transaction amount
+            amount = max_amount  # Initial transaction amount
             dates = sorted([random.randrange(start_day, end_day) for _ in range(num)])  # Ordered transaction date
             for i in range(num):
                 src_i = (subject_index + i) % num
@@ -862,6 +862,7 @@ class TransactionGenerator:
 
                 sub_g.add_edge(src, dst, amount=amount, date=date)
                 self.g.add_edge(src, dst, amount=amount, date=date)
+                amount = max(amount * 0.9, min_amount)  # Decay the next transaction amount
 
         elif pattern_name == "scatter_gather":  # Scatter-Gather (fan-out -> fan-in)
             sub_accounts = [n for n in members if n != subject]

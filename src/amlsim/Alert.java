@@ -71,7 +71,7 @@ public class Alert {
 
     /**
      * Get the subject account
-     * @return If this alert is fraud, return the subject account. Otherwise, return null.
+     * @return If this alert is SAR, return the subject account. Otherwise, return null.
      */
     public Account getSubjectAccount(){
         return subject;
@@ -79,10 +79,12 @@ public class Alert {
 
     /**
      * Get the primary account
-     * @return If this alert is fraud, return the subject account. If this alert is not fraud and has at least one member, return the first account. Otherwise, return null.
+     * @return If this alert is SAR, return the subject account.
+     * If this alert is a false-alert and has one or more members, return the first element of the member list.
+     * If this alert has no members, return null.
      */
-    public Account getPrimaryAccount(){
-        if(isFraud()){
+    public Account getMainAccount(){
+        if(isSar()){
             return getSubjectAccount();
         }else if(members.isEmpty()){
             return null;
@@ -103,7 +105,7 @@ public class Alert {
         return model;
     }
 
-    public boolean isFraud(){
+    public boolean isSar(){
         return this.subject != null;  // The alert group is fraud if and only if a subject account exists
     }
 }

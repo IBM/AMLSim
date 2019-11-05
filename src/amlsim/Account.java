@@ -60,8 +60,8 @@ public class Account extends Client implements Steppable {
 
 		switch(modelID){
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
-			case AbstractTransactionModel.FANOUT: this.model = new FanOutTransactionModel(); break;
-			case AbstractTransactionModel.FANIN: this.model = new FanInTransactionModel(); break;
+			case AbstractTransactionModel.FAN_OUT: this.model = new FanOutTransactionModel(); break;
+			case AbstractTransactionModel.FAN_IN: this.model = new FanInTransactionModel(); break;
 			case AbstractTransactionModel.MUTUAL: this.model = new MutualTransactionModel(); break;
 			case AbstractTransactionModel.FORWARD: this.model = new ForwardTransactionModel(); break;
 			case AbstractTransactionModel.PERIODICAL: this.model = new PeriodicalTransactionModel(); break;
@@ -174,7 +174,7 @@ public class Account extends Client implements Steppable {
 		AMLSim amlsim = (AMLSim) state;
 		long step = state.schedule.getSteps();
 		for(Alert ag : alerts){
-            if(this == ag.getPrimaryAccount()){
+            if(this == ag.getMainAccount()){
                 ag.registerTransactions(step, this);
             }
 		}
@@ -222,7 +222,6 @@ public class Account extends Client implements Steppable {
 	}
 
 	public String getName() {
-//		return Long.toString(this.id);
         return this.id;
 	}
 
@@ -233,9 +232,6 @@ public class Account extends Client implements Steppable {
     public String getID(){
         return this.id;
     }
-//	public long getID(){
-//		return this.id;
-//	}
 
 	/**
 	 * Get the account identifier as String

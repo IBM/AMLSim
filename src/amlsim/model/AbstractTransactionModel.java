@@ -11,22 +11,22 @@ public abstract class AbstractTransactionModel {
 
     // Transaction model ID
     public static final int SINGLE = 0;  // Make a single transaction to each neighbor account
-    public static final int FANOUT = 1;  // Make transactions to all neighbor accounts
-    public static final int FANIN = 2;
+    public static final int FAN_OUT = 1;  // Make transactions to all neighbor accounts
+    public static final int FAN_IN = 2;
     public static final int MUTUAL = 3;
     public static final int FORWARD = 4;
     public static final int PERIODICAL = 5;
 
     private static Random rand = new Random();
-    private static final int FLUCTUATION = 2;  // Fluctuation of the transaction interval TODO: Enable users to specify this value
+    // TODO: Enable users to specify this value
+    private static final int FLUCTUATION = 2;  // Fluctuation of the transaction interval
+    private float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
 
     protected Account account;  // Account object
     protected int interval = 1; // Default transaction interval
     protected float balance;  // Current balance
     protected long startStep = -1;  // The first step of transactions
     protected long endStep = -1;  // The end step of transactions
-    protected float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
-
     /**
      * Get the assumed number of transactions in this simulation
      * @return Number of total transactions

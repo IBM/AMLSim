@@ -74,33 +74,6 @@ public class AMLSim extends ParameterizedPaySim {
 
         numOfSteps = simProp.getSteps();
         logger.info("Simulation Steps: " + numOfSteps);
-
-		//Parse the arguments given
-//		for (int x = 0; x < args.length - 1; x++){
-//			switch (args[x]) {
-//				case "-file":
-//					String filePath = args[x + 1];
-//					super.setPropertiesFile(filePath);
-//					logger.info("Properties File: " + filePath);
-//					break;
-//				case "-for":  //Gets the number of steps
-//					numOfSteps = Long.parseLong(args[x + 1]);
-//					this.setNrOfSteps(numOfSteps);
-//                    logger.info("Simulation Steps: " + numOfSteps);
-//					break;
-//				case "-r":  //Gets the number of repetitions
-//					numOfRepeat = Integer.parseInt(args[x + 1]);
-//                    logger.info("Simulation Repeats: " + numOfRepeat);
-//					break;
-//				case "-inc":  //Gets the number of incrementations for each repetition
-//					double incRepeat = Double.parseDouble(args[x + 1]);
-//					break;
-//				case "-name":  // Simulation name (optional)
-//					simulatorName = args[x + 1];
-//                    logger.info("Simulator Name: " + simulatorName);
-//					break;
-//			}
-//		}
 	}
 
 	public void runSimulation(String[] args){
@@ -191,11 +164,6 @@ public class AMLSim extends ParameterizedPaySim {
 			this.branches.add(new Branch(i));
 		}
 
-//		this.accountFile = this.getParamters().getProperty("accountFile");
-//		this.transactionFile = this.getParamters().getProperty("transactionFile");
-//		this.alertFile = this.getParamters().getProperty("alertFile");
-//		this.counterFile = this.getParamters().getProperty("counterLog");
-//		this.diameterFile = this.getParamters().getProperty("diameterLog");
         this.accountFile = simProp.getInputAcctFile();
         this.transactionFile = simProp.getInputTxFile();
         this.alertFile = simProp.getInputAlertFile();
@@ -336,7 +304,7 @@ public class AMLSim extends ParameterizedPaySim {
 		for(long alertID : scheduleModels.keySet()){
 			int modelID = scheduleModels.get(alertID);
 //			System.out.println(alertID + " " + modelID);
-			alertGroups.get(alertID).getModel().setSchedule(modelID);
+			alertGroups.get(alertID).getModel().setParameters(modelID);
 		}
 		reader.close();
 	}

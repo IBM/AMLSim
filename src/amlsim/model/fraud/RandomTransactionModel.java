@@ -17,7 +17,7 @@ public class RandomTransactionModel extends FraudTransactionModel {
     private static int count = 0;
 
     @Override
-    public void setSchedule(int modelID) {
+    public void setParameters(int modelID) {
 
     }
 
@@ -36,7 +36,7 @@ public class RandomTransactionModel extends FraudTransactionModel {
     }
 
     public void sendTransactions(long step, Account acct){
-        boolean isFraud = alert.isFraud();
+        boolean isFraud = alert.isSar();
         long alertID = alert.getAlertID();
         if(!isValidStep(step))return;
 

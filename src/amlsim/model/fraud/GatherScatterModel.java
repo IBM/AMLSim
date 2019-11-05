@@ -4,6 +4,9 @@ import amlsim.Account;
 
 import java.util.*;
 
+/**
+ * Gather-Scatter transaction model (Multiple accounts -> fan-in -> main account -> fan-out -> multiple accounts)
+ */
 public class GatherScatterModel extends FraudTransactionModel {
 
     private List<Account> origAccts = new ArrayList<>();
@@ -18,13 +21,13 @@ public class GatherScatterModel extends FraudTransactionModel {
     }
 
     @Override
-    public void setSchedule(int modelID) {
-        int numSubAccts = alert.getMembers().size() - 1;
-        int numOrigAccts = numSubAccts / 2;
-        int numBeneAccts = numSubAccts - numOrigAccts;
+    public void setParameters(int modelID) {
+        int numSubMembers = alert.getMembers().size() - 1;
+        int numOrigMembers = numSubMembers / 2;
+        int numBeneMembers = numSubMembers - numOrigMembers;
 
-        gatherSteps = new long[numOrigAccts];
-        scatterSteps = new long[numBeneAccts];
+        gatherSteps = new long[numOrigMembers];
+        scatterSteps = new long[numBeneMembers];
 
         Account mainAcct = alert.getSubjectAccount();
         List<Account> subMembers = new ArrayList<>();
@@ -33,20 +36,20 @@ public class GatherScatterModel extends FraudTransactionModel {
                 subMembers.add(acct);
             }
         }
-        assert(numSubAccts == subMembers.size());
-        for(int i=0; i<numSubAccts; i++){
+        assert(numSubMembers == subMembers.size());
+        for(int i=0; i<numSubMembers; i++){
             Account acct = subMembers.get(i);
-            if(i < numOrigAccts){
+            if(i < numOrigMembers){
                 origAccts.add(acct);
             }else{
                 beneAccts.add(acct);
             }
         }
 
-        for(int i=0; i<numOrigAccts; i++){
+        for(int i=0; i<numOrigMembers; i++){
             gatherSteps[i] = getRandomStepRange(startStep, middleStep);
         }
-        for(int i=0; i<numBeneAccts; i++){
+        for(int i=0; i<numBeneMembers; i++){
             scatterSteps[i] = getRandomStepRange(middleStep, endStep);
         }
     }
@@ -59,7 +62,7 @@ public class GatherScatterModel extends FraudTransactionModel {
     @Override
     public void sendTransactions(long step, Account acct) {
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isFraud();
+        boolean isSar = alert.isSar();
 
         if(step < middleStep){
             for(int i=0; i<gatherSteps.length; i++){
@@ -67,7 +70,7 @@ public class GatherScatterModel extends FraudTransactionModel {
                     Account orig = origAccts.get(i);
                     Account bene = alert.getSubjectAccount();
                     float amount = getAmount();
-                    sendTransaction(step, amount, orig, bene, isFraud, alertID);
+                    sendTransaction(step, amount, orig, bene, isSar, alertID);
                 }
             }
         }else{
@@ -76,7 +79,7 @@ public class GatherScatterModel extends FraudTransactionModel {
                     Account orig = alert.getSubjectAccount();
                     Account bene = beneAccts.get(i);
                     float amount = getAmount();
-                    sendTransaction(step, amount, orig, bene, isFraud, alertID);
+                    sendTransaction(step, amount, orig, bene, isSar, alertID);
                 }
             }
         }

@@ -12,7 +12,7 @@ import amlsim.Account;
 public class StackTransactionModel extends FraudTransactionModel {
     
     @Override
-    public void setSchedule(int modelID) {
+    public void setParameters(int modelID) {
     }
 
     @Override

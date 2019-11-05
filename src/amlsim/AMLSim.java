@@ -335,6 +335,7 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 		for(long alertID : scheduleModels.keySet()){
 			int modelID = scheduleModels.get(alertID);
+//			System.out.println(alertID + " " + modelID);
 			alertGroups.get(alertID).getModel().setSchedule(modelID);
 		}
 		reader.close();
@@ -399,9 +400,9 @@ public class AMLSim extends ParameterizedPaySim {
 		loadAggregatedFile();
 
 		//Initiate the dumpfile output writer
-//		txLogFileName = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName + "//" + AMLSim.simulatorName + "_log.csv";
         txLogFileName = simProp.getOutputTxLogFile();
 		initBufWriter(txLogFileName);
+		logger.info("Transaction log file: " + txLogFileName);
 
 		//add the param list to the object
 		setParamFileList(this.paramFile);

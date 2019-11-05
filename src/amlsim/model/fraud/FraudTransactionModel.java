@@ -28,17 +28,20 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     public static final int BIPARTITE = 4;
     public static final int STACK = 5;
     public static final int DENSE = 6;
+    public static final int SCATTER_GATHER = 7;  // fan-out -> fan-in
+    public static final int GATHER_SCATTER = 8;  // fan-in -> fan-out
 
     /**
      * Create alert transaction model
-     * @param modelID Alert transactoin model ID as int
+     * @param modelID Alert transaction model ID as int
      * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
      * @param startStep Start step
      * @param endStep End step
      * @return Fraud transaction model object
      */
-    public static FraudTransactionModel getModel(int modelID, float minAmount, float maxAmount, int startStep, int endStep){
+    public static FraudTransactionModel getModel(int modelID, float minAmount, float maxAmount,
+                                                 int startStep, int endStep){
         FraudTransactionModel model;
         switch(modelID){
             case FAN_OUT: model = new FanOutTransactionModel(minAmount, maxAmount, startStep, endStep); break;
@@ -47,6 +50,8 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
             case BIPARTITE: model = new BipartiteTransactionModel(minAmount, maxAmount, startStep, endStep); break;
             case STACK: model = new StackTransactionModel(minAmount, maxAmount, startStep, endStep); break;
             case DENSE: model = new RandomTransactionModel(minAmount, maxAmount, startStep, endStep); break;
+            case SCATTER_GATHER: model = new ScatterGatherModel(minAmount, maxAmount, startStep, endStep); break;
+            case GATHER_SCATTER: model = new GatherScatterModel(minAmount, maxAmount, startStep, endStep); break;
             default: throw new IllegalArgumentException("Unknown fraud model ID: " + modelID);
         }
         model.setParameters(minAmount, startStep, endStep);
@@ -94,13 +99,13 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
      * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
      * @param startStep Start simulation step of alert transactions (any transactions cannot be carried out before this step)
-     * @param maxStep End simulation step of alert transactions (any transactions cannot be carried out after this step)
+     * @param endStep End simulation step of alert transactions (any transactions cannot be carried out after this step)
      */
-    public FraudTransactionModel(float minAmount, float maxAmount, int startStep, int maxStep){
+    public FraudTransactionModel(float minAmount, float maxAmount, int startStep, int endStep){
         this.minAmount = minAmount;
         this.maxAmount = maxAmount;
         this.startStep = startStep;
-        this.endStep = maxStep;
+        this.endStep = endStep;
     }
 
     /**
@@ -131,6 +136,11 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
      */
     protected long getRandomStep(){
         return alert.getSimulator().random.nextLong(getStepRange()) + startStep;
+    }
+
+    protected long getRandomStepRange(long start, long end){
+        long range = end - start + 1;
+        return alert.getSimulator().random.nextLong(range) + start;
     }
 
 

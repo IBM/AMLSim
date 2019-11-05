@@ -123,10 +123,14 @@ public abstract class AbstractTransactionModel {
      * @param aid Alert ID
      */
     protected void sendTransaction(long step, float amount, Account orig, Account dest, boolean isFraud, long aid){
-        if(amount <= 0){  // Invalid transaction with no amount
+        if(amount <= 0){  // Invalid transaction amount
+            AMLSim.getLogger().warning("Warning: invalid transaction amount: " + amount);
             return;
         }
         String ttype = orig.getTxType(dest);
+        if(isFraud) {
+            AMLSim.getLogger().info("Handle transaction: " + orig.getID() + " -> " + dest.getID());
+        }
         AMLSim.handleTransaction(step, ttype, amount, orig, dest, isFraud, aid);
     }
 

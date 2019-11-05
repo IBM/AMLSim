@@ -17,8 +17,6 @@ public class FanOutTransactionModel extends FraudTransactionModel {
     private Account orig;
     private List<Account> dests = new ArrayList<>();
 
-    // Transaction schedule
-    private int schedule_mode;
     private long[] steps;
     public static final int SIMULTANEOUS = 1;
     public static final int FIXED_INTERVAL = 2;
@@ -32,9 +30,7 @@ public class FanOutTransactionModel extends FraudTransactionModel {
         return alert.getMembers().size() - 1;
     }
 
-    public void setSchedule(int modelID){
-        this.schedule_mode = modelID;
-
+    public void setSchedule(int scheduleID){
         // Set members
         List<Account> members = alert.getMembers();
         orig = alert.isFraud() ? alert.getSubjectAccount() : members.get(0);
@@ -49,10 +45,10 @@ public class FanOutTransactionModel extends FraudTransactionModel {
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
 
         steps = new long[numDests];
-        if(schedule_mode == SIMULTANEOUS){
+        if(scheduleID == SIMULTANEOUS){
             long step = getRandomStep();
             Arrays.fill(steps, step);
-        }else if(schedule_mode == FIXED_INTERVAL){
+        }else if(scheduleID == FIXED_INTERVAL){
             int range = (int)(endStep - startStep + 1);
             if(numDests < range){
                 interval = range / numDests;
@@ -65,7 +61,7 @@ public class FanOutTransactionModel extends FraudTransactionModel {
                     steps[i] = startStep + i/batch;
                 }
             }
-        }else if(schedule_mode == RANDOM_RANGE){
+        }else if(scheduleID == RANDOM_RANGE){
             for(int i=0; i<numDests; i++){
                 steps[i] = getRandomStep();
             }

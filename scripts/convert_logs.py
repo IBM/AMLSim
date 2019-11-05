@@ -14,7 +14,10 @@ def days_to_date(days):
 
 
 def get_simulator_name(csv_file):
-    # PS_yyyyMMdd_HHmmss_SSS_log.csv --> PS_yyyyMMdd_HHmmss_SSS
+    """Convert log file name to the simulator name
+    :param csv_file: Transaction log file name
+    :return: Simulator name
+    """
     elements = csv_file.split("_")
     return "_".join(elements[:4])
 
@@ -37,8 +40,6 @@ class FraudGroup:
         self.reason = reason  # Description of the fraud reason
         self.transactions = dict()  # Transaction ID, attributes
         self.members = set()  # Accounts involved in the fraud transactions
-        # self.start = None
-        # self.end = None
         self.total_amount = 0.0  # Total transaction amount
         self.count = 0  # Number of transactions
 
@@ -63,32 +64,32 @@ class FraudGroup:
         max_days = max([tx[1] for tx in self.transactions.values()])
         return days_to_date(max_days)
 
-    def output_csv(self, csv_name):
-        wf = open(csv_name, "w")
-        writer = csv.writer(wf)
-
-        # Write header
-        headers = [
-            ["account", "", "", "", "", "", ""],
-            [self.subject, "", "", "start", "end", "", ""],
-            ["", "", "", self.get_start_date(), self.get_end_date(), "", ""],
-            ["", "transaction", "amount", "", "", "", ""],
-            ["", self.count, '{:.2f}'.format(self.total_amount), "", "", "", ""],
-            ["gps_ref", "order_party_acct", "beneficiary_acct",
-             "order_party_name", "beneficiary_name", "amount", "value_date"]
-        ]
-        writer.writerows(headers)
-
-        # Write transactions
-        for tx_id, tx in self.transactions.items():
-            amount = tx[0]
-            date = days_to_date(tx[1])
-            orig_acct = tx[2]
-            bene_acct = tx[3]
-            orig_name = tx[4]
-            bene_name = tx[5]
-            writer.writerow([tx_id, orig_acct, bene_acct, orig_name, bene_name, amount, date])
-        wf.close()
+    # def output_csv(self, csv_name):
+    #     wf = open(csv_name, "w")
+    #     writer = csv.writer(wf)
+    #
+    #     # Write header
+    #     headers = [
+    #         ["account", "", "", "", "", "", ""],
+    #         [self.subject, "", "", "start", "end", "", ""],
+    #         ["", "", "", self.get_start_date(), self.get_end_date(), "", ""],
+    #         ["", "transaction", "amount", "", "", "", ""],
+    #         ["", self.count, '{:.2f}'.format(self.total_amount), "", "", "", ""],
+    #         ["gps_ref", "order_party_acct", "beneficiary_acct",
+    #          "order_party_name", "beneficiary_name", "amount", "value_date"]
+    #     ]
+    #     writer.writerows(headers)
+    #
+    #     # Write transactions
+    #     for tx_id, tx in self.transactions.items():
+    #         amount = tx[0]
+    #         date = days_to_date(tx[1])
+    #         orig_acct = tx[2]
+    #         bene_acct = tx[3]
+    #         orig_name = tx[4]
+    #         bene_name = tx[5]
+    #         writer.writerow([tx_id, orig_acct, bene_acct, orig_name, bene_name, amount, date])
+    #     wf.close()
 
     def get_alerts(self):
         rows = list()

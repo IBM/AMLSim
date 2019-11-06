@@ -18,8 +18,9 @@ public class CycleTransactionModel extends FraudTransactionModel {
     public static final int FIXED_INTERVAL = 0;  // All accounts send money in order with the same interval
     public static final int RANDOM_INTERVAL = 1;  // All accounts send money in order with random intervals
     public static final int UNORDERED = 2;  // All accounts send money randomly
+    private float amount = 0.0F;  // Current transaction amount
 
-    public CycleTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep){
+    CycleTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep){
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -28,6 +29,8 @@ public class CycleTransactionModel extends FraudTransactionModel {
      * @param modelID Schedule model ID as integer
      */
     public void setParameters(int modelID){
+        amount = getAmount();
+
         List<Account> members = alert.getMembers();  // All fraud transaction members
         int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
@@ -80,7 +83,6 @@ public class CycleTransactionModel extends FraudTransactionModel {
         int length = alert.getMembers().size();
         long alertID = alert.getAlertID();
         boolean isFraud = alert.isSar();
-        float amount = getAmount();
 
         // Create cycle transactions
         for(int i=0; i<length; i++){
@@ -90,6 +92,10 @@ public class CycleTransactionModel extends FraudTransactionModel {
                 Account dst = alert.getMembers().get(j);  // The next account
                 if(src.getID().equals(acct.getID())) {
                     sendTransaction(step, amount, src, dst, isFraud, alertID);
+
+                    // Update the next transaction amount
+                    float margin = amount * MARGIN_RATIO;
+                    amount = Math.max(amount - margin, minAmount);
                 }
             }
         }

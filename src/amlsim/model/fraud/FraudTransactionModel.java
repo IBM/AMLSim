@@ -31,6 +31,8 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     public static final int SCATTER_GATHER = 7;  // fan-out -> fan-in
     public static final int GATHER_SCATTER = 8;  // fan-in -> fan-out
 
+    protected final float MARGIN_RATIO = 0.1F;  // Each member will keep this ratio of the received amount
+
     /**
      * Create alert transaction model
      * @param modelID Alert transaction model ID as int

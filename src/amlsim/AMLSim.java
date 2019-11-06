@@ -7,7 +7,6 @@ import amlsim.stat.Diameter;
 import paysim.*;
 
 import java.io.*;
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.*;
@@ -19,13 +18,11 @@ public class AMLSim extends ParameterizedPaySim {
 
     private static SimProperties simProp;
 	public static final boolean TX_OPT = true;  // Optimized transaction
-	public static final int TX_SIZE = 10000000;  // Transaction buffer size
+	private static final int TX_SIZE = 10000000;  // Transaction buffer size
 	private static TransactionRepository txs = new TransactionRepository(TX_SIZE);
 	private static Logger logger = Logger.getLogger("AMLSim");
-	private Handler handler = new ConsoleHandler();
-	private java.util.logging.Formatter formatter = new SimpleFormatter();
 
-    private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
+	private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
 	private Map<Long, Alert> alertGroups = new HashMap<>();
 	private int numBranches = 0;
 	private ArrayList<Branch> branches = new ArrayList<>();
@@ -36,7 +33,6 @@ public class AMLSim extends ParameterizedPaySim {
 	private ArrayList<String> actions = new ArrayList<>();
 	private BufferedWriter bufWriter;
 	private static long numOfSteps = 1;  // Number of simulation steps
-	private int numOfRepeat = 1;    // Number of simulation iterations
 	private static int currentLoop = 0;  // Simulation iteration counter
 	public static String txLogFileName = "";
 
@@ -53,8 +49,10 @@ public class AMLSim extends ParameterizedPaySim {
 	private AMLSim(long seed) {
 		super(seed);
 		super.setTagName("1");
-        logger.addHandler(handler);
-        handler.setFormatter(formatter);
+		Handler handler = new ConsoleHandler();
+		logger.addHandler(handler);
+		java.util.logging.Formatter formatter = new SimpleFormatter();
+		handler.setFormatter(formatter);
         simulatorName = simProp.getSimName();
 	}
 
@@ -78,7 +76,6 @@ public class AMLSim extends ParameterizedPaySim {
 
 	public void runSimulation(String[] args){
 		parseArgs(args);
-		numOfRepeat = 1;
 		executeSimulation();
 	}
 
@@ -86,7 +83,7 @@ public class AMLSim extends ParameterizedPaySim {
 		return numOfSteps;
 	}
 
-    public Account getClientFromID(String id){
+    private Account getClientFromID(String id){
 		int index = this.idMap.get(id);
 		return (Account) this.getClients().get(index);
 	}
@@ -199,7 +196,7 @@ public class AMLSim extends ParameterizedPaySim {
 
 	private final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "IS_FRAUD", "TX_BEHAVIOR_ID", "INIT_BALANCE", "START_DATE", "END_DATE"));
 
-	protected void loadAccountFile(String accountFile) throws IOException{
+	private void loadAccountFile(String accountFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(accountFile));
 		String line = reader.readLine();
 		logger.info("Account CSV header: " + line);
@@ -238,13 +235,13 @@ public class AMLSim extends ParameterizedPaySim {
 		reader.close();
 	}
 
-	protected void loadTransactionFile(String transactionFile) throws IOException{
+	private void loadTransactionFile(String transactionFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(transactionFile));
 		String line = reader.readLine();
 		Map<String, Integer> columnIndex = getColumnIndices(line);
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
-			long txID = Long.parseLong(elements[columnIndex.get("id")]);
+//			long txID = Long.parseLong(elements[columnIndex.get("id")]);
             String srcID = elements[columnIndex.get("src")];
             String dstID = elements[columnIndex.get("dst")];
 
@@ -259,7 +256,7 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 
 
-	protected void loadAlertFile(String alertFile) throws IOException{
+	private void loadAlertFile(String alertFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(alertFile));
 		String line = reader.readLine();
 		Map<String, Integer> columnIndex = getColumnIndices(line);
@@ -421,10 +418,10 @@ public class AMLSim extends ParameterizedPaySim {
 		System.out.println("Simulation name: " + AMLSim.simulatorName);
 	}
 
-	private double getDoublePrecision(double d) {
-		final int precision = 2;
-		return (new BigDecimal(d)).setScale(precision, BigDecimal.ROUND_HALF_UP).doubleValue();
-	}
+//	private double getDoublePrecision(double d) {
+//		final int precision = 2;
+//		return (new BigDecimal(d)).setScale(precision, BigDecimal.ROUND_HALF_UP).doubleValue();
+//	}
 
 	public static void handleTransaction(long step, String desc, float amt, Account orig, Account dest, boolean fraud, long aid){
         String origID = orig.getID();
@@ -443,7 +440,7 @@ public class AMLSim extends ParameterizedPaySim {
 		diameter.addEdge(origID, destID);
 	}
 
-	public void writeDiameter(long step, double[] result){
+	private void writeDiameter(long step, double[] result){
 		try{
 			BufferedWriter writer = new BufferedWriter(new FileWriter(diameterFile, true));
 			writer.write(step + "," + result[0] + "," + result[1] + "\n");
@@ -464,30 +461,21 @@ public class AMLSim extends ParameterizedPaySim {
 
 
 	public static void main(String[] args){
-//		if(args.length < 6){
-//			System.err.println("Usage: java amlsim.AMLSim -file [PropertyFile] -for [Steps] -r [Repeats] [-name [SimulatorName]]");
-//			System.exit(1);
-//		}
         if(args.length < 1){
             System.err.println("Usage: java amlsim.AMLSim [ConfFile]");
             System.exit(1);
         }
 
+		// Loading configuration JSON file instead of parsing command line arguments
         String propFile = args[0];
         try {
             simProp = new SimProperties(propFile);
         }catch (IOException e){
-            System.err.println("Cannot load JSON file: " + propFile);
+            System.err.println("Cannot load configuration JSON file: " + propFile);
             e.printStackTrace();
             System.exit(1);
         }
 
-//		int nrOfTimesRepeat = Integer.parseInt(args[5]);
-//		for(int i=0; i<nrOfTimesRepeat; i++){
-//			AMLSim p = new AMLSim(1);
-//			p.setCurrentLoop(i);
-//			p.runSimulation(args);
-//		}
         int seed = simProp.getSeed();
         AMLSim sim = new AMLSim(seed);
         sim.setCurrentLoop(0);

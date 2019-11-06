@@ -14,13 +14,19 @@ public class ScatterGatherModel extends FraudTransactionModel {
     private List<Account> intermediate = new ArrayList<>();
     private long[] scatterSteps;
     private long[] gatherSteps;
+    private float scatterAmount;
+    private float gatherAmount;
 
-    public ScatterGatherModel(float minAmount, float maxAmount, int startStep, int maxStep) {
+    ScatterGatherModel(float minAmount, float maxAmount, int startStep, int maxStep) {
         super(minAmount, maxAmount, startStep, maxStep);
     }
 
     @Override
     public void setParameters(int modelID) {
+        scatterAmount = getAmount();
+        float margin = scatterAmount * MARGIN_RATIO;
+        gatherAmount = Math.max(scatterAmount - margin, minAmount);
+
         orig = alert.getSubjectAccount();
         for (Account acct : alert.getMembers()) {
             if (acct == orig) {
@@ -60,15 +66,11 @@ public class ScatterGatherModel extends FraudTransactionModel {
 
         for(int i=0; i<numMidMembers; i++){
             if(scatterSteps[i] == step){
-                float amount = getAmount();
                 Account _bene = intermediate.get(i);
-                sendTransaction(step, amount, orig, _bene, isFraud, alertID);
-//                System.out.println("Scatter " + i + " " + step + " " + amount);
+                sendTransaction(step, scatterAmount, orig, _bene, isFraud, alertID);
             }else if(gatherSteps[i] == step) {
-                float amount = getAmount();
                 Account _orig = intermediate.get(i);
-                sendTransaction(step, amount, _orig, bene, isFraud, alertID);
-//                System.out.println("Gather " + i + " " + step + " " + amount);
+                sendTransaction(step, gatherAmount, _orig, bene, isFraud, alertID);
             }
         }
     }

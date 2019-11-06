@@ -14,14 +14,18 @@ public class GatherScatterModel extends FraudTransactionModel {
     private long[] gatherSteps;
     private long[] scatterSteps;
     private long middleStep;
+    private float totalReceivedAmount = 0.0F;
+    private float scatterAmount;
 
-    public GatherScatterModel(float minAmount, float maxAmount, int startStep, int endStep) {
+    GatherScatterModel(float minAmount, float maxAmount, int startStep, int endStep) {
         super(minAmount, maxAmount, startStep, endStep);
-        middleStep = (startStep + endStep) / 2;
     }
 
     @Override
     public void setParameters(int modelID) {
+        middleStep = (startStep + endStep) / 2;
+        scatterAmount = minAmount;
+
         int numSubMembers = alert.getMembers().size() - 1;
         int numOrigMembers = numSubMembers / 2;
         int numBeneMembers = numSubMembers - numOrigMembers;
@@ -71,15 +75,20 @@ public class GatherScatterModel extends FraudTransactionModel {
                     Account bene = alert.getSubjectAccount();
                     float amount = getAmount();
                     sendTransaction(step, amount, orig, bene, isSar, alertID);
+                    totalReceivedAmount += amount;
                 }
             }
         }else{
-            for(int i=0; i<scatterSteps.length; i++){
+            int numScatters = scatterSteps.length;
+            if(step == middleStep){
+                float margin = totalReceivedAmount * MARGIN_RATIO;
+                scatterAmount = Math.max((totalReceivedAmount - margin) / numScatters, minAmount);
+            }
+            for(int i=0; i<numScatters; i++){
                 if(scatterSteps[i] == step){
                     Account orig = alert.getSubjectAccount();
                     Account bene = beneAccts.get(i);
-                    float amount = getAmount();
-                    sendTransaction(step, amount, orig, bene, isSar, alertID);
+                    sendTransaction(step, minAmount, orig, bene, isSar, alertID);
                 }
             }
         }

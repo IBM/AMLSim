@@ -862,7 +862,8 @@ class TransactionGenerator:
 
                 sub_g.add_edge(src, dst, amount=amount, date=date)
                 self.g.add_edge(src, dst, amount=amount, date=date)
-                amount = max(amount * 0.9, min_amount)  # Decay the next transaction amount
+                margin = amount * 0.1  # Margin the beneficiary account can gain
+                amount = max(amount - margin, min_amount)
 
         elif pattern_name == "scatter_gather":  # Scatter-Gather (fan-out -> fan-in)
             sub_accounts = [n for n in members if n != subject]

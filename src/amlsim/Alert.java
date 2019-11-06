@@ -97,7 +97,7 @@ public class Alert {
      * Set subject account
      * @param fraudster Subject account object
      */
-    public void setSubjectAccount(FraudAccount fraudster){
+    public void setMainAccount(FraudAccount fraudster){
         this.subject = fraudster;
     }
 

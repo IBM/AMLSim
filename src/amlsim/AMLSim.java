@@ -109,7 +109,7 @@ public class AMLSim extends ParameterizedPaySim {
 
 		// Load alert file
 		try{
-			loadAlertFile(this.alertFile);
+			loadAlertMemberFile(this.alertFile);
 		}catch(IOException e){
 			System.err.println("Cannot load alert file: " + this.alertFile);
 			e.printStackTrace();
@@ -194,7 +194,7 @@ public class AMLSim extends ParameterizedPaySim {
 		return columnIndex;
 	}
 
-	private final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "IS_FRAUD", "TX_BEHAVIOR_ID", "INIT_BALANCE", "START_DATE", "END_DATE"));
+	private final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "IS_SAR", "TX_BEHAVIOR_ID", "INIT_BALANCE", "START_DATE", "END_DATE"));
 
 	private void loadAccountFile(String accountFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(accountFile));
@@ -207,7 +207,7 @@ public class AMLSim extends ParameterizedPaySim {
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
             String accountID = elements[columnIndex.get("ACCOUNT_ID")];
-			boolean isFraud = elements[columnIndex.get("IS_FRAUD")].toLowerCase().equals("true");
+			boolean isSar = elements[columnIndex.get("IS_SAR")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
 			float init_balance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
 			int start_step = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
@@ -219,7 +219,7 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-			Account client = isFraud ? new FraudAccount(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues)
+			Account client = isSar ? new FraudAccount(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues)
 					: new Account(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues);
 
 			int index = this.getClients().size();
@@ -256,7 +256,9 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 
 
-	private void loadAlertFile(String alertFile) throws IOException{
+	private void loadAlertMemberFile(String alertFile) throws IOException{
+		logger.info("Load alert member list from:" + alertFile);
+
 		BufferedReader reader = new BufferedReader(new FileReader(alertFile));
 		String line = reader.readLine();
 		Map<String, Integer> columnIndex = getColumnIndices(line);
@@ -266,7 +268,7 @@ public class AMLSim extends ParameterizedPaySim {
 			long alertID = Long.parseLong(elements[columnIndex.get("alertID")]);
             String clientID = elements[columnIndex.get("clientID")];
 
-			boolean isSubject = elements[columnIndex.get("isSubject")].toLowerCase().equals("true");
+			boolean isSar = elements[columnIndex.get("isSar")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
 			float minAmount = Float.parseFloat(elements[columnIndex.get("minAmount")]);
 			float maxAmount = Float.parseFloat(elements[columnIndex.get("maxAmount")]);
@@ -292,8 +294,8 @@ public class AMLSim extends ParameterizedPaySim {
 			}
 			Account c = getClientFromID(clientID);
 			fg.addMember(c);
-			if(isSubject){
-				fg.setSubjectAccount((FraudAccount) c);
+			if(isSar){
+				fg.setMainAccount((FraudAccount) c);
 				c.setCase(true);
 			}
 			scheduleModels.put(alertID, scheduleID);

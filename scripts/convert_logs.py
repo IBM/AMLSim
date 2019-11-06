@@ -33,20 +33,24 @@ def get_bank(acct_id):
 CASH_TYPES = {"CASH-IN", "CASH-OUT"}
 
 
-class FraudGroup:
+class AMLTypology:
+    """Suspicious transaction and account group
+    """
 
     def __init__(self, reason):
-        self.subject = None  # Subject account ID
-        self.reason = reason  # Description of the fraud reason
+        self.is_sar = False  # SAR flag
+        self.main_acct = None  # Main account ID
+        self.reason = reason  # Description of the SAR
         self.transactions = dict()  # Transaction ID, attributes
-        self.members = set()  # Accounts involved in the fraud transactions
+        self.members = set()  # Accounts involved in the alert transactions
         self.total_amount = 0.0  # Total transaction amount
         self.count = 0  # Number of transactions
 
-    def add_member(self, member, is_subject):
+    def add_member(self, member, is_sar):
         self.members.add(member)
-        if is_subject:
-            self.subject = member
+        if is_sar:
+            self.is_sar = True
+            self.main_acct = member
 
     def add_tx(self, tx_id, amount, days, orig_acct, dest_acct, orig_name, dest_name, attr):
         self.transactions[tx_id] = (amount, days, orig_acct, dest_acct, orig_name, dest_name, attr)
@@ -63,33 +67,6 @@ class FraudGroup:
     def get_end_date(self):
         max_days = max([tx[1] for tx in self.transactions.values()])
         return days_to_date(max_days)
-
-    # def output_csv(self, csv_name):
-    #     wf = open(csv_name, "w")
-    #     writer = csv.writer(wf)
-    #
-    #     # Write header
-    #     headers = [
-    #         ["account", "", "", "", "", "", ""],
-    #         [self.subject, "", "", "start", "end", "", ""],
-    #         ["", "", "", self.get_start_date(), self.get_end_date(), "", ""],
-    #         ["", "transaction", "amount", "", "", "", ""],
-    #         ["", self.count, '{:.2f}'.format(self.total_amount), "", "", "", ""],
-    #         ["gps_ref", "order_party_acct", "beneficiary_acct",
-    #          "order_party_name", "beneficiary_name", "amount", "value_date"]
-    #     ]
-    #     writer.writerows(headers)
-    #
-    #     # Write transactions
-    #     for tx_id, tx in self.transactions.items():
-    #         amount = tx[0]
-    #         date = days_to_date(tx[1])
-    #         orig_acct = tx[2]
-    #         bene_acct = tx[3]
-    #         orig_name = tx[4]
-    #         bene_name = tx[5]
-    #         writer.writerow([tx_id, orig_acct, bene_acct, orig_name, bene_name, amount, date])
-    #     wf.close()
 
     def get_alerts(self):
         rows = list()
@@ -118,7 +95,7 @@ class Schema:
             self.acct_balance_idx = None
             self.acct_start_idx = None
             self.acct_end_idx = None
-            self.acct_fraud_idx = None
+            self.acct_sar_idx = None
             self.acct_model_idx = None
 
             self.tx_num_cols = None
@@ -132,7 +109,7 @@ class Schema:
             self.tx_type_idx = None
             self.tx_orig_idx = None
             self.tx_dest_idx = None
-            self.tx_fraud_idx = None
+            self.tx_sar_idx = None
             self.tx_alert_idx = None
 
             self.alert_acct_num_cols = None
@@ -155,7 +132,7 @@ class Schema:
             self.alert_tx_name2idx = dict()
             self.alert_tx_id_idx = None
             self.alert_tx_type_idx = None
-            self.alert_tx_fraud_idx = None
+            self.alert_tx_sar_idx = None
             self.alert_tx_idx = None
             self.alert_tx_orig_idx = None
             self.alert_tx_dest_idx = None
@@ -239,8 +216,8 @@ class Schema:
                 self.acct_start_idx = idx
             elif dtype == "end_time":
                 self.acct_end_idx = idx
-            elif dtype == "fraud_flag":
-                self.acct_fraud_idx = idx
+            elif dtype == "sar_flag":
+                self.acct_sar_idx = idx
             elif dtype == "model_id":
                 self.acct_model_idx = idx
 
@@ -270,8 +247,8 @@ class Schema:
                 self.tx_orig_idx = idx
             elif dtype == "dest_id":
                 self.tx_dest_idx = idx
-            elif dtype == "fraud_flag":
-                self.tx_fraud_idx = idx
+            elif dtype == "sar_flag":
+                self.tx_sar_idx = idx
             elif dtype == "alert_id":
                 self.tx_alert_idx = idx
 
@@ -322,8 +299,8 @@ class Schema:
                 self.alert_tx_id_idx = idx
             elif dtype == "alert_type":
                 self.alert_tx_type_idx = idx
-            elif dtype == "fraud_flag":
-                self.alert_tx_fraud_idx = idx
+            elif dtype == "sar_flag":
+                self.alert_tx_sar_idx = idx
             elif dtype == "transaction_id":
                 self.alert_tx_idx = idx
             elif dtype == "orig_id":
@@ -425,7 +402,7 @@ class Schema:
         dt = self._base_date + datetime.timedelta(num_days)
         return dt.isoformat() + "Z"  # UTC
 
-    def get_acct_row(self, acct_id, acct_name, init_balance, start_str, end_str, is_fraud, model_id, **attr):
+    def get_acct_row(self, acct_id, acct_name, init_balance, start_str, end_str, is_sar, model_id, **attr):
         row = list(self.acct_defaults)
         row[self.acct_id_idx] = acct_id
         row[self.acct_name_idx] = acct_name
@@ -444,7 +421,7 @@ class Schema:
         except ValueError:  # If failed, keep the default value
             pass
 
-        row[self.acct_fraud_idx] = is_fraud
+        row[self.acct_sar_idx] = is_sar
         row[self.acct_model_idx] = model_id
 
         for name, value in attr.items():
@@ -457,7 +434,7 @@ class Schema:
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
-    def get_tx_row(self, _tx_id, _timestamp, _amount, _tx_type, _orig, _dest, _is_fraud, _alert_id, **attr):
+    def get_tx_row(self, _tx_id, _timestamp, _amount, _tx_type, _orig, _dest, _is_sar, _alert_id, **attr):
         row = list(self.tx_defaults)
         row[self.tx_id_idx] = _tx_id
         row[self.tx_time_idx] = _timestamp
@@ -465,7 +442,7 @@ class Schema:
         row[self.tx_type_idx] = _tx_type
         row[self.tx_orig_idx] = _orig
         row[self.tx_dest_idx] = _dest
-        row[self.tx_fraud_idx] = _is_fraud
+        row[self.tx_sar_idx] = _is_sar
         row[self.tx_alert_idx] = _alert_id
 
         for name, value in attr.items():
@@ -499,12 +476,12 @@ class Schema:
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
-    def get_alert_tx_row(self, _alert_id, _alert_type, _is_fraud, _tx_id, _orig, _dest,
+    def get_alert_tx_row(self, _alert_id, _alert_type, _is_sar, _tx_id, _orig, _dest,
                          _tx_type, _amount, _timestamp, **attr):
         row = list(self.alert_tx_defaults)
         row[self.alert_tx_id_idx] = _alert_id
         row[self.alert_tx_type_idx] = _alert_type
-        row[self.alert_tx_fraud_idx] = _is_fraud
+        row[self.alert_tx_sar_idx] = _is_sar
         row[self.alert_tx_idx] = _tx_id
         row[self.alert_tx_orig_idx] = _orig
         row[self.alert_tx_dest_idx] = _dest
@@ -586,7 +563,7 @@ class Schema:
 class LogConverter:
 
     def __init__(self, conf_file):
-        self.frauds = dict()
+        self.reports = dict()  # SAR ID and transaction subgraph
         self.org_types = dict()  # ID, organization type
 
         with open(conf_file, "r") as rf:
@@ -612,12 +589,12 @@ class LogConverter:
         self.in_acct_file = input_conf["accounts"]
         self.group_file = input_conf["alert_members"]
 
-        self.out_acct_file = output_conf["accounts"]
-        self.tx_file = output_conf["transactions"]
-        self.cash_tx_file = output_conf["cash_transactions"]
-        self.fraud_file = output_conf["frauds"]
-        self.alert_tx_file = output_conf["alert_transactions"]
-        self.alert_acct_file = output_conf["alert_members"]
+        self.out_acct_file = output_conf["accounts"]  # All account list file
+        self.tx_file = output_conf["transactions"]  # All transaction list file
+        self.cash_tx_file = output_conf["cash_transactions"]  # Cash transaction list file
+        self.sar_acct_file = output_conf["sar_accounts"]  # SAR account list file
+        self.alert_tx_file = output_conf["alert_transactions"]  # Alert transaction list file
+        self.alert_acct_file = output_conf["alert_members"]  # Alert account list file
 
         self.party_individual_file = output_conf["party_individuals"]
         self.party_organization_file = output_conf["party_organizations"]
@@ -663,7 +640,7 @@ class LogConverter:
         start_idx = indices["START_DATE"]
         end_idx = indices["END_DATE"]
         type_idx = indices["ACCOUNT_TYPE"]
-        fraud_idx = indices["IS_FRAUD"]
+        sar_idx = indices["IS_SAR"]
         model_idx = indices["TX_BEHAVIOR_ID"]
 
         mapping_id = 1  # Mapping ID for account-alert list
@@ -676,11 +653,11 @@ class LogConverter:
             start = row[start_idx]
             end = row[end_idx]
             acct_type = row[type_idx]
-            acct_fraud = row[fraud_idx]
+            acct_sar = row[sar_idx]
             acct_model = row[model_idx]
             attr = {name: row[index] for name, index in indices.items()}
             output_row = self.schema.get_acct_row(acct_id, acct_name, balance, start, end,
-                                                  acct_fraud, acct_model, **attr)
+                                                  acct_sar, acct_model, **attr)
             acct_writer.writerow(output_row)
             self.org_types[acct_id] = acct_type
 
@@ -729,7 +706,7 @@ class LogConverter:
         amt_idx = indices["amount"]
         orig_idx = indices["nameOrig"]
         dest_idx = indices["nameDest"]
-        fraud_idx = indices["isFraud"]
+        sar_idx = indices["isFraud"]
         alert_idx = indices["alertID"]
         type_idx = indices["type"]
 
@@ -743,10 +720,10 @@ class LogConverter:
                 amount = row[amt_idx]  # transaction amount
                 orig_id = row[orig_idx]  # originator ID
                 dest_id = row[dest_idx]  # beneficiary ID
-                fraud_id = int(row[fraud_idx])  # Fraud index
+                sar_id = int(row[sar_idx])  # SAR transaction index
                 alert_id = int(row[alert_idx])  # Alert ID
 
-                is_fraud = fraud_id > 0
+                is_sar = sar_id > 0
                 is_alert = alert_id >= 0
                 ttype = row[type_idx]
             except ValueError:
@@ -758,18 +735,18 @@ class LogConverter:
                 if cash_tx not in cash_tx_set:
                     cash_tx_set.add(cash_tx)
                     output_row = self.schema.get_tx_row(tx_id, date_str, amount, ttype, orig_id, dest_id,
-                                                        is_fraud, alert_id, **attr)
+                                                        is_sar, alert_id, **attr)
                     cash_tx_writer.writerow(output_row)
             else:  # Account-to-account transactions including alert transactions
                 tx = (orig_id, dest_id, ttype, amount, date_str)
                 if tx not in tx_set:
                     output_row = self.schema.get_tx_row(tx_id, date_str, amount, ttype, orig_id, dest_id,
-                                                        is_fraud, alert_id, **attr)
+                                                        is_sar, alert_id, **attr)
                     tx_writer.writerow(output_row)
                     tx_set.add(tx)
             if is_alert:  # Alert transactions
-                alert_type = self.frauds.get(alert_id).get_reason()
-                alert_row = self.schema.get_alert_tx_row(alert_id, alert_type, is_fraud, tx_id, orig_id, dest_id,
+                alert_type = self.reports.get(alert_id).get_reason()
+                alert_row = self.schema.get_alert_tx_row(alert_id, alert_type, is_sar, tx_id, orig_id, dest_id,
                                                          ttype, amount, date_str, **attr)
                 alert_tx_writer.writerow(alert_row)
             tx_id += 1
@@ -816,26 +793,26 @@ class LogConverter:
             reason = row[indices["reason"]]
             alert_id = int(row[indices["alertID"]])
             client_id = row[indices["clientID"]]
-            is_subject = row[indices["isSubject"]].lower() == "true"
+            is_sar = row[indices["isSar"]].lower() == "true"
             model_id = row[indices["modelID"]]
             schedule_id = row[indices["scheduleID"]]
 
-            if alert_id not in self.frauds:
-                self.frauds[alert_id] = FraudGroup(reason)
-            self.frauds[alert_id].add_member(client_id, is_subject)
+            if alert_id not in self.reports:
+                self.reports[alert_id] = AMLTypology(reason)
+            self.reports[alert_id].add_member(client_id, is_sar)
 
             attr = {name: row[index] for name, index in indices.items()}
-            output_row = self.schema.get_alert_acct_row(alert_id, reason, client_id, client_id, is_subject,
+            output_row = self.schema.get_alert_acct_row(alert_id, reason, client_id, client_id, is_sar,
                                                         model_id, schedule_id, **attr)
             writer.writerow(output_row)
 
-    def output_fraud_cases(self):
-        """Extract subject account list involved in alert transactions from transaction log file
+    def output_sar_cases(self):
+        """Extract SAR account list involved in alert transactions from transaction log file
         """
         input_file = self.log_file
-        output_file = os.path.join(self.work_dir, self.fraud_file)
+        output_file = os.path.join(self.work_dir, self.sar_acct_file)
 
-        print("Convert fraud cases from %s to %s" % (input_file, output_file))
+        print("Convert SAR typologies from %s to %s" % (input_file, output_file))
         rf = open(input_file, "r")
         reader = csv.reader(rf)
         header = next(reader)
@@ -857,38 +834,39 @@ class LogConverter:
             except ValueError:
                 continue
 
-            if alert_id >= 0 and alert_id in self.frauds:  # Fraud transactions
+            if alert_id >= 0 and alert_id in self.reports:  # SAR transactions
                 attr = {name: row[index] for name, index in indices.items()}
-                self.frauds[alert_id].add_tx(tx_id, amount, days, orig, dest, orig_name, dest_name, attr)
+                self.reports[alert_id].add_tx(tx_id, amount, days, orig, dest, orig_name, dest_name, attr)
                 tx_id += 1
 
         alerts = set()
         count = 0
-        frauds = len(self.frauds)
-        for fraud_id, fg in self.frauds.items():
-            if fg.count == 0:
+        num_reports = len(self.reports)
+        for sar_id, group in self.reports.items():
+            if group.count == 0:
                 continue
-            data = fg.get_alerts()
-            reason = fg.get_reason()
-            escalated = "YES" if (fg.subject is not None) else "NO"  # Fraud or false alert
+            data = group.get_alerts()
+            reason = group.get_reason()
+            escalated = "YES" if group.is_sar else "NO"  # SAR or false alert
             for row in data:
                 acct_id, cust_id, date = row
                 org_type = "INDIVIDUAL" if self.org_types[acct_id] == "I" else "COMPANY"
-                alerts.add((fraud_id, acct_id, cust_id, date, reason, org_type, escalated))
+                alerts.add((sar_id, acct_id, cust_id, date, reason, org_type, escalated))
             count += 1
             if count % 100 == 0:
-                print("Frauds: %d/%d" % (count, frauds))
+                print("SAR Typologies: %d/%d" % (count, num_reports))
 
         count = 0
         with open(output_file, "w") as wf:
             writer = csv.writer(wf)
             writer.writerow(
                 ["ALERT_ID", "MAIN_ACCOUNT_ID", "MAIN_CUSTOMER_ID", "EVENT_DATE",
-                 "ALERT_TYPE", "ACCOUNT_TYPE", "IS_FRAUD"])
+                 "ALERT_TYPE", "ACCOUNT_TYPE", "IS_SAR"])
             for alert in alerts:
-                fraud_id, acct_id, cust_id, date, alert_type, acct_type, is_fraud = alert
-                writer.writerow((count, acct_id, cust_id, date, alert_type, acct_type, is_fraud))
-                count += 1
+                sar_id, acct_id, cust_id, date, alert_type, acct_type, is_sar = alert
+                if is_sar == "YES":
+                    writer.writerow((count, acct_id, cust_id, date, alert_type, acct_type, is_sar))
+                    count += 1
 
 
 if __name__ == "__main__":
@@ -901,5 +879,5 @@ if __name__ == "__main__":
     converter = LogConverter(argv[1])
     converter.convert_alert_members()
     converter.convert_acct_tx()
-    converter.output_fraud_cases()
+    converter.output_sar_cases()
     # converter.output_subject_accounts()

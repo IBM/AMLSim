@@ -42,7 +42,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
         data_type = col.get("dataType")
         if data_type == "account_id":
             acct_id_idx = idx
-        elif data_type == "fraud_flag":
+        elif data_type == "sar_flag":
             acct_fraud_idx = idx
     for idx, col in enumerate(schema_data["transaction"]):
         data_type = col.get("dataType")

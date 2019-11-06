@@ -54,10 +54,10 @@ Two of five vertices has no outgoing edges and two of five vertices has no incom
 
 
 ### alertPatterns.csv
-Fraud transaction pattern list
+AML typology transaction pattern list
 - `count` Number of transaction sets
-- `type` Fraud pattern name (`fan_in`, `fan_out` or `cycle`)
-- `schedule_id` Transaction scheduling ID
+- `type` Transaction network pattern name (e.g. `fan_in`, `fan_out`, `cycle`...) of the typology
+- `schedule_id` Scheduling ID of the typology
   - 0: All accounts send money in order with the same interval
   - 1: All accounts send money in order with random intervals
   - 2: All accounts send money randomly
@@ -72,7 +72,7 @@ Fraud transaction pattern list
 - `bene_country` Whether the beneficiary country is suspicious
 - `orig_business` Whether the originator business type is suspicious
 - `bene_business` Whether the beneficiary business type is suspicious
-- `is_fraud` Whether the alert is fraud (True) or false alert (False)
+- `is_sar` Whether the alert is SAR (True) or false alert (False)
 
 
 ### transactionType.csv

@@ -1,4 +1,4 @@
-count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,is_fraud
+count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,is_sar
 30,fan_in,2,5,10,100,5,20,30,0.5,True
 30,fan_out,2,5,10,100,5,20,30,0.5,True
 40,cycle,2,5,10,100,5,20,30,0.5,True

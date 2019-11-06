@@ -1,2 +1,2 @@
-count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,orig_country,bene_country,orig_business,bene_business,is_fraud
+count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,orig_country,bene_country,orig_business,bene_business,is_sar
 1,fan_in,2,4,10,100,5,20,30,0.5,True,True,True,True,True

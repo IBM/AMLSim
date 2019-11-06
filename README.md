@@ -92,7 +92,7 @@ The file names of the output data are defined at the "output" section of `conf.j
     "cash_transactions": "cash_tx.csv",  // Cash transaction list CSV
     "alert_members": "alert_accounts.csv",  // Alerted account list CSV
     "alert_transactions": "alert_transactions.csv",  // Alerted transaction list CSV
-    "frauds": "frauds.csv",    // Fraud account list CSV
+    "sar_accounts": "sar_accounts.csv",    // SAR account list CSV
     "party_individuals": "individuals-bulkload.csv",
     "party_organizations": "organizations-bulkload.csv",
     "account_mapping": "accountMapping.csv",

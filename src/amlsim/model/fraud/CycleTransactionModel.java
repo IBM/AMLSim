@@ -62,7 +62,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
                 Arrays.sort(steps);  // Ordered
             }
         }
-        System.out.println("Cycle transaction steps: " + Arrays.toString(steps));
+//        System.out.println("Cycle transaction steps: " + Arrays.toString(steps));
     }
 
     @Override

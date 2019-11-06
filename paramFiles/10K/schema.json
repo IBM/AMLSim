@@ -29,7 +29,7 @@
     {
       "name": "prior_sar_count",
       "valueType": "boolean",
-      "dataType": "fraud_flag"
+      "dataType": "sar_flag"
     },
     {
       "name": "branch_id",
@@ -142,7 +142,7 @@
     {
       "name": "is_fraud",
       "valueType": "boolean",
-      "dataType": "fraud_flag"
+      "dataType": "sar_flag"
     },
     {
       "name": "alert_id",
@@ -169,7 +169,7 @@
     {
       "name": "is_fraud",
       "valueType": "boolean",
-      "dataType": "fraud_flag"
+      "dataType": "sar_flag"
     },
     {
       "name": "tran_id",

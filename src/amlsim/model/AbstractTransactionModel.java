@@ -129,7 +129,7 @@ public abstract class AbstractTransactionModel {
         }
         String ttype = orig.getTxType(dest);
         if(isFraud) {
-            AMLSim.getLogger().info("Handle transaction: " + orig.getID() + " -> " + dest.getID());
+            AMLSim.getLogger().fine("Handle transaction: " + orig.getID() + " -> " + dest.getID());
         }
         AMLSim.handleTransaction(step, ttype, amount, orig, dest, isFraud, aid);
     }

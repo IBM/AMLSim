@@ -62,6 +62,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
                 Arrays.sort(steps);  // Ordered
             }
         }
+        System.out.println("Cycle transaction steps: " + Arrays.toString(steps));
     }
 
     @Override
@@ -85,18 +86,16 @@ public class CycleTransactionModel extends FraudTransactionModel {
         boolean isFraud = alert.isSar();
 
         // Create cycle transactions
-        for(int i=0; i<length; i++){
-            if(steps[i] == step){
-                int j = (i+1) % length;  // i, j: index of the previous, next account
+        for(int i=0; i<length; i++) {
+            if (steps[i] == step) {
+                int j = (i + 1) % length;  // i, j: index of the previous, next account
                 Account src = alert.getMembers().get(i);  // The previous account
                 Account dst = alert.getMembers().get(j);  // The next account
-                if(src.getID().equals(acct.getID())) {
-                    sendTransaction(step, amount, src, dst, isFraud, alertID);
+                sendTransaction(step, amount, src, dst, isFraud, alertID);
 
-                    // Update the next transaction amount
-                    float margin = amount * MARGIN_RATIO;
-                    amount = Math.max(amount - margin, minAmount);
-                }
+                // Update the next transaction amount
+                float margin = amount * MARGIN_RATIO;
+                amount = Math.max(amount - margin, minAmount);
             }
         }
     }

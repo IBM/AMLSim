@@ -15,7 +15,7 @@ public class GatherScatterModel extends FraudTransactionModel {
     private long[] scatterSteps;
     private long middleStep;
     private float totalReceivedAmount = 0.0F;
-    private float scatterAmount;
+    private float scatterAmount = 0.0F;  // Scatter transaction amount will be defined after gather transactions
 
     GatherScatterModel(float minAmount, float maxAmount, int startStep, int endStep) {
         super(minAmount, maxAmount, startStep, endStep);
@@ -24,7 +24,6 @@ public class GatherScatterModel extends FraudTransactionModel {
     @Override
     public void setParameters(int modelID) {
         middleStep = (startStep + endStep) / 2;
-        scatterAmount = minAmount;
 
         int numSubMembers = alert.getMembers().size() - 1;
         int numOrigMembers = numSubMembers / 2;
@@ -80,7 +79,7 @@ public class GatherScatterModel extends FraudTransactionModel {
             }
         }else{
             int numScatters = scatterSteps.length;
-            if(step == middleStep){
+            if(step == middleStep){  // Define the amount of scatter transactions
                 float margin = totalReceivedAmount * MARGIN_RATIO;
                 scatterAmount = Math.max((totalReceivedAmount - margin) / numScatters, minAmount);
             }
@@ -88,7 +87,7 @@ public class GatherScatterModel extends FraudTransactionModel {
                 if(scatterSteps[i] == step){
                     Account orig = alert.getSubjectAccount();
                     Account bene = beneAccts.get(i);
-                    sendTransaction(step, minAmount, orig, bene, isSar, alertID);
+                    sendTransaction(step, scatterAmount, orig, bene, isSar, alertID);
                 }
             }
         }

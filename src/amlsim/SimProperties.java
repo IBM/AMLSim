@@ -75,7 +75,7 @@ public class SimProperties {
         return inputDir + inputProp.getString("transactions");
     }
 
-    public String getInputAlertFile(){
+    public String getInputAlertMemberFile(){
         return inputDir + inputProp.getString("alert_members");
     }
 

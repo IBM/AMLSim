@@ -34,11 +34,11 @@ public class AMLSim extends ParameterizedPaySim {
 	private BufferedWriter bufWriter;
 	private static long numOfSteps = 1;  // Number of simulation steps
 	private static int currentLoop = 0;  // Simulation iteration counter
-	public static String txLogFileName = "";
+	private static String txLogFileName = "";
 
 	private String accountFile = "";
 	private String transactionFile = "";
-	private String alertFile = "";
+	private String alertMemberFile = "";
 	private String counterFile = "";
 	private String diameterFile = "";
 
@@ -107,11 +107,11 @@ public class AMLSim extends ParameterizedPaySim {
 			System.exit(1);
 		}
 
-		// Load alert file
+		// Load alert member file
 		try{
-			loadAlertMemberFile(this.alertFile);
+			loadAlertMemberFile(this.alertMemberFile);
 		}catch(IOException e){
-			System.err.println("Cannot load alert file: " + this.alertFile);
+			System.err.println("Cannot load alert file: " + this.alertMemberFile);
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -163,7 +163,7 @@ public class AMLSim extends ParameterizedPaySim {
 
         this.accountFile = simProp.getInputAcctFile();
         this.transactionFile = simProp.getInputTxFile();
-        this.alertFile = simProp.getInputAlertFile();
+        this.alertMemberFile = simProp.getInputAlertMemberFile();
         this.counterFile = simProp.getCounterLogFile();
         this.diameterFile = simProp.getDiameterLogFile();
         this.computeDiameter = simProp.isComputeDiameter();
@@ -284,18 +284,22 @@ public class AMLSim extends ParameterizedPaySim {
 				throw new IllegalArgumentException(String.format("startStep %d is larger than endStep %d", minStep, maxStep));
 			}
 
-			Alert fg;
-			if(alertGroups.containsKey(alertID)){
-				fg = alertGroups.get(alertID);
-			}else{
+			Alert alert;
+			if(alertGroups.containsKey(alertID)){  // Get an AML typology object and update the minimum/maximum amount
+				alert = alertGroups.get(alertID);
+				AMLTypology model = alert.getModel();
+				model.updateMinAmount(minAmount);
+				model.updateMaxAmount(maxAmount);
+
+			}else{  // Create a new AML typology object
 				AMLTypology model = AMLTypology.getModel(modelID, minAmount, maxAmount, minStep, maxStep);
-				fg = new Alert(alertID, model, this);
-				alertGroups.put(alertID, fg);
+				alert = new Alert(alertID, model, this);
+				alertGroups.put(alertID, alert);
 			}
 			Account c = getClientFromID(clientID);
-			fg.addMember(c);
+			alert.addMember(c);
 			if(isSAR){
-				fg.setMainAccount((SARAccount) c);
+				alert.setMainAccount((SARAccount) c);
 				c.setCase(true);
 			}
 			scheduleModels.put(alertID, scheduleID);
@@ -357,7 +361,11 @@ public class AMLSim extends ParameterizedPaySim {
 			e.printStackTrace();
 		}
 	}
-	
+
+	public static String getTxLogFileName(){
+		return txLogFileName;
+	}
+
 	public void executeSimulation(){
 		//Load the parameters from the .property file
 		loadParametersFromFile();

@@ -34,7 +34,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     protected final float MARGIN_RATIO = 0.1F;  // Each member will keep this ratio of the received amount
 
     /**
-     * Create alert transaction model
+     * Create an AML typology object (alert transaction model)
      * @param modelID Alert transaction model ID as int
      * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
@@ -112,6 +112,22 @@ public abstract class AMLTypology extends AbstractTransactionModel {
         this.maxAmount = maxAmount;
         this.startStep = startStep;
         this.endStep = endStep;
+    }
+
+    /**
+     * Update the minimum transaction amount if the given amount is smaller than the current one
+     * @param minAmount New minimum amount
+     */
+    public void updateMinAmount(float minAmount){
+        this.minAmount = Math.min(this.minAmount, minAmount);
+    }
+
+    /**
+     * Update the maximum transaction amount if the given amount is larger than the current one
+     * @param maxAmount New maximum amount
+     */
+    public void updateMaxAmount(float maxAmount){
+        this.maxAmount = Math.max(this.maxAmount, maxAmount);
     }
 
     /**

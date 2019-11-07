@@ -126,7 +126,7 @@ public class TransactionRepository {
         // Flush transaction logs to the CSV file
 
         try {
-            FileWriter writer1 = new FileWriter(new File(AMLSim.txLogFileName), true);
+            FileWriter writer1 = new FileWriter(new File(AMLSim.getTxLogFileName()), true);
             BufferedWriter writer = new BufferedWriter(writer1);
 
             for(int i = 0; i < this.index; i++){

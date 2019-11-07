@@ -1,6 +1,6 @@
 package amlsim;
 
-import amlsim.model.fraud.FraudTransactionModel;
+import amlsim.model.aml.AMLTypology;
 import paysim.PaySim;
 
 import java.util.*;
@@ -14,10 +14,10 @@ public class Alert {
     private long alertID;  // Alert identifier
     private List<Account> members;  // Accounts involved in this alert
     private Account subject;   // Main account of the fraud alert
-    private FraudTransactionModel model;    // Transaction model
+    private AMLTypology model;    // Transaction model
     private AMLSim amlsim;  // AMLSim main object
 
-    public Alert(long alertID, FraudTransactionModel model, AMLSim sim){
+    public Alert(long alertID, AMLTypology model, AMLSim sim){
         this.alertID = alertID;
         this.members = new ArrayList<>();
         this.subject = null;
@@ -84,7 +84,7 @@ public class Alert {
      * If this alert has no members, return null.
      */
     public Account getMainAccount(){
-        if(isSar()){
+        if(isSAR()){
             return getSubjectAccount();
         }else if(members.isEmpty()){
             return null;
@@ -97,15 +97,15 @@ public class Alert {
      * Set subject account
      * @param fraudster Subject account object
      */
-    public void setMainAccount(FraudAccount fraudster){
+    public void setMainAccount(SARAccount fraudster){
         this.subject = fraudster;
     }
 
-    public FraudTransactionModel getModel(){
+    public AMLTypology getModel(){
         return model;
     }
 
-    public boolean isSar(){
+    public boolean isSAR(){
         return this.subject != null;  // The alert group is fraud if and only if a subject account exists
     }
 }

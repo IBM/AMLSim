@@ -10,20 +10,20 @@
 //
 // Note: No specific bank models are used for this fraud transaction model class.
 
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 import amlsim.Alert;
 import amlsim.model.AbstractTransactionModel;
 
 /**
- * Transaction model for fraudsters
+ * Suspicious transaction models
  */
-public abstract class FraudTransactionModel extends AbstractTransactionModel {
+public abstract class AMLTypology extends AbstractTransactionModel {
 
     // Fraud transaction model ID
-    public static final int FRAUD_FAN_OUT = 1;
-    public static final int FRAUD_FAN_IN = 2;
+    public static final int AML_FAN_OUT = 1;
+    public static final int AML_FAN_IN = 2;
     public static final int CYCLE = 3;
     public static final int BIPARTITE = 4;
     public static final int STACK = 5;
@@ -42,19 +42,19 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
      * @param endStep End step
      * @return Fraud transaction model object
      */
-    public static FraudTransactionModel getModel(int modelID, float minAmount, float maxAmount,
-                                                 int startStep, int endStep){
-        FraudTransactionModel model;
+    public static AMLTypology getModel(int modelID, float minAmount, float maxAmount,
+                                       int startStep, int endStep){
+        AMLTypology model;
         switch(modelID){
-            case FRAUD_FAN_OUT: model = new FanOutTransactionModel(minAmount, maxAmount, startStep, endStep); break;
-            case FRAUD_FAN_IN: model = new FanInTransactionModel(minAmount, maxAmount, startStep, endStep); break;
-            case CYCLE: model = new CycleTransactionModel(minAmount, maxAmount, startStep, endStep); break;
-            case BIPARTITE: model = new BipartiteTransactionModel(minAmount, maxAmount, startStep, endStep); break;
-            case STACK: model = new StackTransactionModel(minAmount, maxAmount, startStep, endStep); break;
-            case DENSE: model = new RandomTransactionModel(minAmount, maxAmount, startStep, endStep); break;
-            case SCATTER_GATHER: model = new ScatterGatherModel(minAmount, maxAmount, startStep, endStep); break;
-            case GATHER_SCATTER: model = new GatherScatterModel(minAmount, maxAmount, startStep, endStep); break;
-            default: throw new IllegalArgumentException("Unknown fraud model ID: " + modelID);
+            case AML_FAN_OUT: model = new FanOutTypology(minAmount, maxAmount, startStep, endStep); break;
+            case AML_FAN_IN: model = new FanInTypology(minAmount, maxAmount, startStep, endStep); break;
+            case CYCLE: model = new CycleTypology(minAmount, maxAmount, startStep, endStep); break;
+            case BIPARTITE: model = new BipartiteTypology(minAmount, maxAmount, startStep, endStep); break;
+            case STACK: model = new StackTypology(minAmount, maxAmount, startStep, endStep); break;
+            case DENSE: model = new RandomTypology(minAmount, maxAmount, startStep, endStep); break;
+            case SCATTER_GATHER: model = new ScatterGatherTypology(minAmount, maxAmount, startStep, endStep); break;
+            case GATHER_SCATTER: model = new GatherScatterTypology(minAmount, maxAmount, startStep, endStep); break;
+            default: throw new IllegalArgumentException("Unknown typology model ID: " + modelID);
         }
         model.setParameters(minAmount, startStep, endStep);
         return model;
@@ -101,13 +101,13 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
     }
 
     /**
-     * Common constructor of fraud transaction
+     * Common constructor of AML typology transaction
      * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
      * @param startStep Start simulation step of alert transactions (any transactions cannot be carried out before this step)
      * @param endStep End simulation step of alert transactions (any transactions cannot be carried out after this step)
      */
-    public FraudTransactionModel(float minAmount, float maxAmount, int startStep, int endStep){
+    public AMLTypology(float minAmount, float maxAmount, int startStep, int endStep){
         this.minAmount = minAmount;
         this.maxAmount = maxAmount;
         this.startStep = startStep;
@@ -122,19 +122,19 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
         return alert.getSimulator().random.nextFloat() * (maxAmount - minAmount) + minAmount;
     }
 
-    /**
-     * Generate a rounded random amount
-     * @param base Multiple amount to round amount
-     * @return Rounded random amount
-     */
-    protected float getRoundedAmount(int base){
-        if(base <= 0){
-            throw new IllegalArgumentException("The base must be positive");
-        }
-        float amount = getAmount();
-        int rounded = Math.round(amount);
-        return (rounded / base) * base;
-    }
+//    /**
+//     * Generate a rounded random amount
+//     * @param base Multiple amount to round amount
+//     * @return Rounded random amount
+//     */
+//    protected float getRoundedAmount(int base){
+//        if(base <= 0){
+//            throw new IllegalArgumentException("The base must be positive");
+//        }
+//        float amount = getAmount();
+//        int rounded = Math.round(amount);
+//        return (float)(rounded / base) * base;
+//    }
 
     /**
      * Generate a random simulation step
@@ -152,7 +152,7 @@ public abstract class FraudTransactionModel extends AbstractTransactionModel {
 
     @Override
     public String getType() {
-        return "Fraud";
+        return "AMLTypology";
     }
 
     @Override

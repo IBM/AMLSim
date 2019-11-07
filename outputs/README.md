@@ -10,9 +10,9 @@ All final output files will be generated to this directory. The directory and fi
     "accounts": "accounts.csv",  // Account list CSV
     "transactions": "transactions.csv",  // All transaction list CSV
     "cash_transactions": "cash_tx.csv",  // Cash transaction list CSV
-    "alert_members": "alert_accounts.csv",  // Alerted account list CSV
+    "alert_members": "alert_accounts.csv",  // Alerted member account list CSV
     "alert_transactions": "alert_transactions.csv",  // Alerted transaction list CSV
-    "frauds": "frauds.csv",  // Fraud account list CSV
+    "sar_accounts": "sar_accounts.csv",  // SAR-flagged member account list CSV
     //  ...
     "transaction_log": "tx_log.csv",
     "counter_log": "tx_count.csv",

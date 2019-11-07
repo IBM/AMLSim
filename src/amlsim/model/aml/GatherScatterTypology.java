@@ -1,4 +1,4 @@
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * Gather-Scatter transaction model (Multiple accounts -> fan-in -> main account -> fan-out -> multiple accounts)
  */
-public class GatherScatterModel extends FraudTransactionModel {
+public class GatherScatterTypology extends AMLTypology {
 
     private List<Account> origAccts = new ArrayList<>();
     private List<Account> beneAccts = new ArrayList<>();
@@ -17,7 +17,7 @@ public class GatherScatterModel extends FraudTransactionModel {
     private float totalReceivedAmount = 0.0F;
     private float scatterAmount = 0.0F;  // Scatter transaction amount will be defined after gather transactions
 
-    GatherScatterModel(float minAmount, float maxAmount, int startStep, int endStep) {
+    GatherScatterTypology(float minAmount, float maxAmount, int startStep, int endStep) {
         super(minAmount, maxAmount, startStep, endStep);
     }
 
@@ -65,7 +65,7 @@ public class GatherScatterModel extends FraudTransactionModel {
     @Override
     public void sendTransactions(long step, Account acct) {
         long alertID = alert.getAlertID();
-        boolean isSar = alert.isSar();
+        boolean isSAR = alert.isSAR();
 
         if(step < middleStep){
             for(int i=0; i<gatherSteps.length; i++){
@@ -73,7 +73,7 @@ public class GatherScatterModel extends FraudTransactionModel {
                     Account orig = origAccts.get(i);
                     Account bene = alert.getSubjectAccount();
                     float amount = getAmount();
-                    sendTransaction(step, amount, orig, bene, isSar, alertID);
+                    sendTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
                 }
             }
@@ -87,7 +87,7 @@ public class GatherScatterModel extends FraudTransactionModel {
                 if(scatterSteps[i] == step){
                     Account orig = alert.getSubjectAccount();
                     Account bene = beneAccts.get(i);
-                    sendTransaction(step, scatterAmount, orig, bene, isSar, alertID);
+                    sendTransaction(step, scatterAmount, orig, bene, isSAR, alertID);
                 }
             }
         }

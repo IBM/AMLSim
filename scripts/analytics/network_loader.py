@@ -11,7 +11,7 @@ import json
 
 
 # Account (vertex) and transaction (edge) attribute keys
-ACCT_FRAUD = "sar"
+ACCT_SAR = "sar"
 TX_AMOUNT = "amount"
 TX_DATE = "date"
 
@@ -68,7 +68,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
         for row in reader:
             acct_id = row[acct_id_idx]  # ACCOUNT_ID
             is_fraud = row[acct_fraud_idx].lower() == "true"  # IS_FRAUD
-            attr = {ACCT_FRAUD: is_fraud}
+            attr = {ACCT_SAR: is_fraud}
             _g.add_node(acct_id, **attr)
             num_accts += 1
             if is_fraud:
@@ -148,17 +148,17 @@ class ResultGraphLoader(__TransactionGraphLoader):
         acct_path = os.path.join(output_dir, acct_file)
         tx_path = os.path.join(output_dir, tx_file)
         self.g = load_result_csv(acct_path, tx_path, self.schema)
-        self.num_normal_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_FRAUD).items() if not flag])
-        self.num_fraud_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_FRAUD).items() if flag])
+        self.num_normal_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_SAR).items() if not flag])
+        self.num_fraud_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_SAR).items() if flag])
 
     def count_hub_accounts(self, min_degree=DEGREE_STEP, max_degree=10):
         super(ResultGraphLoader, self).count_hub_accounts(min_degree, max_degree)
 
         # Extract the same statistical data for normal and alert account vertices
-        normal_in_deg = Counter([v for k, v in self.g.in_degree().items() if not self.g.node[k][ACCT_FRAUD]])
-        normal_out_deg = Counter([v for k, v in self.g.out_degree().items() if not self.g.node[k][ACCT_FRAUD]])
-        fraud_in_deg = Counter([v for k, v in self.g.in_degree().items() if self.g.node[k][ACCT_FRAUD]])
-        fraud_out_deg = Counter([v for k, v in self.g.out_degree().items() if self.g.node[k][ACCT_FRAUD]])
+        normal_in_deg = Counter([v for k, v in self.g.in_degree().items() if not self.g.node[k][ACCT_SAR]])
+        normal_out_deg = Counter([v for k, v in self.g.out_degree().items() if not self.g.node[k][ACCT_SAR]])
+        fraud_in_deg = Counter([v for k, v in self.g.in_degree().items() if self.g.node[k][ACCT_SAR]])
+        fraud_out_deg = Counter([v for k, v in self.g.out_degree().items() if self.g.node[k][ACCT_SAR]])
 
         print("Number of fan-in / fan-out patterns for %d normal accounts" % self.num_normal_accts)
         for th in range(min_degree, max_degree + 1, DEGREE_STEP):

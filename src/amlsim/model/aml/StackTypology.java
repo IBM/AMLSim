@@ -2,14 +2,14 @@
 // Note: No specific bank models are used for this fraud transaction model class.
 //
 
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
 /**
  * Stacked bipartite transactions
  */
-public class StackTransactionModel extends FraudTransactionModel {
+public class StackTypology extends AMLTypology {
     
     @Override
     public void setParameters(int modelID) {
@@ -24,7 +24,7 @@ public class StackTransactionModel extends FraudTransactionModel {
         return orig_members * mid_members + mid_members + dest_members;
     }
 
-    public StackTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep) {
+    public StackTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 

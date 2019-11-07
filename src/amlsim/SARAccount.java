@@ -1,6 +1,6 @@
 package amlsim;
 
-import amlsim.model.fraud.*;
+import amlsim.model.aml.*;
 import sim.engine.SimState;
 
 import java.util.Map;
@@ -8,11 +8,11 @@ import java.util.Map;
 /**
  * Suspicious account class
  */
-public class FraudAccount extends Account {
+public class SARAccount extends Account {
 
 	private int count = 0;
 
-    FraudAccount(String id, int modelID, int interval, float init_balance, int start, int end, Map<String, String> attrs){
+    SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, Map<String, String> attrs){
 		super(id, modelID, interval, init_balance, start, end, attrs);
 	}
 
@@ -28,19 +28,19 @@ public class FraudAccount extends Account {
 		}
 
 		this.model.sendTransaction(step);
-		boolean success = handleFraud(amlsim);
+		boolean success = handleAlert(amlsim);
 		if(success){
 			count++;
 		}
 	}
 
-	private boolean handleFraud(AMLSim amlsim){
+	private boolean handleAlert(AMLSim amlsim){
 		if(alerts.isEmpty()){
 			return false;
 		}
 
 		Alert fg = alerts.get(count % alerts.size());
-		FraudTransactionModel model = fg.getModel();
+		AMLTypology model = fg.getModel();
 
 		model.sendTransaction(amlsim.schedule.getSteps());
 		return true;

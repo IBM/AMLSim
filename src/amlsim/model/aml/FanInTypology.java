@@ -2,7 +2,7 @@
 // Note: No specific bank models are used for this fraud transaction model class.
 //
 
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * Multiple accounts send money to the subject account
  */
-public class FanInTransactionModel extends FraudTransactionModel {
+public class FanInTypology extends AMLTypology {
 
     // Senders and receiver
     private Account dest;  // The destination (receiver) account
@@ -24,7 +24,7 @@ public class FanInTransactionModel extends FraudTransactionModel {
     public static final int FIXED_INTERVAL = 2;
     public static final int RANDOM_RANGE = 3;
 
-    public FanInTransactionModel(float minAmount, float maxAmount, int start, int end){
+    public FanInTypology(float minAmount, float maxAmount, int start, int end){
         super(minAmount, maxAmount, start, end);
     }
 
@@ -33,7 +33,7 @@ public class FanInTransactionModel extends FraudTransactionModel {
 
         // Set alert members
         List<Account> members = alert.getMembers();
-        dest = alert.isSar() ? alert.getSubjectAccount() : members.get(0);  // The subject account is the receiver
+        dest = alert.isSAR() ? alert.getSubjectAccount() : members.get(0);  // The subject account is the receiver
         for(Account orig : members){  // The rest of accounts are senders
             if(orig != dest) origs.add(orig);
         }
@@ -80,7 +80,7 @@ public class FanInTransactionModel extends FraudTransactionModel {
 
     public void sendTransactions(long step, Account acct){
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isSar();
+        boolean isFraud = alert.isSAR();
         float amount = getAmount() / origs.size();
 
         for(int i=0; i<origs.size(); i++){

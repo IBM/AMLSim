@@ -1,4 +1,4 @@
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * Scatter-Gather transaction model (Main account -> fan-out -> multiple accounts -> fan-in -> single account)
  */
-public class ScatterGatherModel extends FraudTransactionModel {
+public class ScatterGatherTypology extends AMLTypology {
 
     private Account orig = null;  // First sender account (main)
     private Account bene = null;  // Last receiver account
@@ -17,7 +17,7 @@ public class ScatterGatherModel extends FraudTransactionModel {
     private float scatterAmount;
     private float gatherAmount;
 
-    ScatterGatherModel(float minAmount, float maxAmount, int startStep, int maxStep) {
+    ScatterGatherTypology(float minAmount, float maxAmount, int startStep, int maxStep) {
         super(minAmount, maxAmount, startStep, maxStep);
     }
 
@@ -60,7 +60,7 @@ public class ScatterGatherModel extends FraudTransactionModel {
     @Override
     public void sendTransactions(long step, Account acct) {
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isSar();
+        boolean isFraud = alert.isSAR();
         int numTotalMembers = alert.getMembers().size();
         int numMidMembers = numTotalMembers - 2;
 

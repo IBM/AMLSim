@@ -793,7 +793,7 @@ class LogConverter:
             reason = row[indices["reason"]]
             alert_id = int(row[indices["alertID"]])
             client_id = row[indices["clientID"]]
-            is_sar = row[indices["isSar"]].lower() == "true"
+            is_sar = row[indices["isSAR"]].lower() == "true"
             model_id = row[indices["modelID"]]
             schedule_id = row[indices["scheduleID"]]
 

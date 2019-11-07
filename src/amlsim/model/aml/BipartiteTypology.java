@@ -2,7 +2,7 @@
 // Note: No specific bank models are used for this fraud transaction model class.
 //
 
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
@@ -12,7 +12,7 @@ import java.util.*;
  * Bipartite transaction model
  * Some accounts send money to a different account set
  */
-public class BipartiteTransactionModel extends FraudTransactionModel {
+public class BipartiteTypology extends AMLTypology {
 
     @Override
     public void setParameters(int modelID) {
@@ -27,7 +27,7 @@ public class BipartiteTransactionModel extends FraudTransactionModel {
         return numSenders * numReceivers;  // all-to-all
     }
 
-    public BipartiteTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep) {
+    public BipartiteTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 

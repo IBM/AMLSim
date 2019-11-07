@@ -2,7 +2,7 @@
 // Note: No specific bank models are used for this fraud transaction model class.
 //
 
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * The main account (subject account of fraud) makes a transaction with one of the neighbor accounts
  * and the neighbor also makes transactions with its neighbors
  */
-public class RandomTransactionModel extends FraudTransactionModel {
+public class RandomTypology extends AMLTypology {
 
     private static int count = 0;
 
@@ -26,7 +26,7 @@ public class RandomTransactionModel extends FraudTransactionModel {
         return alert.getMembers().size();
     }
 
-    public RandomTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep) {
+    public RandomTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -36,7 +36,7 @@ public class RandomTransactionModel extends FraudTransactionModel {
     }
 
     public void sendTransactions(long step, Account acct){
-        boolean isFraud = alert.isSar();
+        boolean isFraud = alert.isSAR();
         long alertID = alert.getAlertID();
         if(!isValidStep(step))return;
 

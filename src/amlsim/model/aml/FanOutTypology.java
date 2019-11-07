@@ -2,7 +2,7 @@
 // Note: No specific bank models are used for this fraud transaction model class.
 //
 
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * The subject account sends money to multiple members
  */
-public class FanOutTransactionModel extends FraudTransactionModel {
+public class FanOutTypology extends AMLTypology {
 
     // Sender and receivers
     private Account orig;
@@ -22,7 +22,7 @@ public class FanOutTransactionModel extends FraudTransactionModel {
     public static final int FIXED_INTERVAL = 2;
     public static final int RANDOM_RANGE = 3;
 
-    public FanOutTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep){
+    public FanOutTypology(float minAmount, float maxAmount, int minStep, int maxStep){
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -33,7 +33,7 @@ public class FanOutTransactionModel extends FraudTransactionModel {
     public void setParameters(int scheduleID){
         // Set members
         List<Account> members = alert.getMembers();
-        orig = alert.isSar() ? alert.getSubjectAccount() : members.get(0);
+        orig = alert.isSAR() ? alert.getSubjectAccount() : members.get(0);
         for(Account dest : members){
             if(orig != dest) dests.add(dest);
         }
@@ -79,7 +79,7 @@ public class FanOutTransactionModel extends FraudTransactionModel {
             return;
         }
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isSar();
+        boolean isFraud = alert.isSAR();
         float amount = getAmount() / dests.size();
 
         for(int i=0; i<dests.size(); i++){

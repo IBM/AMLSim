@@ -976,7 +976,7 @@ class TransactionGenerator:
         print("Output alert member list to:", alert_member_file)
         with open(alert_member_file, "w") as wf:
             writer = csv.writer(wf)
-            base_attrs = ["alertID", "reason", "clientID", "isSar", "modelID", "minAmount", "maxAmount",
+            base_attrs = ["alertID", "reason", "clientID", "isSAR", "modelID", "minAmount", "maxAmount",
                           "startStep", "endStep", "scheduleID"]
             writer.writerow(base_attrs + self.attr_names)
             for gid, sub_g in self.alert_groups.items():

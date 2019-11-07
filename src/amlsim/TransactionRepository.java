@@ -30,15 +30,15 @@ public class TransactionRepository {
     private float[] origAfter;
     private float[] destBefore;
     private float[] destAfter;
-    private boolean[] isFraud;
+    private boolean[] isSAR;
     private long[] alertIDs;
 
     private Map<Long, Integer> txCounter;
-    private Map<Long, Integer> fraudCounter;
+    private Map<Long, Integer> sarTxCounter;
 
     public TransactionRepository(int size) {
         this.txCounter = new HashMap<>();
-        this.fraudCounter = new HashMap<>();
+        this.sarTxCounter = new HashMap<>();
 
 //        this.amt_fmt = new DecimalFormat("#.#");
 //        int precision = 2;
@@ -55,7 +55,7 @@ public class TransactionRepository {
         this.origAfter = new float[size];
         this.destBefore = new float[size];
         this.destAfter = new float[size];
-        this.isFraud = new boolean[size];
+        this.isSAR = new boolean[size];
         this.alertIDs = new long[size];
     }
 
@@ -84,11 +84,11 @@ public class TransactionRepository {
         this.origAfter[index] = origAfter;
         this.destBefore[index] = destBefore;
         this.destAfter[index] = destAfter;
-        this.isFraud[index] = fraud;
+        this.isSAR[index] = fraud;
         this.alertIDs[index] = aid;
 
         if(fraud){
-            fraudCounter.put(step, fraudCounter.getOrDefault(step, 0) + 1);
+            sarTxCounter.put(step, sarTxCounter.getOrDefault(step, 0) + 1);
         }else if(!desc.contains("CASH-")) {
             txCounter.put(step, txCounter.getOrDefault(step, 0) + 1);  // Exclude cash transactions for counter
             count--;
@@ -112,9 +112,9 @@ public class TransactionRepository {
             BufferedWriter writer = new BufferedWriter(new FileWriter(fname));
             writer.write("step,normal,fraud\n");
             for(long i=0; i<steps; i++){
-                int num_tx = txCounter.getOrDefault(i, 0);
-                int num_fraud = fraudCounter.getOrDefault(i, 0);
-                writer.write(i + "," + num_tx + "," + num_fraud + "\n");
+                int numTx = txCounter.getOrDefault(i, 0);
+                int numSARTx = sarTxCounter.getOrDefault(i, 0);
+                writer.write(i + "," + numTx + "," + numSARTx + "\n");
             }
             writer.flush();
         }catch(IOException e){
@@ -133,7 +133,7 @@ public class TransactionRepository {
                 writer.write(steps[i] + "," + descriptions[i] + "," + getDoublePrecision(amounts[i]) + "," +
                         origIDs[i] + "," + getDoublePrecision(origBefore[i]) + "," + getDoublePrecision(origAfter[i]) + "," +
                         destIDs[i] + "," + getDoublePrecision(destBefore[i]) + "," + getDoublePrecision(destAfter[i]) + "," +
-                        (isFraud[i] ? "1" : "0") + "," + alertIDs[i] + "\n");
+                        (isSAR[i] ? "1" : "0") + "," + alertIDs[i] + "\n");
             }
             writer.flush();
             writer.close();

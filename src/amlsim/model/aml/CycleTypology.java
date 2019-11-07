@@ -2,7 +2,7 @@
 // Note: No specific bank models are used for this fraud transaction model class.
 //
 
-package amlsim.model.fraud;
+package amlsim.model.aml;
 
 import amlsim.Account;
 
@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * Cycle transaction model
  */
-public class CycleTransactionModel extends FraudTransactionModel {
+public class CycleTypology extends AMLTypology {
 
     // Transaction schedule
     private long[] steps;  // Array of simulation steps when each transaction is scheduled to be made
@@ -20,7 +20,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
     public static final int UNORDERED = 2;  // All accounts send money randomly
     private float amount = 0.0F;  // Current transaction amount
 
-    CycleTransactionModel(float minAmount, float maxAmount, int minStep, int maxStep){
+    CycleTypology(float minAmount, float maxAmount, int minStep, int maxStep){
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -83,7 +83,7 @@ public class CycleTransactionModel extends FraudTransactionModel {
     public void sendTransactions(long step, Account acct) {
         int length = alert.getMembers().size();
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isSar();
+        boolean isFraud = alert.isSAR();
 
         // Create cycle transactions
         for(int i=0; i<length; i++) {

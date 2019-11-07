@@ -2,7 +2,7 @@ package amlsim;
 
 import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
-import amlsim.model.fraud.FraudTransactionModel;
+import amlsim.model.aml.AMLTypology;
 import amlsim.stat.Diameter;
 import paysim.*;
 
@@ -207,7 +207,7 @@ public class AMLSim extends ParameterizedPaySim {
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
             String accountID = elements[columnIndex.get("ACCOUNT_ID")];
-			boolean isSar = elements[columnIndex.get("IS_SAR")].toLowerCase().equals("true");
+			boolean isSAR = elements[columnIndex.get("IS_SAR")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
 			float init_balance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
 			int start_step = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
@@ -219,7 +219,7 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-			Account client = isSar ? new FraudAccount(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues)
+			Account client = isSAR ? new SARAccount(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues)
 					: new Account(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues);
 
 			int index = this.getClients().size();
@@ -268,7 +268,7 @@ public class AMLSim extends ParameterizedPaySim {
 			long alertID = Long.parseLong(elements[columnIndex.get("alertID")]);
             String clientID = elements[columnIndex.get("clientID")];
 
-			boolean isSar = elements[columnIndex.get("isSar")].toLowerCase().equals("true");
+			boolean isSAR = elements[columnIndex.get("isSAR")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
 			float minAmount = Float.parseFloat(elements[columnIndex.get("minAmount")]);
 			float maxAmount = Float.parseFloat(elements[columnIndex.get("maxAmount")]);
@@ -288,14 +288,14 @@ public class AMLSim extends ParameterizedPaySim {
 			if(alertGroups.containsKey(alertID)){
 				fg = alertGroups.get(alertID);
 			}else{
-				FraudTransactionModel model = FraudTransactionModel.getModel(modelID, minAmount, maxAmount, minStep, maxStep);
+				AMLTypology model = AMLTypology.getModel(modelID, minAmount, maxAmount, minStep, maxStep);
 				fg = new Alert(alertID, model, this);
 				alertGroups.put(alertID, fg);
 			}
 			Account c = getClientFromID(clientID);
 			fg.addMember(c);
-			if(isSar){
-				fg.setMainAccount((FraudAccount) c);
+			if(isSAR){
+				fg.setMainAccount((SARAccount) c);
 				c.setCase(true);
 			}
 			scheduleModels.put(alertID, scheduleID);

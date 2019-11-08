@@ -51,22 +51,23 @@ Count,In-degree,Out-degree
 ```
 From this parameter file, the transaction graph generator generates a directed graph with five vertices (accounts) and five edges.
 Two of five vertices has no outgoing edges and two of five vertices has no incoming edges (these two vertices might be same).
-
+The transaction network generator constructs a directed graph from the degree distribution data with
+[Configuration Model](https://networkx.github.io/documentation/networkx-1.11/reference/generated/networkx.generators.degree_seq.directed_configuration_model.html).
 
 ### alertPatterns.csv
 AML typology transaction pattern list
-- `count` Number of transaction sets
-- `type` Transaction network pattern name (e.g. `fan_in`, `fan_out`, `cycle`...) of the typology
-- `schedule_id` Scheduling ID of the typology
-  - 0: All accounts send money in order with the same interval
-  - 1: All accounts send money in order with random intervals
-  - 2: All accounts send money randomly
+- `count` Number of typologies (transaction sets)
+- `type` Name of transaction type (`fan_in`, `fan_out`, `cycle`...) as the AML typology
+- `schedule_id` Transaction scheduling ID of the typology
+  - 0: All member accounts send money in order with the same interval (number of days)
+  - 1: All member accounts send money in order with random intervals
+  - 2: All member accounts send money randomly
 - `accounts`: Number of involved accounts
-- `individual_amount` Minimum individual amount
-- `aggregated_amount` Minimum aggregated amount
+- `individual_amount` Initial individual transaction amount
+- `aggregated_amount` Minimum aggregated (total) transaction amount
 - `transaction_count` Minimum transaction count
 - `amount_difference` Proportion of transaction difference
-- `period` Lookback period (days)
+- `period` Lookback period (number of days)
 - `amount_rounded` Proportion of transactions with rounded amounts
 - `orig_country` Whether the originator country is suspicious
 - `bene_country` Whether the beneficiary country is suspicious
@@ -76,7 +77,8 @@ AML typology transaction pattern list
 
 
 ### transactionType.csv
-This CSV file has two columns with header names: `Type`(transaction type name) and `Frequency`(frequency)
+This CSV file has two columns with header names: `Type` (transaction type name) 
+and `Frequency` (relative number of transaction frequency)
 
 Here is an example of transactionType.csv.
 ```

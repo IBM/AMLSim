@@ -7,14 +7,16 @@ package amlsim.model.aml;
 import amlsim.Account;
 
 import java.util.List;
+import java.util.Random;
 
 /**
  * The main account (subject account of fraud) makes a transaction with one of the neighbor accounts
- * and the neighbor also makes transactions with its neighbors
+ * and the neighbor also makes transactions with its neighbors.
+ * The beneficiary account and amount of each transaction are determined randomly.
  */
 public class RandomTypology extends AMLTypology {
 
-    private static int count = 0;
+    private static Random rand = new Random();
 
     @Override
     public void setParameters(int modelID) {
@@ -26,13 +28,13 @@ public class RandomTypology extends AMLTypology {
         return alert.getMembers().size();
     }
 
-    public RandomTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
+    RandomTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
     @Override
     public String getType() {
-        return "DenseFraud";
+        return "RandomTypology";
     }
 
     public void sendTransactions(long step, Account acct){
@@ -41,21 +43,23 @@ public class RandomTypology extends AMLTypology {
         if(!isValidStep(step))return;
 
         Account hub = isFraud ? alert.getSubjectAccount() : this.alert.getMembers().get(0); // Main account
-        List<Account> dests = hub.getDests();
-        int numDests = dests.size();
-        if(numDests == 0)return;
+        List<Account> beneList = hub.getDests();
+        int numBenes = beneList.size();
+        if(numBenes == 0)return;
 
-        float amount = getAmount() / numDests;
+        float amount = getRandomAmount();
 
-        int idx = (int)(step % numDests);  // Choose one of neighbors
-        Account dest = dests.get(idx);
-        sendTransaction(step, amount, hub, dest, isFraud, (int)alertID);  // Main account makes transactions to one of the neighbors
-        List<Account> nbs = dest.getDests();
+//        int idx = (int)(step % numBenes);  // Choose one of neighbors
+        int idx = rand.nextInt(numBenes);
+        Account bene = beneList.get(idx);
+        sendTransaction(step, amount, hub, bene, isFraud, (int)alertID);  // Main account makes transactions to one of the neighbors
+        List<Account> nbs = bene.getDests();
         int numNbs = nbs.size();
         if(numNbs > 0){
-            idx = (int)(step % numNbs);  // Choose one of its neighbors
+//            idx = (int)(step % numNbs);  // Choose one of its neighbors
+            idx = rand.nextInt(numNbs);
             Account nb = nbs.get(idx);
-            sendTransaction(step, amount, dest, nb, isFraud, (int)alertID);  // Neighbor accounts make transactions
+            sendTransaction(step, amount, bene, nb, isFraud, (int)alertID);  // Neighbor accounts make transactions
         }
     }
 }

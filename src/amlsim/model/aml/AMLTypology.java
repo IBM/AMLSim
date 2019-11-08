@@ -21,7 +21,7 @@ import amlsim.model.AbstractTransactionModel;
  */
 public abstract class AMLTypology extends AbstractTransactionModel {
 
-    // Fraud transaction model ID
+    // Transaction model ID of AML typologies
     public static final int AML_FAN_OUT = 1;
     public static final int AML_FAN_IN = 2;
     public static final int CYCLE = 3;
@@ -31,6 +31,13 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     public static final int SCATTER_GATHER = 7;  // fan-out -> fan-in
     public static final int GATHER_SCATTER = 8;  // fan-in -> fan-out
 
+    // Transaction scheduling ID
+    protected static final int FIXED_INTERVAL = 0;  // All accounts send money in order with the same interval
+    protected static final int RANDOM_INTERVAL = 1;  // All accounts send money in order with random intervals
+    protected static final int UNORDERED = 2;  // All accounts send money randomly
+    protected static final int SIMULTANEOUS = 3;  // All transactions are performed at single step simultaneously
+
+    // TODO: Enable users to configure this parameter
     protected final float MARGIN_RATIO = 0.1F;  // Each member will keep this ratio of the received amount
 
     /**
@@ -38,12 +45,12 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      * @param modelID Alert transaction model ID as int
      * @param minAmount Minimum transaction amount
      * @param maxAmount Maximum transaction amount
-     * @param startStep Start step
-     * @param endStep End step
-     * @return Fraud transaction model object
+     * @param startStep Start simulation step (all transactions will start after this step)
+     * @param endStep End simulation step (all transactions will finish before this step)
+     * @return AML typology model object
      */
-    public static AMLTypology getModel(int modelID, float minAmount, float maxAmount,
-                                       int startStep, int endStep){
+    public static AMLTypology createTypology(int modelID, float minAmount, float maxAmount,
+                                             int startStep, int endStep){
         AMLTypology model;
         switch(modelID){
             case AML_FAN_OUT: model = new FanOutTypology(minAmount, maxAmount, startStep, endStep); break;
@@ -101,9 +108,9 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     }
 
     /**
-     * Common constructor of AML typology transaction
-     * @param minAmount Minimum transaction amount
-     * @param maxAmount Maximum transaction amount
+     * Construct an AML typology with the given basic parameters
+     * @param minAmount Minimum transaction amount (each transaction amount must not be lower than this value)
+     * @param maxAmount Maximum transaction amount (each transaction amount must not be higher than this value)
      * @param startStep Start simulation step of alert transactions (any transactions cannot be carried out before this step)
      * @param endStep End simulation step of alert transactions (any transactions cannot be carried out after this step)
      */
@@ -134,33 +141,30 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      * Generate a random amount
      * @return A random amount within "minAmount" and "maxAmount"
      */
-    protected float getAmount(){
+    float getRandomAmount(){
         return alert.getSimulator().random.nextFloat() * (maxAmount - minAmount) + minAmount;
     }
 
-//    /**
-//     * Generate a rounded random amount
-//     * @param base Multiple amount to round amount
-//     * @return Rounded random amount
-//     */
-//    protected float getRoundedAmount(int base){
-//        if(base <= 0){
-//            throw new IllegalArgumentException("The base must be positive");
-//        }
-//        float amount = getAmount();
-//        int rounded = Math.round(amount);
-//        return (float)(rounded / base) * base;
-//    }
-
     /**
      * Generate a random simulation step
-     * @return A simulation step within startStep and endStep
+     * @return Random simulation step within startStep and endStep
      */
-    protected long getRandomStep(){
+    long getRandomStep(){
         return alert.getSimulator().random.nextLong(getStepRange()) + startStep;
     }
 
-    protected long getRandomStepRange(long start, long end){
+    /**
+     * Generate a random simulation step from the given start and end steps
+     * @param start Minimum simulation step
+     * @param end Maximum simulation
+     * @return Random simulation step within the given step range
+     */
+    long getRandomStepRange(long start, long end){
+        if(start < startStep || endStep < end){
+            throw new IllegalArgumentException("The start and end steps must be within " + startStep + " and " + endStep);
+        }else if(end < start){
+            throw new IllegalArgumentException("The start and end steps are unordered");
+        }
         long range = end - start + 1;
         return alert.getSimulator().random.nextLong(range) + start;
     }

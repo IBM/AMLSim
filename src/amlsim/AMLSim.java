@@ -26,7 +26,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private Map<Long, Alert> alertGroups = new HashMap<>();
 	private int numBranches = 0;
 	private ArrayList<Branch> branches = new ArrayList<>();
-	private int defaultInterval = 30;  // Default transaction interval for accounts
+	private int defaultTxInterval = 30;  // Default transaction interval for accounts
 
 	private static String simulatorName = null;
 	private ArrayList<String> paramFile = new ArrayList<>();
@@ -121,35 +121,32 @@ public class AMLSim extends ParameterizedPaySim {
 
 	public void loadParametersFromFile(){
 		super.loadParametersFromFile();
-//        Properties prop = this.getParamters();
 
         // Default transaction interval for accounts
-//        this.defaultInterval = Integer.parseInt(prop.getProperty("transactionInterval"));
-        this.defaultInterval = simProp.getTransactionInterval();
+        this.defaultTxInterval = simProp.getTransactionInterval();
 
-		// Number of transaction limit
-//        int transactionLimit = Integer.parseInt(prop.getProperty("transactionLimit"));
+		// Number of transactions for logging buffer
         int transactionLimit = simProp.getTransactionLimit();
-        if(transactionLimit > 0){
+        if(transactionLimit > 0){  // Set the limit only if the parameter is positive value
             txs.setLimit(transactionLimit);
         }
 
 		// Parameters of Cash Transactions
 		int norm_in_int = simProp.getCashTxInterval(true, false);  // Interval of cash-in transactions for normal account
-		int fraud_in_int = simProp.getCashTxInterval(true, true);  // Interval of cash-in transactions for suspicious account
+		int suspicious_in_int = simProp.getCashTxInterval(true, true);  // Interval of cash-in transactions for suspicious account
 		float norm_in_min = simProp.getCashTxMinAmount(true, false);  // Minimum amount of cash-in transactions for normal account
 		float norm_in_max = simProp.getCashTxMaxAmount(true, false);  // Maximum amount of cash-in transactions for normal account
-		float fraud_in_min = simProp.getCashTxMinAmount(true, true);  // Minimum amount of cash-in transactions for suspicious account
-		float fraud_in_max = simProp.getCashTxMaxAmount(true, true);  // Maximum amount of cash-in transactions for suspicious account
-		CashInModel.setParam(norm_in_int, fraud_in_int, norm_in_min, norm_in_max, fraud_in_min, fraud_in_max);
+		float suspicious_in_min = simProp.getCashTxMinAmount(true, true);  // Minimum amount of cash-in transactions for suspicious account
+		float suspicious_in_max = simProp.getCashTxMaxAmount(true, true);  // Maximum amount of cash-in transactions for suspicious account
+		CashInModel.setParam(norm_in_int, suspicious_in_int, norm_in_min, norm_in_max, suspicious_in_min, suspicious_in_max);
 
 		int norm_out_int = simProp.getCashTxInterval(false, false);  // Interval of cash-out transactions for normal account
-		int fraud_out_int = simProp.getCashTxInterval(false, true);  // Interval of cash-out transactions for suspicious account
+		int suspicious_out_int = simProp.getCashTxInterval(false, true);  // Interval of cash-out transactions for suspicious account
 		float norm_out_min = simProp.getCashTxMinAmount(false, false);  // Minimum amount of cash-out transactions for normal account
 		float norm_out_max = simProp.getCashTxMaxAmount(false, false);  // Maximum amount of cash-out transactions for normal account
-		float fraud_out_min = simProp.getCashTxMinAmount(false, true);  // Minimum amount of cash-out transactions for suspicious account
-		float fraud_out_max = simProp.getCashTxMaxAmount(false, true);  // Maximum amount of cash-out transactions for suspicious account
-		CashOutModel.setParam(norm_out_int, fraud_out_int, norm_out_min, norm_out_max, fraud_out_min, fraud_out_max);
+		float suspicious_out_min = simProp.getCashTxMinAmount(false, true);  // Minimum amount of cash-out transactions for suspicious account
+		float suspicious_out_max = simProp.getCashTxMaxAmount(false, true);  // Maximum amount of cash-out transactions for suspicious account
+		CashOutModel.setParam(norm_out_int, suspicious_out_int, norm_out_min, norm_out_max, suspicious_out_min, suspicious_out_max);
 
 
 		// Create branches (for cash transactions)
@@ -219,8 +216,8 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-			Account client = isSAR ? new SARAccount(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues)
-					: new Account(accountID, modelID, defaultInterval, init_balance, start_step, end_step, extraValues);
+			Account client = isSAR ? new SARAccount(accountID, modelID, defaultTxInterval, init_balance, start_step, end_step, extraValues)
+					: new Account(accountID, modelID, defaultTxInterval, init_balance, start_step, end_step, extraValues);
 
 			int index = this.getClients().size();
 			client.setBranch(this.branches.get(index % this.numBranches));
@@ -292,7 +289,7 @@ public class AMLSim extends ParameterizedPaySim {
 				model.updateMaxAmount(maxAmount);
 
 			}else{  // Create a new AML typology object
-				AMLTypology model = AMLTypology.getModel(modelID, minAmount, maxAmount, minStep, maxStep);
+				AMLTypology model = AMLTypology.createTypology(modelID, minAmount, maxAmount, minStep, maxStep);
 				alert = new Alert(alertID, model, this);
 				alertGroups.put(alertID, alert);
 			}
@@ -306,7 +303,6 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 		for(long alertID : scheduleModels.keySet()){
 			int modelID = scheduleModels.get(alertID);
-//			System.out.println(alertID + " " + modelID);
 			alertGroups.get(alertID).getModel().setParameters(modelID);
 		}
 		reader.close();
@@ -324,7 +320,6 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 		logger.info("Simulator Name: " + AMLSim.simulatorName);
 
-//		String dirPath = System.getProperty("user.dir")  +"//outputs//" + AMLSim.simulatorName;
         String dirPath = simProp.getOutputDir();
 		File f = new File(dirPath);
 		if(f.exists()){
@@ -340,7 +335,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private void loadAggregatedFile() {
 		this.paramFile = new ArrayList<>();
 
-		// TODO: Load actions (transaction types) from configuration files
+		// TODO: Load actions (transaction types) from the parameter file
         this.actions.add("TRANSFER");
 //		this.actions.add("CASH_IN");
 //		this.actions.add("CASH_OUT");
@@ -362,7 +357,7 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 	}
 
-	public static String getTxLogFileName(){
+	static String getTxLogFileName(){
 		return txLogFileName;
 	}
 

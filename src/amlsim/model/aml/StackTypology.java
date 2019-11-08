@@ -18,10 +18,10 @@ public class StackTypology extends AMLTypology {
     @Override
     public int getNumTransactions() {
         int total_members = alert.getMembers().size();
-        int orig_members = total_members / 3;  // First 1/3 accounts are sender accounts
+        int orig_members = total_members / 3;  // First 1/3 accounts are originator accounts
         int mid_members = orig_members;  // Second 1/3 accounts are intermediate accounts
-        int dest_members = total_members - orig_members * 2;  // Rest of accounts are receiver accounts
-        return orig_members * mid_members + mid_members + dest_members;
+        int bene_members = total_members - orig_members * 2;  // Rest of accounts are beneficiary accounts
+        return orig_members * mid_members + mid_members + bene_members;
     }
 
     public StackTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
@@ -30,42 +30,42 @@ public class StackTypology extends AMLTypology {
 
     @Override
     public String getType() {
-        return "StackFraud";
+        return "StackTypology";
     }
 
     @Override
     public void sendTransactions(long step, Account acct) {
 
         int total_members = alert.getMembers().size();
-        int orig_members = total_members / 3;  // First 1/3 accounts are sender accounts
+        int orig_members = total_members / 3;  // First 1/3 accounts are originator accounts
         int mid_members = orig_members;  // Second 1/3 accounts are intermediate accounts
-        int dest_members = total_members - orig_members * 2;  // Rest of accounts are receiver accounts
+        int bene_members = total_members - orig_members * 2;  // Rest of accounts are beneficiary accounts
 
-        float amount1 = getAmount();
+        float amount1 = getRandomAmount();
         float total_flow = amount1 * orig_members * mid_members;  // Total transaction amount
-        float amount2 = total_flow / (mid_members * dest_members);
+        float amount2 = total_flow / (mid_members * bene_members);
 
-        for(int i=0; i<orig_members; i++){  // Sender accounts --> Intermediate accounts
+        for(int i=0; i<orig_members; i++){  // originator accounts --> Intermediate accounts
             Account orig = alert.getMembers().get(i);
             if(!orig.getID().equals(acct.getID())){
                 continue;
             }
 
             for(int j=orig_members; j<(orig_members+mid_members); j++){
-                Account dest = alert.getMembers().get(j);
-                sendTransaction(step, amount1, orig, dest);
+                Account bene = alert.getMembers().get(j);
+                sendTransaction(step, amount1, orig, bene);
             }
         }
 
-        for(int i=orig_members; i<(orig_members+mid_members); i++){   // Intermediate accounts --> Receiver accounts
+        for(int i=orig_members; i<(orig_members+mid_members); i++){   // Intermediate accounts --> Beneficiary accounts
             Account orig = alert.getMembers().get(i);
             if(!orig.getID().equals(acct.getID())){
                 continue;
             }
 
             for(int j=(orig_members+mid_members); j<total_members; j++){
-                Account dest = alert.getMembers().get(j);
-                sendTransaction(step, amount2, orig, dest);
+                Account bene = alert.getMembers().get(j);
+                sendTransaction(step, amount2, orig, bene);
             }
         }
     }

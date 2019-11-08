@@ -5,12 +5,12 @@ import amlsim.Account;
 import java.util.*;
 
 /**
- * Scatter-Gather transaction model (Main account -> fan-out -> multiple accounts -> fan-in -> single account)
+ * Scatter-Gather transaction model (Main originator account -> fan-out -> multiple accounts -> fan-in -> single account)
  */
 public class ScatterGatherTypology extends AMLTypology {
 
-    private Account orig = null;  // First sender account (main)
-    private Account bene = null;  // Last receiver account
+    private Account orig = null;  // The first sender (main) account
+    private Account bene = null;  // The last beneficiary account
     private List<Account> intermediate = new ArrayList<>();
     private long[] scatterSteps;
     private long[] gatherSteps;
@@ -73,5 +73,10 @@ public class ScatterGatherTypology extends AMLTypology {
                 sendTransaction(step, gatherAmount, _orig, bene, isFraud, alertID);
             }
         }
+    }
+
+    @Override
+    public String getType() {
+        return "ScatterGatherTypology";
     }
 }

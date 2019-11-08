@@ -59,15 +59,15 @@ def plot_alert(tx_csv):
         new_edges = [(src, dst) for (step, src, dst) in edges if step == steps[i]]
         subg.add_edges_from(new_edges)
         nodes = subg.nodes()
-        eedges = subg.edges()
-        colors = ["r" if within_acct(n) else "b" for n in nodes]
-        ecolors = ["r" if e in e_suspicious[i] else "k" for e in eedges]
+        all_edges = subg.edges()
+        node_colors = ["r" if within_acct(n) else "b" for n in nodes]
+        edge_colors = ["r" if e in e_suspicious[i] else "k" for e in all_edges]
 
         plt.title("Step %d" % steps[i])
         plt.xlim([-1.0, 1.0])
         plt.ylim([-1.0, 1.0])
-        nx.draw_networkx_nodes(subg, pos, nodelist=nodes, node_color=colors, node_size=50)
-        nx.draw_networkx_edges(subg, pos, edgelist=eedges, edge_color=ecolors, arrowsize=5, width=0.5)
+        nx.draw_networkx_nodes(subg, pos, nodelist=nodes, node_color=node_colors, node_size=50)
+        nx.draw_networkx_edges(subg, pos, edgelist=all_edges, edge_color=edge_colors, arrowsize=5, width=0.5)
 
     fig = plt.figure()
     anim = animation.FuncAnimation(fig, show_graph, frames=len(steps))

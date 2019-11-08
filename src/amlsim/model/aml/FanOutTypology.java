@@ -13,16 +13,13 @@ import java.util.*;
  */
 public class FanOutTypology extends AMLTypology {
 
-    // Sender and receivers
+    // Originator and beneficiary accounts
     private Account orig;
-    private List<Account> dests = new ArrayList<>();
+    private List<Account> beneList = new ArrayList<>();
 
     private long[] steps;
-    public static final int SIMULTANEOUS = 1;
-    public static final int FIXED_INTERVAL = 2;
-    public static final int RANDOM_RANGE = 3;
 
-    public FanOutTypology(float minAmount, float maxAmount, int minStep, int maxStep){
+    FanOutTypology(float minAmount, float maxAmount, int minStep, int maxStep){
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -34,35 +31,35 @@ public class FanOutTypology extends AMLTypology {
         // Set members
         List<Account> members = alert.getMembers();
         orig = alert.isSAR() ? alert.getSubjectAccount() : members.get(0);
-        for(Account dest : members){
-            if(orig != dest) dests.add(dest);
+        for(Account bene : members){
+            if(orig != bene) beneList.add(bene);
         }
 
         // Set schedule
-        int numDests = dests.size();
+        int numBenes = beneList.size();
         int totalStep = (int)(endStep - startStep + 1);
-        int defaultInterval = totalStep / numDests;
+        int defaultInterval = totalStep / numBenes;
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
 
-        steps = new long[numDests];
+        steps = new long[numBenes];
         if(scheduleID == SIMULTANEOUS){
             long step = getRandomStep();
             Arrays.fill(steps, step);
         }else if(scheduleID == FIXED_INTERVAL){
             int range = (int)(endStep - startStep + 1);
-            if(numDests < range){
-                interval = range / numDests;
-                for(int i=0; i<numDests; i++){
+            if(numBenes < range){
+                interval = range / numBenes;
+                for(int i=0; i<numBenes; i++){
                     steps[i] = startStep + interval*i;
                 }
             }else{
-                long batch = numDests / range;
-                for(int i=0; i<numDests; i++){
+                long batch = numBenes / range;
+                for(int i=0; i<numBenes; i++){
                     steps[i] = startStep + i/batch;
                 }
             }
-        }else if(scheduleID == RANDOM_RANGE){
-            for(int i=0; i<numDests; i++){
+        }else if(scheduleID == RANDOM_INTERVAL || scheduleID == UNORDERED){
+            for(int i=0; i<numBenes; i++){
                 steps[i] = getRandomStep();
             }
         }
@@ -70,7 +67,7 @@ public class FanOutTypology extends AMLTypology {
 
     @Override
     public String getType() {
-        return "FanOutFraud";
+        return "FanOutTypology";
     }
 
     @Override
@@ -80,12 +77,12 @@ public class FanOutTypology extends AMLTypology {
         }
         long alertID = alert.getAlertID();
         boolean isFraud = alert.isSAR();
-        float amount = getAmount() / dests.size();
+        float amount = getRandomAmount();
 
-        for(int i=0; i<dests.size(); i++){
+        for(int i = 0; i< beneList.size(); i++){
             if(steps[i] == step){
-                Account dest = dests.get(i);
-                sendTransaction(step, amount, orig, dest, isFraud, alertID);
+                Account bene = beneList.get(i);
+                sendTransaction(step, amount, orig, bene, isFraud, alertID);
             }
         }
     }

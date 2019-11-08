@@ -15,9 +15,6 @@ public class CycleTypology extends AMLTypology {
 
     // Transaction schedule
     private long[] steps;  // Array of simulation steps when each transaction is scheduled to be made
-    public static final int FIXED_INTERVAL = 0;  // All accounts send money in order with the same interval
-    public static final int RANDOM_INTERVAL = 1;  // All accounts send money in order with random intervals
-    public static final int UNORDERED = 2;  // All accounts send money randomly
     private float amount = 0.0F;  // Current transaction amount
 
     CycleTypology(float minAmount, float maxAmount, int minStep, int maxStep){
@@ -29,7 +26,7 @@ public class CycleTypology extends AMLTypology {
      * @param modelID Schedule model ID as integer
      */
     public void setParameters(int modelID){
-        amount = getAmount();
+        amount = maxAmount;  // Initialize the transaction amount
 
         List<Account> members = alert.getMembers();  // All fraud transaction members
         int length = members.size();  // Number of members (total transactions)
@@ -62,7 +59,6 @@ public class CycleTypology extends AMLTypology {
                 Arrays.sort(steps);  // Ordered
             }
         }
-//        System.out.println("Cycle transaction steps: " + Arrays.toString(steps));
     }
 
     @Override
@@ -72,7 +68,7 @@ public class CycleTypology extends AMLTypology {
 
     @Override
     public String getType() {
-        return "CycleFraud";
+        return "CycleTypology";
     }
 
     /**

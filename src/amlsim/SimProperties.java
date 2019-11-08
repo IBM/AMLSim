@@ -4,37 +4,39 @@ import java.io.*;
 import java.nio.file.*;
 import org.json.*;
 
+
+/**
+ * Simulation properties and global parameters loaded from the configuration JSON file
+ */
 public class SimProperties {
 
     private static final String separator = File.separator;
-    private JSONObject obj;
     private JSONObject generalProp;
     private JSONObject simProp;
     private JSONObject inputProp;
     private JSONObject outputProp;
     private JSONObject cashInProp;
     private JSONObject cashOutProp;
-    private String simName;
     private String inputDir;
     private String outputDir;
 
-    public SimProperties(String fname) throws IOException{
-        String jsonStr = loadTextFile(fname);
-        obj = new JSONObject(jsonStr);
-        generalProp = obj.getJSONObject("general");
-        simProp = obj.getJSONObject("simulator");
-        inputProp = obj.getJSONObject("temporal");
-        outputProp = obj.getJSONObject("output");
-        cashInProp = obj.getJSONObject("default").getJSONObject("cash_in");
-        cashOutProp = obj.getJSONObject("default").getJSONObject("cash_out");
+    public SimProperties(String jsonName) throws IOException{
+        String jsonStr = loadTextFile(jsonName);
+        JSONObject jsonObject = new JSONObject(jsonStr);
+        generalProp = jsonObject.getJSONObject("general");
+        simProp = jsonObject.getJSONObject("simulator");
+        inputProp = jsonObject.getJSONObject("temporal");
+        outputProp = jsonObject.getJSONObject("output");
+        cashInProp = jsonObject.getJSONObject("default").getJSONObject("cash_in");
+        cashOutProp = jsonObject.getJSONObject("default").getJSONObject("cash_out");
 
-        simName = generalProp.getString("simulation_name");
+        String simName = generalProp.getString("simulation_name");
         inputDir = inputProp.getString("directory") + separator;
         outputDir = inputDir + separator + simName + separator;
     }
 
-    public static String loadTextFile(String fname) throws IOException{
-        Path file = Paths.get(fname);
+    private static String loadTextFile(String jsonName) throws IOException{
+        Path file = Paths.get(jsonName);
         byte[] bytes = Files.readAllBytes(file);
         return new String(bytes);
     }

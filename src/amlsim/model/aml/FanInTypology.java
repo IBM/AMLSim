@@ -14,41 +14,38 @@ import java.util.*;
 public class FanInTypology extends AMLTypology {
 
     // Senders and receiver
-    private Account dest;  // The destination (receiver) account
-    private List<Account> origs = new ArrayList<>();  // The origin (sender) accounts
+    private Account bene;  // The destination (beneficiary) account
+    private List<Account> origList = new ArrayList<>();  // The origin (originator) accounts
 
-    // Transaction schedule
-    private int schedule_mode;
     private long[] steps;
-    public static final int SIMULTANEOUS = 1;
-    public static final int FIXED_INTERVAL = 2;
-    public static final int RANDOM_RANGE = 3;
+    private static final int SIMULTANEOUS = 1;
+    private static final int FIXED_INTERVAL = 2;
+    private static final int RANDOM_RANGE = 3;
 
-    public FanInTypology(float minAmount, float maxAmount, int start, int end){
+    FanInTypology(float minAmount, float maxAmount, int start, int end){
         super(minAmount, maxAmount, start, end);
     }
 
-    public void setParameters(int modelID){
-        this.schedule_mode = modelID;
+    public void setParameters(int schedulingID){
 
-        // Set alert members
+        // Set members
         List<Account> members = alert.getMembers();
-        dest = alert.isSAR() ? alert.getSubjectAccount() : members.get(0);  // The subject account is the receiver
+        bene = alert.isSAR() ? alert.getSubjectAccount() : members.get(0);  // The subject account is the receiver
         for(Account orig : members){  // The rest of accounts are senders
-            if(orig != dest) origs.add(orig);
+            if(orig != bene) origList.add(orig);
         }
 
         // Set transaction schedule
-        int numOrigs = origs.size();
+        int numOrigs = origList.size();
         int totalStep = (int)(endStep - startStep + 1);
         int defaultInterval = totalStep / numOrigs;
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
 
         steps = new long[numOrigs];
-        if(schedule_mode == SIMULTANEOUS){
+        if(schedulingID == SIMULTANEOUS){
             long step = getRandomStep();
             Arrays.fill(steps, step);
-        }else if(schedule_mode == FIXED_INTERVAL){
+        }else if(schedulingID == FIXED_INTERVAL){
             int range = (int)(endStep - startStep + 1);
             if(numOrigs < range){
                 interval = range / numOrigs;
@@ -61,7 +58,7 @@ public class FanInTypology extends AMLTypology {
                     steps[i] = startStep + i/batch;
                 }
             }
-        }else if(schedule_mode == RANDOM_RANGE){
+        }else if(schedulingID == RANDOM_RANGE){
             for(int i=0; i<numOrigs; i++){
                 steps[i] = getRandomStep();
             }
@@ -81,12 +78,12 @@ public class FanInTypology extends AMLTypology {
     public void sendTransactions(long step, Account acct){
         long alertID = alert.getAlertID();
         boolean isFraud = alert.isSAR();
-        float amount = getAmount() / origs.size();
+        float amount = getRandomAmount();  // / origs.size();
 
-        for(int i=0; i<origs.size(); i++){
+        for(int i = 0; i< origList.size(); i++){
             if(steps[i] == step){
-                Account orig = origs.get(i);
-                sendTransaction(step, amount, orig, dest, isFraud, alertID);
+                Account orig = origList.get(i);
+                sendTransaction(step, amount, orig, bene, isFraud, alertID);
             }
         }
     }

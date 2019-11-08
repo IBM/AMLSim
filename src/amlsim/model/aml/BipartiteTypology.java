@@ -22,7 +22,7 @@ public class BipartiteTypology extends AMLTypology {
     @Override
     public int getNumTransactions() {
         int numMembers = alert.getMembers().size();
-        int numSenders = numMembers / 2;  // The first half accounts are senders
+        int numSenders = numMembers / 2;  // The former half accounts are originators
         int numReceivers = numMembers - numSenders;
         return numSenders * numReceivers;  // all-to-all
     }
@@ -33,12 +33,12 @@ public class BipartiteTypology extends AMLTypology {
 
     @Override
     public String getType() {
-        return "BipartiteFraud";
+        return "BipartiteTypology";
     }
 
     @Override
     public void sendTransactions(long step, Account acct) {
-        float amount = getAmount();  // The amount of each transaction
+        float amount = getRandomAmount();  // The amount of each transaction
         List<Account> members = alert.getMembers();  // Fraud members
 
         int last_orig_index = members.size() / 2;  // The first half accounts are senders
@@ -49,8 +49,8 @@ public class BipartiteTypology extends AMLTypology {
             }
 
             for(int j=last_orig_index; j<members.size(); j++){
-                Account dest = members.get(j);  // The second half accounts are receivers
-                sendTransaction(step, amount, orig, dest);
+                Account bene = members.get(j);  // The latter half accounts are beneficiaries
+                sendTransaction(step, amount, orig, bene);
             }
         }
     }

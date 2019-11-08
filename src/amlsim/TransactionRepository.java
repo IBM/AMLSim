@@ -16,13 +16,11 @@ public class TransactionRepository {
 //    private DecimalFormat amt_fmt;
 
     private int count = 0;
-    private int limit = Integer.MAX_VALUE;
+    private int limit = Integer.MAX_VALUE;  // Number of transactions as buffer
 
     private long[] steps;
     private String[] descriptions;
     private float[] amounts;
-//    private long[] origIDs;
-//    private long[] destIDs;
     private String[] origIDs;
     private String[] destIDs;
 
@@ -39,10 +37,6 @@ public class TransactionRepository {
     public TransactionRepository(int size) {
         this.txCounter = new HashMap<>();
         this.sarTxCounter = new HashMap<>();
-
-//        this.amt_fmt = new DecimalFormat("#.#");
-//        int precision = 2;
-//        this.amt_fmt.setMinimumFractionDigits(precision);
 
         this.size = size;
         this.steps = new long[size];

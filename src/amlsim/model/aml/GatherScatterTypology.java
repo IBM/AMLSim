@@ -72,7 +72,7 @@ public class GatherScatterTypology extends AMLTypology {
                 if(gatherSteps[i] == step){
                     Account orig = origAccts.get(i);
                     Account bene = alert.getSubjectAccount();
-                    float amount = getAmount();
+                    float amount = getRandomAmount();
                     sendTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
                 }
@@ -91,6 +91,11 @@ public class GatherScatterTypology extends AMLTypology {
                 }
             }
         }
+    }
+
+    @Override
+    public String getType() {
+        return "GatherScatterTypology";
     }
 }
 

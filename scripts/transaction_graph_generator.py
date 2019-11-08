@@ -131,7 +131,7 @@ class TransactionGenerator:
         self.alert_groups = dict()  # Alert ID and alert transaction subgraph
         # TODO: Move the mapping of AML pattern to configuration JSON file
         self.alert_types = {"fan_out": 1, "fan_in": 2, "cycle": 3, "bipartite": 4, "stack": 5,
-                            "dense": 6, "scatter_gather": 7, "gather_scatter": 8}  # Pattern name and model ID
+                            "random": 6, "scatter_gather": 7, "gather_scatter": 8}  # Pattern name and model ID
 
         def get_types(type_csv):
             tx_types = list()
@@ -681,7 +681,7 @@ class TransactionGenerator:
         """Add an AML rule transaction set
         :param is_sar: Whether the alerted transaction set is SAR or false-alert
         :param pattern_name: Name of pattern type
-            ("fan_in", "fan_out", "cycle", "dense", "mixed", "stack", "scatter_gather" or "gather_scatter")
+            ("fan_in", "fan_out", "cycle", "random", "stack", "scatter_gather" or "gather_scatter")
         :param num_accounts: Number of transaction members (accounts)
         :param individual_amount: Initial individual amount
         :param total_amount: Minimum total amount
@@ -696,17 +696,6 @@ class TransactionGenerator:
         :param bene_business: Whether the beneficiary business type is suspicious (currently unused)
         """
         main_acct, members = self.get_alert_members(num_accounts, is_sar)
-
-        # Prepare parameters
-        # if individual_amount is None:
-        #     min_amount = self.default_min_amount
-        #     max_amount = self.default_max_amount
-        # else:
-        #     min_amount = individual_amount
-        #     max_amount = individual_amount * 2
-        #
-        # if total_amount is None:
-        #     total_amount = 0
 
         start_date = 0
         end_date = self.total_steps
@@ -766,40 +755,40 @@ class TransactionGenerator:
                 if transaction_count > num_transactions and accumulated_amount >= total_amount:
                     break
 
-        elif pattern_name == "mixed":  # fan_out -> bipartite -> fan_in
-            src = members[0]  # Source account
-            dst = members[num_members - 1]  # Destination account
-            src_list = members[1:(num_members // 2)]  # First intermediate accounts
-            dst_list = members[(num_members // 2):num_members - 1]  # Second intermediate accounts
-
-            if num_transactions is None:
-                num_transactions = len(src_list) + len(dst_list) + len(src_list) * len(dst_list)
-
-            for _dst in src_list:  # Fan-out
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
-                date = random.randrange(start_date, end_date)
-                sub_g.add_edge(src, _dst, amount=amount, date=date)
-                self.g.add_edge(src, _dst, amount=amount, date=date)
-                transaction_count += 1
-                accumulated_amount += amount
-
-            for _src, _dst in itertools.product(src_list, dst_list):  # Bipartite
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
-                date = random.randrange(start_date, end_date)
-                sub_g.add_edge(_src, _dst, amount=amount, date=date)
-                self.g.add_edge(_src, _dst, amount=amount, date=date)
-                transaction_count += 1
-                accumulated_amount += amount
-
-            for _src in itertools.cycle(dst_list):  # Fan-in
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
-                date = random.randrange(start_date, end_date)
-                sub_g.add_edge(_src, dst, amount=amount, date=date)
-                self.g.add_edge(_src, dst, amount=amount, date=date)
-                transaction_count += 1
-                accumulated_amount += amount
-                if transaction_count >= num_transactions and accumulated_amount >= total_amount:
-                    break
+        # elif pattern_name == "mixed":  # fan_out -> bipartite -> fan_in
+        #     src = members[0]  # Source account
+        #     dst = members[num_members - 1]  # Destination account
+        #     src_list = members[1:(num_members // 2)]  # First intermediate accounts
+        #     dst_list = members[(num_members // 2):num_members - 1]  # Second intermediate accounts
+        #
+        #     if num_transactions is None:
+        #         num_transactions = len(src_list) + len(dst_list) + len(src_list) * len(dst_list)
+        #
+        #     for _dst in src_list:  # Fan-out
+        #         amount = individual_amount  # random.uniform(min_amount, max_amount)
+        #         date = random.randrange(start_date, end_date)
+        #         sub_g.add_edge(src, _dst, amount=amount, date=date)
+        #         self.g.add_edge(src, _dst, amount=amount, date=date)
+        #         transaction_count += 1
+        #         accumulated_amount += amount
+        #
+        #     for _src, _dst in itertools.product(src_list, dst_list):  # Bipartite
+        #         amount = individual_amount  # random.uniform(min_amount, max_amount)
+        #         date = random.randrange(start_date, end_date)
+        #         sub_g.add_edge(_src, _dst, amount=amount, date=date)
+        #         self.g.add_edge(_src, _dst, amount=amount, date=date)
+        #         transaction_count += 1
+        #         accumulated_amount += amount
+        #
+        #     for _src in itertools.cycle(dst_list):  # Fan-in
+        #         amount = individual_amount  # random.uniform(min_amount, max_amount)
+        #         date = random.randrange(start_date, end_date)
+        #         sub_g.add_edge(_src, dst, amount=amount, date=date)
+        #         self.g.add_edge(_src, dst, amount=amount, date=date)
+        #         transaction_count += 1
+        #         accumulated_amount += amount
+        #         if transaction_count >= num_transactions and accumulated_amount >= total_amount:
+        #             break
 
         elif pattern_name == "stack":  # two dense bipartite layers
             src_list = members[:num_members // 3]  # First 1/3 of members: source accounts
@@ -827,7 +816,7 @@ class TransactionGenerator:
                 if transaction_count > num_transactions and accumulated_amount >= total_amount:
                     break
 
-        elif pattern_name == "dense":  # Dense alert accounts (all-to-all)
+        elif pattern_name == "random":  # Random transactions among members
             dst_list = [n for n in members if n != main_acct]
             for dst in dst_list:
                 amount = individual_amount  # random.uniform(min_amount, max_amount)

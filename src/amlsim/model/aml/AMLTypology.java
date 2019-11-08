@@ -27,7 +27,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     public static final int CYCLE = 3;
     public static final int BIPARTITE = 4;
     public static final int STACK = 5;
-    public static final int DENSE = 6;
+    public static final int RANDOM = 6;
     public static final int SCATTER_GATHER = 7;  // fan-out -> fan-in
     public static final int GATHER_SCATTER = 8;  // fan-in -> fan-out
 
@@ -58,7 +58,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
             case CYCLE: model = new CycleTypology(minAmount, maxAmount, startStep, endStep); break;
             case BIPARTITE: model = new BipartiteTypology(minAmount, maxAmount, startStep, endStep); break;
             case STACK: model = new StackTypology(minAmount, maxAmount, startStep, endStep); break;
-            case DENSE: model = new RandomTypology(minAmount, maxAmount, startStep, endStep); break;
+            case RANDOM: model = new RandomTypology(minAmount, maxAmount, startStep, endStep); break;
             case SCATTER_GATHER: model = new ScatterGatherTypology(minAmount, maxAmount, startStep, endStep); break;
             case GATHER_SCATTER: model = new GatherScatterTypology(minAmount, maxAmount, startStep, endStep); break;
             default: throw new IllegalArgumentException("Unknown typology model ID: " + modelID);

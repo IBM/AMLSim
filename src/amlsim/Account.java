@@ -20,11 +20,11 @@ public class Account extends Client implements Steppable {
 	private boolean caseSubject = false;
 	private Random rand = new Random();
 	private Branch branch = null;
-    private Map<String, Account> origs = new HashMap<>();  // Sender Client ID --> Client Object
-    private Map<String, Account> dests = new HashMap<>();  // Receiver Client ID --> Client Object
+    private Map<String, Account> origs = new HashMap<>();  // Originator Client ID --> Client Object
+    private Map<String, Account> dests = new HashMap<>();  // Beneficiary Client ID --> Client Object
 
-    private Account prevOrig = null;  // Previous sender Client
-	private Account prevDest = null;  // Previous receiver Client
+    private Account prevOrig = null;  // Previous originator account
+	private Account prevDest = null;  // Previous beneficiary account
 	List<Alert> alerts = new ArrayList<>();
     private Map<String, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
 
@@ -198,8 +198,8 @@ public class Account extends Client implements Steppable {
     }
 
 	/**
-	 * Get the previous origin (sender) account
-	 * @return Previous sender account object
+	 * Get the previous originator account
+	 * @return Previous originator account objects
 	 */
 	public Account getPrevOrig(){
 		return prevOrig;

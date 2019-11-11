@@ -82,8 +82,8 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
         reader = csv.reader(rf)
         next(reader)  # Skip header
         for row in reader:
-            src_id = row[tx_src_idx]  # SENDER_ACCOUNT_ID
-            dst_id = row[tx_dst_idx]  # RECEIVER_ACCOUNT_ID
+            src_id = row[tx_src_idx]  # Originator account ID
+            dst_id = row[tx_dst_idx]  # Beneficiary account ID
             amount = float(row[tx_amt_idx])  # TX_AMOUNT
             date = parse(row[tx_date_idx]) if is_date_type else base_date + timedelta(int(row[tx_date_idx]))
             date_str = date.strftime("%Y-%m-%d")

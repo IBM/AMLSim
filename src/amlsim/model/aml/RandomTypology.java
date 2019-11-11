@@ -51,8 +51,6 @@ public class RandomTypology extends AMLTypology {
         long alertID = alert.getAlertID();
         if(!isValidStep(step))return;
 
-//        Account hub = isSAR ? alert.getMainAccount() : this.alert.getMembers().get(0); // Main account
-//        List<Account> beneList = hub.getDests();
         List<Account> beneList = nextOrig.getDests();
         int numBenes = beneList.size();
         if(numBenes == 0)return;
@@ -63,12 +61,5 @@ public class RandomTypology extends AMLTypology {
         Account bene = beneList.get(idx);
         sendTransaction(step, amount, nextOrig, bene, isSAR, (int)alertID);  // Main account makes transactions to one of the neighbors
         nextOrig = bene;  // The next originator account is the previous beneficiary account
-//        List<Account> nbs = bene.getDests();
-//        int numNbs = nbs.size();
-//        if(numNbs > 0){
-//            idx = rand.nextInt(numNbs);
-//            Account nb = nbs.get(idx);
-//            sendTransaction(step, amount, bene, nb, isSAR, (int)alertID);  // Neighbor accounts make transactions
-//        }
     }
 }

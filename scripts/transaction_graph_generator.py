@@ -196,10 +196,9 @@ class TransactionGenerator:
         else:
             return True
 
-    def get_alert_members(self, num, is_sar):
+    def get_alert_members(self, num):
         """Get account vertices randomly (high-degree vertices are likely selected)
         :param num: Number of total account vertices
-        :param is_sar: Whether the alert is SAR (True) or false-alert (False)
         :return: Main account and account ID list
         """
         found = False
@@ -217,8 +216,7 @@ class TransactionGenerator:
                 continue
             main_acct = random.choice(list(candidates_set))  # Choose one main account from members randomly
             found = True
-            if is_sar:
-                self.main_acct_candidates.remove(main_acct)
+            self.main_acct_candidates.remove(main_acct)
         return main_acct, members
 
     def get_account_vertices(self, num, suspicious=None):
@@ -668,19 +666,19 @@ class TransactionGenerator:
 
                 for i in range(num_patterns):
                     # Add an AML typology
-                    self.add_alert_pattern(is_sar, pattern_name, num_accounts, individual_amount, total_amount,
-                                           num_transactions, schedule, amount_difference, period, amount_rounded,
-                                           orig_country, bene_country, orig_business, bene_business)
+                    self.add_aml_typology(is_sar, pattern_name, num_accounts, individual_amount, total_amount,
+                                          num_transactions, schedule, amount_difference, period, amount_rounded,
+                                          orig_country, bene_country, orig_business, bene_business)
                     count += 1
                     if count % 1000 == 0:
                         print("Write %d alerts" % count)
 
-    def add_alert_pattern(self, is_sar, pattern_name, num_accounts, individual_amount, total_amount,
-                          num_transactions=None, schedule=1, amount_difference=None, period=None, amount_rounded=None,
-                          orig_country=False, bene_country=False, orig_business=False, bene_business=False):
-        """Add an AML rule transaction set
-        :param is_sar: Whether the alerted transaction set is SAR or false-alert
-        :param pattern_name: Name of pattern type
+    def add_aml_typology(self, is_sar, typology_name, num_accounts, individual_amount, total_amount,
+                         num_transactions=None, schedule=1, amount_difference=None, period=None, amount_rounded=None,
+                         orig_country=False, bene_country=False, orig_business=False, bene_business=False):
+        """Add an AML typology transaction set
+        :param is_sar: Whether the alerted transaction set is SAR (True) or false-alert (False)
+        :param typology_name: Name of pattern type
             ("fan_in", "fan_out", "cycle", "random", "stack", "scatter_gather" or "gather_scatter")
         :param num_accounts: Number of transaction members (accounts)
         :param individual_amount: Initial individual amount
@@ -688,27 +686,37 @@ class TransactionGenerator:
         :param num_transactions: Minimum number of transactions
         :param schedule: AML pattern transaction schedule model ID
         :param amount_difference: Proportion of maximum transaction difference (currently unused)
-        :param period: Overall transaction period (days, currently unused)
+        :param period: Number of days as the overall transaction period (currently unused)
         :param amount_rounded: Proportion of number of transactions with rounded amounts (currently unused)
         :param orig_country: Whether the originator country is suspicious (currently unused)
         :param bene_country: Whether the beneficiary country is suspicious (currently unused)
         :param orig_business: Whether the originator business type is suspicious (currently unused)
         :param bene_business: Whether the beneficiary business type is suspicious (currently unused)
         """
-        main_acct, members = self.get_alert_members(num_accounts, is_sar)
+        main_acct, members = self.get_alert_members(num_accounts)
 
         start_date = 0
         end_date = self.total_steps
 
         # Create subgraph structure with transaction attributes
-        model_id = self.alert_types[pattern_name]  # alert model ID
-        sub_g = nx.MultiDiGraph(model_id=model_id, reason=pattern_name, scheduleID=schedule, start=start_date,
+        model_id = self.alert_types[typology_name]  # alert model ID
+        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule, start=start_date,
                                 end=end_date)  # Transaction subgraph for a typology
         num_members = len(members)  # Number of accounts
         accumulated_amount = 0
         transaction_count = 0
 
-        if pattern_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
+        def add_edge(_orig, _bene, _amount, _date):
+            """Add transaction edge to the AML typology subgraph as well as the whole transaction graph
+            :param _orig: Originator account ID
+            :param _bene: Beneficiary account ID
+            :param _amount: Transaction amount
+            :param _date: Transaction timestamp
+            """
+            sub_g.add_edge(_orig, _bene, amount=_amount, date=_date)
+            self.g.add_edge(_orig, _bene, amount=_date, date=_date)
+
+        if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
             src_list = [n for n in members if n != main_acct]
             dst = main_acct
             if num_transactions is None:
@@ -716,14 +724,13 @@ class TransactionGenerator:
             for src in itertools.cycle(src_list):  # Generate transactions for the specified number
                 amount = individual_amount  # random.uniform(min_amount, max_amount)
                 date = random.randrange(start_date, end_date)
-                sub_g.add_edge(src, dst, amount=amount, date=date)
-                self.g.add_edge(src, dst, amount=amount, date=date)
+                add_edge(src, dst, amount, date)
                 transaction_count += 1
                 accumulated_amount += amount
                 if transaction_count >= num_transactions and accumulated_amount >= total_amount:
                     break
 
-        elif pattern_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
+        elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
             src = main_acct
             dst_list = [n for n in members if n != main_acct]
             if num_transactions is None:
@@ -731,31 +738,29 @@ class TransactionGenerator:
             for dst in itertools.cycle(dst_list):  # Generate transactions for the specified number
                 amount = individual_amount  # random.uniform(min_amount, max_amount)
                 date = random.randrange(start_date, end_date)
-                sub_g.add_edge(src, dst, amount=amount, date=date)
-                self.g.add_edge(src, dst, amount=amount, date=date)
+                add_edge(src, dst, amount, date)
 
                 transaction_count += 1
                 accumulated_amount += amount
                 if transaction_count >= num_transactions and accumulated_amount >= total_amount:
                     break
 
-        elif pattern_name == "bipartite":  # bipartite (sender accounts --> all-to-all --> receiver accounts)
-            src_list = members[:(num_members // 2)]  # The former half members are sender accounts
-            dst_list = members[(num_members // 2):]  # The latter half members are receiver accounts
+        elif typology_name == "bipartite":  # bipartite (originator accounts -> many-to-many -> beneficiary accounts)
+            src_list = members[:(num_members // 2)]  # The former half members are originator accounts
+            dst_list = members[(num_members // 2):]  # The latter half members are beneficiary accounts
             if num_transactions is None:  # Number of transactions
                 num_transactions = len(src_list) * len(dst_list)
-            for src, dst in itertools.product(src_list, dst_list):  # All-to-all transactions
+            for src, dst in itertools.product(src_list, dst_list):  # All-to-all transaction edges
                 amount = individual_amount  # random.uniform(min_amount, max_amount)
                 date = random.randrange(start_date, end_date)
-                sub_g.add_edge(src, dst, amount=amount, date=date)
-                self.g.add_edge(src, dst, amount=amount, date=date)
+                add_edge(src, dst, amount, date)
 
                 transaction_count += 1
                 accumulated_amount += amount
                 if transaction_count > num_transactions and accumulated_amount >= total_amount:
                     break
 
-        elif pattern_name == "stack":  # two dense bipartite layers
+        elif typology_name == "stack":  # two dense bipartite layers
             src_list = members[:num_members // 3]  # First 1/3 of members: source accounts
             mid_list = members[num_members // 3:num_members * 2 // 3]  # Second 1/3 of members: intermediate accounts
             dst_list = members[num_members * 2 // 3:]  # Last 1/3 of members: destination accounts
@@ -765,8 +770,7 @@ class TransactionGenerator:
             for src, dst in itertools.product(src_list, mid_list):  # all-to-all transactions
                 amount = individual_amount  # random.uniform(min_amount, max_amount)
                 date = random.randrange(start_date, end_date)
-                sub_g.add_edge(src, dst, amount=amount, date=date)
-                self.g.add_edge(src, dst, amount=amount, date=date)
+                add_edge(src, dst, amount, date)
                 transaction_count += 1
                 accumulated_amount += amount
                 if transaction_count > num_transactions and accumulated_amount >= total_amount:
@@ -774,35 +778,31 @@ class TransactionGenerator:
             for src, dst in itertools.product(mid_list, dst_list):  # all-to-all transactions
                 amount = individual_amount  # random.uniform(min_amount, max_amount)
                 date = random.randrange(start_date, end_date)
-                sub_g.add_edge(src, dst, amount=amount, date=date)
-                self.g.add_edge(src, dst, amount=amount, date=date)
+                add_edge(src, dst, amount, date)
                 transaction_count += 1
                 accumulated_amount += amount
                 if transaction_count > num_transactions and accumulated_amount >= total_amount:
                     break
 
-        elif pattern_name == "random":  # Random transactions among members
+        elif typology_name == "random":  # Random transactions among members
             dst_list = [n for n in members if n != main_acct]
             for dst in dst_list:
                 amount = individual_amount  # random.uniform(min_amount, max_amount)
                 date = random.randrange(start_date, end_date)
-                sub_g.add_edge(main_acct, dst, amount=amount, date=date)
-                self.g.add_edge(main_acct, dst, amount=amount, date=date)
+                add_edge(main_acct, dst, amount, date)
             for dst in dst_list:
                 nb1 = random.choice(dst_list)
                 if dst != nb1:
                     amount = individual_amount  # random.uniform(min_amount, max_amount)
                     date = random.randrange(start_date, end_date)
-                    sub_g.add_edge(dst, nb1, amount=amount, date=date)
-                    self.g.add_edge(dst, nb1, amount=amount, date=date)
+                    add_edge(dst, nb1, amount, date)
                 nb2 = random.choice(dst_list)
                 if dst != nb2:
                     amount = individual_amount  # random.uniform(min_amount, max_amount)
                     date = random.randrange(start_date, end_date)
-                    sub_g.add_edge(nb2, dst, amount=amount, date=date)
-                    self.g.add_edge(nb2, dst, amount=amount, date=date)
+                    add_edge(nb2, dst, amount, date)
 
-        elif pattern_name == "cycle":  # Cycle transactions
+        elif typology_name == "cycle":  # Cycle transactions
             start_index = list(members).index(main_acct)  # Index of member list indicates the main account
             num = len(members)  # Number of involved accounts
             amount = individual_amount  # max_amount  # Initial transaction amount
@@ -814,12 +814,11 @@ class TransactionGenerator:
                 dst = members[dst_i]  # Destination account ID
                 date = dates[i]  # Transaction date (timestamp)
 
-                sub_g.add_edge(src, dst, amount=amount, date=date)
-                self.g.add_edge(src, dst, amount=amount, date=date)
+                add_edge(src, dst, amount, date)
                 margin = amount * 0.1  # Margin the beneficiary account can gain
                 amount = amount - margin  # max(amount - margin, min_amount)
 
-        elif pattern_name == "scatter_gather":  # Scatter-Gather (fan-out -> fan-in)
+        elif typology_name == "scatter_gather":  # Scatter-Gather (fan-out -> fan-in)
             sub_accounts = [n for n in members if n != main_acct]
             dest = sub_accounts[0]  # Final destination account
             num = len(members)
@@ -833,12 +832,10 @@ class TransactionGenerator:
                 scatter_date = random.randrange(start_date, middle_day)
                 gather_date = random.randrange(middle_day, end_date)
 
-                sub_g.add_edge(main_acct, acct, amount=scatter_amount, date=scatter_date)
-                self.g.add_edge(main_acct, acct, amount=scatter_amount, date=scatter_date)
-                sub_g.add_edge(acct, dest, amount=gather_amount, date=gather_date)
-                self.g.add_edge(acct, dest, amount=gather_amount, date=gather_date)
+                add_edge(main_acct, acct, scatter_amount, scatter_date)
+                add_edge(acct, dest, gather_amount, gather_date)
 
-        elif pattern_name == "gather_scatter":  # Gather-Scatter (fan-in -> fan-out)
+        elif typology_name == "gather_scatter":  # Gather-Scatter (fan-in -> fan-out)
             sub_accounts = [n for n in members if n != main_acct]
             num_orig_accounts = len(sub_accounts) // 2
             orig_accounts = sub_accounts[:num_orig_accounts]
@@ -850,8 +847,7 @@ class TransactionGenerator:
                 amount = individual_amount  # random.uniform(min_amount, max_amount)
                 date = random.randrange(start_date, middle_day)
 
-                sub_g.add_edge(acct, main_acct, amount=amount, date=date)
-                self.g.add_edge(acct, main_acct, amount=amount, date=date)
+                add_edge(acct, main_acct, amount, date)
                 accumulated_amount += amount
 
             margin = accumulated_amount * 0.1  # Margin of the intermediate (main) account
@@ -862,12 +858,12 @@ class TransactionGenerator:
             for i in range(num_bene_accounts):
                 acct = bene_accounts[i]
                 date = random.randrange(middle_day, end_date)
+                add_edge(main_acct, acct, scatter_amount, date)
 
-                sub_g.add_edge(main_acct, acct, amount=scatter_amount, date=date)
-                self.g.add_edge(main_acct, acct, amount=scatter_amount, date=date)
+        # Add user-defined typology implementations here
 
         else:
-            print("Warning: unknown pattern type: %s" % pattern_name)
+            print("Warning: unknown pattern type: %s" % typology_name)
             return
 
         # Add the generated transaction edges to whole transaction graph

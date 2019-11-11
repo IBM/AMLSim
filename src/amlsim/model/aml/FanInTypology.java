@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class FanInTypology extends AMLTypology {
 
-    // Senders and receiver
+    // Originators and the main beneficiary
     private Account bene;  // The destination (beneficiary) account
     private List<Account> origList = new ArrayList<>();  // The origin (originator) accounts
 
@@ -31,7 +31,7 @@ public class FanInTypology extends AMLTypology {
         // Set members
         List<Account> members = alert.getMembers();
         bene = alert.isSAR() ? alert.getMainAccount() : members.get(0);  // The subject account is the receiver
-        for(Account orig : members){  // The rest of accounts are senders
+        for(Account orig : members){  // The rest of accounts are originators
             if(orig != bene) origList.add(orig);
         }
 

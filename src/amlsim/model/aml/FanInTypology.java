@@ -30,7 +30,7 @@ public class FanInTypology extends AMLTypology {
 
         // Set members
         List<Account> members = alert.getMembers();
-        bene = alert.isSAR() ? alert.getSubjectAccount() : members.get(0);  // The subject account is the receiver
+        bene = alert.isSAR() ? alert.getMainAccount() : members.get(0);  // The subject account is the receiver
         for(Account orig : members){  // The rest of accounts are senders
             if(orig != bene) origList.add(orig);
         }
@@ -47,6 +47,7 @@ public class FanInTypology extends AMLTypology {
             Arrays.fill(steps, step);
         }else if(schedulingID == FIXED_INTERVAL){
             int range = (int)(endStep - startStep + 1);
+//            System.out.printf("%d -> %d -> %d\n", startStep, range, endStep);
             if(numOrigs < range){
                 interval = range / numOrigs;
                 for(int i=0; i<numOrigs; i++){

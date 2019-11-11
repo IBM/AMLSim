@@ -755,41 +755,6 @@ class TransactionGenerator:
                 if transaction_count > num_transactions and accumulated_amount >= total_amount:
                     break
 
-        # elif pattern_name == "mixed":  # fan_out -> bipartite -> fan_in
-        #     src = members[0]  # Source account
-        #     dst = members[num_members - 1]  # Destination account
-        #     src_list = members[1:(num_members // 2)]  # First intermediate accounts
-        #     dst_list = members[(num_members // 2):num_members - 1]  # Second intermediate accounts
-        #
-        #     if num_transactions is None:
-        #         num_transactions = len(src_list) + len(dst_list) + len(src_list) * len(dst_list)
-        #
-        #     for _dst in src_list:  # Fan-out
-        #         amount = individual_amount  # random.uniform(min_amount, max_amount)
-        #         date = random.randrange(start_date, end_date)
-        #         sub_g.add_edge(src, _dst, amount=amount, date=date)
-        #         self.g.add_edge(src, _dst, amount=amount, date=date)
-        #         transaction_count += 1
-        #         accumulated_amount += amount
-        #
-        #     for _src, _dst in itertools.product(src_list, dst_list):  # Bipartite
-        #         amount = individual_amount  # random.uniform(min_amount, max_amount)
-        #         date = random.randrange(start_date, end_date)
-        #         sub_g.add_edge(_src, _dst, amount=amount, date=date)
-        #         self.g.add_edge(_src, _dst, amount=amount, date=date)
-        #         transaction_count += 1
-        #         accumulated_amount += amount
-        #
-        #     for _src in itertools.cycle(dst_list):  # Fan-in
-        #         amount = individual_amount  # random.uniform(min_amount, max_amount)
-        #         date = random.randrange(start_date, end_date)
-        #         sub_g.add_edge(_src, dst, amount=amount, date=date)
-        #         self.g.add_edge(_src, dst, amount=amount, date=date)
-        #         transaction_count += 1
-        #         accumulated_amount += amount
-        #         if transaction_count >= num_transactions and accumulated_amount >= total_amount:
-        #             break
-
         elif pattern_name == "stack":  # two dense bipartite layers
             src_list = members[:num_members // 3]  # First 1/3 of members: source accounts
             mid_list = members[num_members // 3:num_members * 2 // 3]  # Second 1/3 of members: intermediate accounts

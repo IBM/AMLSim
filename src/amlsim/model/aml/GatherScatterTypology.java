@@ -32,7 +32,7 @@ public class GatherScatterTypology extends AMLTypology {
         gatherSteps = new long[numOrigMembers];
         scatterSteps = new long[numBeneMembers];
 
-        Account mainAcct = alert.getSubjectAccount();
+        Account mainAcct = alert.getMainAccount();
         List<Account> subMembers = new ArrayList<>();
         for (Account acct : alert.getMembers()){
             if(acct != mainAcct){
@@ -71,7 +71,7 @@ public class GatherScatterTypology extends AMLTypology {
             for(int i=0; i<gatherSteps.length; i++){
                 if(gatherSteps[i] == step){
                     Account orig = origAccts.get(i);
-                    Account bene = alert.getSubjectAccount();
+                    Account bene = alert.getMainAccount();
                     float amount = getRandomAmount();
                     sendTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
@@ -85,7 +85,7 @@ public class GatherScatterTypology extends AMLTypology {
             }
             for(int i=0; i<numScatters; i++){
                 if(scatterSteps[i] == step){
-                    Account orig = alert.getSubjectAccount();
+                    Account orig = alert.getMainAccount();
                     Account bene = beneAccts.get(i);
                     sendTransaction(step, scatterAmount, orig, bene, isSAR, alertID);
                 }

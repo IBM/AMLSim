@@ -27,7 +27,7 @@ public class ScatterGatherTypology extends AMLTypology {
         float margin = scatterAmount * MARGIN_RATIO;
         gatherAmount = Math.max(scatterAmount - margin, minAmount);
 
-        orig = alert.getSubjectAccount();
+        orig = alert.getMainAccount();
         for (Account acct : alert.getMembers()) {
             if (acct == orig) {
                 continue;

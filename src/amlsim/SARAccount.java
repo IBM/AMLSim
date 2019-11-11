@@ -22,7 +22,7 @@ public class SARAccount extends Account {
 		long step = state.schedule.getSteps();
 
 		for(Alert ag : alerts){
-            if(this == ag.getMainAccount()){
+            if(this == ag.getPrimaryAccount()){
                 ag.registerTransactions(step, this);
             }
 		}

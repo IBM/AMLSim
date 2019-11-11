@@ -174,7 +174,7 @@ public class Account extends Client implements Steppable {
 		AMLSim amlsim = (AMLSim) state;
 		long step = state.schedule.getSteps();
 		for(Alert ag : alerts){
-            if(this == ag.getMainAccount()){
+            if(this == ag.getPrimaryAccount()){
                 ag.registerTransactions(step, this);
             }
 		}

@@ -13,14 +13,14 @@ public class Alert {
 
     private long alertID;  // Alert identifier
     private List<Account> members;  // Accounts involved in this alert
-    private Account subject;   // Main account of the fraud alert
+    private Account mainAccount;   // Main account of the fraud alert
     private AMLTypology model;    // Transaction model
     private AMLSim amlsim;  // AMLSim main object
 
     public Alert(long alertID, AMLTypology model, AMLSim sim){
         this.alertID = alertID;
         this.members = new ArrayList<>();
-        this.subject = null;
+        this.mainAccount = null;
         this.model = model;
         this.model.setAlert(this);
         this.amlsim = sim;
@@ -70,11 +70,11 @@ public class Alert {
     }
 
     /**
-     * Get the subject account
+     * Get the main account
      * @return If this alert is SAR, return the subject account. Otherwise, return null.
      */
-    public Account getSubjectAccount(){
-        return subject;
+    public Account getMainAccount(){
+        return mainAccount;
     }
 
     /**
@@ -83,9 +83,9 @@ public class Alert {
      * If this alert is a false-alert and has one or more members, return the first element of the member list.
      * If this alert has no members, return null.
      */
-    public Account getMainAccount(){
+    Account getPrimaryAccount(){
         if(isSAR()){
-            return getSubjectAccount();
+            return getMainAccount();
         }else if(members.isEmpty()){
             return null;
         }else{
@@ -94,11 +94,11 @@ public class Alert {
     }
 
     /**
-     * Set subject account
-     * @param fraudster Subject account object
+     * Set the main account
+     * @param fraudster Main account object
      */
-    public void setMainAccount(SARAccount fraudster){
-        this.subject = fraudster;
+    void setMainAccount(SARAccount fraudster){
+        this.mainAccount = fraudster;
     }
 
     public AMLTypology getModel(){
@@ -106,7 +106,7 @@ public class Alert {
     }
 
     public boolean isSAR(){
-        return this.subject != null;  // The alert group is fraud if and only if a subject account exists
+        return this.mainAccount != null;  // The alert group is fraud if and only if a subject account exists
     }
 }
 

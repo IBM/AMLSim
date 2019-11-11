@@ -59,6 +59,11 @@
       "dataType": "model_id"
     },
     {
+      "name": "bank_id",
+      "valueType": "int",
+      "dataType": "bank_id"
+    },
+    {
       "name": "first_name",
       "valueType": "string"
     },
@@ -211,7 +216,8 @@
     {"name": "model_id", "dataType": "model_id"},
     {"name": "start", "dataType": "date", "defaultValue": 0},
     {"name": "end", "dataType": "date", "defaultValue": 1000000},
-    {"name": "schedule_id", "dataType": "schedule_id"}
+    {"name": "schedule_id", "dataType": "schedule_id"},
+    {"name": "bank_id", "dataType": "bank_id"}
   ],
   "party_individual": [
     {"name": "birthPlaceCountry", "valueType": "string", "defaultValue": "US"},

@@ -206,9 +206,10 @@ public class AMLSim extends ParameterizedPaySim {
             String accountID = elements[columnIndex.get("ACCOUNT_ID")];
 			boolean isSAR = elements[columnIndex.get("IS_SAR")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
-			float init_balance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
-			int start_step = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
-			int end_step = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
+			float initBalance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
+			int start = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
+			int end = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
+			int bankID = Integer.parseInt(elements[columnIndex.get("BANK_ID")]);
 
 			Map<String, String> extraValues = new HashMap<>();
 			for(String column : extraColumns){
@@ -216,14 +217,14 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-			Account client = isSAR ? new SARAccount(accountID, modelID, defaultTxInterval, init_balance, start_step, end_step, extraValues)
-					: new Account(accountID, modelID, defaultTxInterval, init_balance, start_step, end_step, extraValues);
+			Account account = isSAR ? new SARAccount(accountID, modelID, defaultTxInterval, initBalance, start, end, bankID, extraValues)
+					: new Account(accountID, modelID, defaultTxInterval, initBalance, start, end, bankID, extraValues);
 
 			int index = this.getClients().size();
-			client.setBranch(this.branches.get(index % this.numBranches));
-			this.getClients().add(client);
+			account.setBranch(this.branches.get(index % this.numBranches));
+			this.getClients().add(account);
 			this.idMap.put(accountID, index);
-			this.schedule.scheduleRepeating(client);
+			this.schedule.scheduleRepeating(account);
 		}
 		int numAccounts = idMap.size();
 		logger.info("Number of total accounts: " + numAccounts);
@@ -238,7 +239,6 @@ public class AMLSim extends ParameterizedPaySim {
 		Map<String, Integer> columnIndex = getColumnIndices(line);
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
-//			long txID = Long.parseLong(elements[columnIndex.get("id")]);
             String srcID = elements[columnIndex.get("src")];
             String dstID = elements[columnIndex.get("dst")];
 
@@ -276,7 +276,6 @@ public class AMLSim extends ParameterizedPaySim {
 			if(minAmount > maxAmount){
 				throw new IllegalArgumentException(String.format("minAmount %f is larger than maxAmount %f", minAmount, maxAmount));
 			}
-
 			if(minStep > maxStep){
 				throw new IllegalArgumentException(String.format("startStep %d is larger than endStep %d", minStep, maxStep));
 			}
@@ -293,11 +292,11 @@ public class AMLSim extends ParameterizedPaySim {
 				alert = new Alert(alertID, model, this);
 				alertGroups.put(alertID, alert);
 			}
-			Account c = getClientFromID(clientID);
-			alert.addMember(c);
+			Account account = getClientFromID(clientID);
+			alert.addMember(account);
 			if(isSAR){
-				alert.setMainAccount((SARAccount) c);
-				c.setCase(true);
+				alert.setMainAccount((SARAccount) account);
+				account.setSAR(true);
 			}
 			scheduleModels.put(alertID, scheduleID);
 		}

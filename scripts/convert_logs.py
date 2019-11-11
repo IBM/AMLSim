@@ -97,6 +97,7 @@ class Schema:
             self.acct_end_idx = None
             self.acct_sar_idx = None
             self.acct_model_idx = None
+            self.acct_bank_idx = None
 
             self.tx_num_cols = None
             self.tx_names = list()
@@ -124,6 +125,7 @@ class Schema:
             self.alert_acct_subject_idx = None
             self.alert_acct_model_idx = None
             self.alert_acct_schedule_idx = None
+            self.alert_acct_bank_idx = None
 
             self.alert_tx_num_cols = None
             self.alert_tx_names = list()
@@ -220,6 +222,8 @@ class Schema:
                 self.acct_sar_idx = idx
             elif dtype == "model_id":
                 self.acct_model_idx = idx
+            elif dtype == "bank_id":
+                self.acct_bank_idx = idx
 
         # Transaction list
         for idx, col in enumerate(tx_data):
@@ -280,6 +284,8 @@ class Schema:
                 self.alert_acct_model_idx = idx
             elif dtype == "schedule_id":
                 self.alert_acct_schedule_idx = idx
+            elif dtype == "bank_id":
+                self.alert_acct_bank_idx = idx
 
         # Alert transaction list
         for idx, col in enumerate(alert_tx_data):
@@ -402,7 +408,7 @@ class Schema:
         dt = self._base_date + datetime.timedelta(num_days)
         return dt.isoformat() + "Z"  # UTC
 
-    def get_acct_row(self, acct_id, acct_name, init_balance, start_str, end_str, is_sar, model_id, **attr):
+    def get_acct_row(self, acct_id, acct_name, init_balance, start_str, end_str, is_sar, model_id, bank_id, **attr):
         row = list(self.acct_defaults)
         row[self.acct_id_idx] = acct_id
         row[self.acct_name_idx] = acct_name
@@ -423,6 +429,7 @@ class Schema:
 
         row[self.acct_sar_idx] = is_sar
         row[self.acct_model_idx] = model_id
+        row[self.acct_bank_idx] = bank_id
 
         for name, value in attr.items():
             if name in self.acct_name2idx:
@@ -456,7 +463,7 @@ class Schema:
         return row
 
     def get_alert_acct_row(self, _alert_id, _reason, _acct_id, _acct_name, _is_subject,
-                           _model_id, _schedule_id, **attr):
+                           _model_id, _schedule_id, _bank_id, **attr):
         row = list(self.alert_acct_defaults)
         row[self.alert_acct_alert_idx] = _alert_id
         row[self.alert_acct_reason_idx] = _reason
@@ -465,6 +472,7 @@ class Schema:
         row[self.alert_acct_subject_idx] = _is_subject
         row[self.alert_acct_model_idx] = _model_id
         row[self.alert_acct_schedule_idx] = _schedule_id
+        row[self.alert_acct_bank_idx] = _bank_id
 
         for name, value in attr.items():
             if name in self.alert_acct_name2idx:
@@ -585,10 +593,12 @@ class LogConverter:
         base_date = parse(base_date_str)
         self.schema = Schema(os.path.join(param_dir, schema_file), base_date)
 
+        # Input files
         self.log_file = os.path.join(self.input_dir, self.sim_name, output_conf["transaction_log"])
-        self.in_acct_file = input_conf["accounts"]
-        self.group_file = input_conf["alert_members"]
+        self.in_acct_file = input_conf["accounts"]  # Account list file from the transaction graph generator
+        self.group_file = input_conf["alert_members"]  # Alert account list file from the transaction graph generator
 
+        # Output files
         self.out_acct_file = output_conf["accounts"]  # All account list file
         self.tx_file = output_conf["transactions"]  # All transaction list file
         self.cash_tx_file = output_conf["cash_transactions"]  # Cash transaction list file
@@ -642,6 +652,7 @@ class LogConverter:
         type_idx = indices["ACCOUNT_TYPE"]
         sar_idx = indices["IS_SAR"]
         model_idx = indices["TX_BEHAVIOR_ID"]
+        bank_idx = indices["BANK_ID"]
 
         mapping_id = 1  # Mapping ID for account-alert list
 
@@ -655,9 +666,10 @@ class LogConverter:
             acct_type = row[type_idx]
             acct_sar = row[sar_idx]
             acct_model = row[model_idx]
+            bank_id = row[bank_idx]
             attr = {name: row[index] for name, index in indices.items()}
             output_row = self.schema.get_acct_row(acct_id, acct_name, balance, start, end,
-                                                  acct_sar, acct_model, **attr)
+                                                  acct_sar, acct_model, bank_id, **attr)
             acct_writer.writerow(output_row)
             self.org_types[acct_id] = acct_type
 
@@ -796,6 +808,7 @@ class LogConverter:
             is_sar = row[indices["isSAR"]].lower() == "true"
             model_id = row[indices["modelID"]]
             schedule_id = row[indices["scheduleID"]]
+            bank_id = row[indices["bankID"]]
 
             if alert_id not in self.reports:
                 self.reports[alert_id] = AMLTypology(reason)
@@ -803,7 +816,7 @@ class LogConverter:
 
             attr = {name: row[index] for name, index in indices.items()}
             output_row = self.schema.get_alert_acct_row(alert_id, reason, client_id, client_id, is_sar,
-                                                        model_id, schedule_id, **attr)
+                                                        model_id, schedule_id, bank_id, **attr)
             writer.writerow(output_row)
 
     def output_sar_cases(self):

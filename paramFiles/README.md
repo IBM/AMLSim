@@ -8,11 +8,8 @@ Account configuration list
 - `count` Number of accounts
 - `min_balance` Minimum initial balance
 - `max_balance` Maximum initial balance
-- `start_day` The day when the account is opened
-- `end_day` The day when the account is closed
 - `country` Alpha-2 country code
 - `business_type` business type
-- `suspicious` Suspicious account or not (currently unused)
 - `model` Account behavior model ID (See also `AbstractTransactionModel.java`)
   - 0: Single transactions
   - 1: Fan-out
@@ -20,6 +17,7 @@ Account configuration list
   - 3: Mutual
   - 4: Forward
   - 5: Periodical
+- `bank_id` Bank ID which these accounts belong to (optional, default is 0)
 
 
 Raw account list

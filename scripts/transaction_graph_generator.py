@@ -350,6 +350,7 @@ class TransactionGenerator:
         idx_country = None  # Country
         idx_business = None  # Business type
         idx_model = None  # Transaction model
+        idx_bank = None  # Bank ID
 
         with open(acct_file, "r") as rf:
             reader = csv.reader(rf)
@@ -372,6 +373,8 @@ class TransactionGenerator:
                     idx_business = i
                 elif k == "model":
                     idx_model = i
+                elif k == "bank_id":
+                    idx_bank = i
                 else:
                     print("Warning: unknown key: %s" % k)
 
@@ -387,10 +390,11 @@ class TransactionGenerator:
                 country = row[idx_country]
                 business = row[idx_business]
                 model_id = parse_int(row[idx_model])
+                bank_id = parse_int(row[idx_bank]) if idx_bank is not None else 0
 
                 for i in range(num):
                     init_balance = random.uniform(min_balance, max_balance)  # Generate amount
-                    self.add_account(aid, init_balance, start_day, end_day, country, business, model_id)
+                    self.add_account(aid, init_balance, start_day, end_day, country, business, model_id, bank_id)
                     aid += 1
 
         self.num_accounts = aid
@@ -512,7 +516,7 @@ class TransactionGenerator:
             dst = nodes[dst_i]
             self.add_transaction(src, dst)  # Add edges to transaction graph
 
-    def add_account(self, aid, init_balance, start, end, country, business, model_id, **attr):
+    def add_account(self, aid, init_balance, start, end, country, business, model_id, bank_id=0, **attr):
         """Add an account vertex
         :param aid: Account ID
         :param init_balance: Initial amount
@@ -521,13 +525,14 @@ class TransactionGenerator:
         :param country: Country name
         :param business: Business type
         :param model_id: Transaction model ID
+        :param bank_id: Bank ID
         :param attr: Optional attributes
         :return:
         """
         # Add an account vertex with an ID and attributes if and only if an account with the same ID is not yet added
         if self.check_account_absent(aid):
             self.g.add_node(aid, label="account", init_balance=init_balance, start=start, end=end, country=country,
-                            business=business, is_sar=False, model_id=model_id, **attr)
+                            business=business, is_sar=False, model_id=model_id, bank_id=bank_id, **attr)
 
     def add_transaction(self, src, dst, amount=None, date=None, ttype=None):
         """Add a transaction edge
@@ -706,6 +711,10 @@ class TransactionGenerator:
         accumulated_amount = 0
         transaction_count = 0
 
+        # Set bank ID attribute to all member accounts
+        for n in members:
+            sub_g.add_node(n, bank_id=self.g.node[n]["bank_id"])
+
         def add_edge(_orig, _bene, _amount, _date):
             """Add transaction edge to the AML typology subgraph as well as the whole transaction graph
             :param _orig: Originator account ID
@@ -883,7 +892,7 @@ class TransactionGenerator:
         with open(acct_file, "w") as wf:
             writer = csv.writer(wf)
             base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY",
-                          "ACCOUNT_TYPE", "IS_SAR", "TX_BEHAVIOR_ID"]
+                          "ACCOUNT_TYPE", "IS_SAR", "TX_BEHAVIOR_ID", "BANK_ID"]
             writer.writerow(base_attrs + self.attr_names)
             for n in self.g.nodes(data=True):
                 aid = n[0]  # Account ID
@@ -896,7 +905,8 @@ class TransactionGenerator:
                 business = prop["business"]  # Business type
                 is_sar = "true" if prop[IS_SAR_KEY] else "false"  # Whether this account is involved in SAR
                 model_id = prop["model_id"]  # Transaction behavior model ID
-                values = [aid, cid, balance, start, end, country, business, is_sar, model_id]
+                bank_id = prop["bank_id"]  # Bank ID
+                values = [aid, cid, balance, start, end, country, business, is_sar, model_id, bank_id]
                 for attr_name in self.attr_names:
                     values.append(prop[attr_name])
                 writer.writerow(values)
@@ -925,7 +935,7 @@ class TransactionGenerator:
         with open(alert_member_file, "w") as wf:
             writer = csv.writer(wf)
             base_attrs = ["alertID", "reason", "clientID", "isSAR", "modelID", "minAmount", "maxAmount",
-                          "startStep", "endStep", "scheduleID"]
+                          "startStep", "endStep", "scheduleID", "bankID"]
             writer.writerow(base_attrs + self.attr_names)
             for gid, sub_g in self.alert_groups.items():
                 model_id = sub_g.graph["model_id"]
@@ -939,7 +949,9 @@ class TransactionGenerator:
                     max_amt = '{:.2f}'.format(max(get_out_edge_attrs(sub_g, n, "amount")))
                     min_step = start
                     max_step = end
-                    values = [gid, reason, n, is_sar, model_id, min_amt, max_amt, min_step, max_step, schedule_id]
+                    bank_id = sub_g.node[n]["bank_id"]
+                    values = [gid, reason, n, is_sar, model_id, min_amt, max_amt,
+                              min_step, max_step, schedule_id, bank_id]
                     prop = self.g.node[n]
                     for attr_name in self.attr_names:
                         values.append(prop[attr_name])

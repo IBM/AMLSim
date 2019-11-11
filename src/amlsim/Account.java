@@ -20,8 +20,9 @@ public class Account extends Client implements Steppable {
 	private boolean caseSubject = false;
 	private Random rand = new Random();
 	private Branch branch = null;
-    private Map<String, Account> origs = new HashMap<>();  // Originator Client ID --> Client Object
-    private Map<String, Account> dests = new HashMap<>();  // Beneficiary Client ID --> Client Object
+    private Map<String, Account> origs = new HashMap<>();  // Originator account ID --> Account object
+    private Map<String, Account> dests = new HashMap<>();  // Beneficiary account ID --> Account object
+	private int bankID = 0;  // Bank ID
 
     private Account prevOrig = null;  // Previous originator account
 	private Account prevDest = null;  // Previous beneficiary account
@@ -45,14 +46,15 @@ public class Account extends Client implements Steppable {
 
 	/**
 	 * Constructor of the account object
-	 * @param id Client ID
+	 * @param id Account ID
 	 * @param modelID Transaction model ID (int value)
      * @param interval Default transaction interval
-	 * @param init_balance Initial account balance
+	 * @param initBalance Initial account balance
 	 * @param start Start step
 	 * @param end End step
+	 * @param attrs Other attributes
 	 */
-    public Account(String id, int modelID, int interval, float init_balance, long start, long end, Map<String, String> attrs){
+    public Account(String id, int modelID, int interval, float initBalance, long start, long end, Map<String, String> attrs){
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
@@ -68,15 +70,35 @@ public class Account extends Client implements Steppable {
 			default: System.err.println("Unknown model ID: " + modelID); this.model = new EmptyModel(); break;
 		}
 		this.model.setAccount(this);
-		this.model.setParameters(interval, init_balance, start, end);
+		this.model.setParameters(interval, initBalance, start, end);
 
 		this.cashInModel = new CashInModel();
 		this.cashInModel.setAccount(this);
-		this.cashInModel.setParameters(interval, init_balance, start, end);
+		this.cashInModel.setParameters(interval, initBalance, start, end);
 
 		this.cashOutModel = new CashOutModel();
 		this.cashOutModel.setAccount(this);
-		this.cashOutModel.setParameters(interval, init_balance, start, end);
+		this.cashOutModel.setParameters(interval, initBalance, start, end);
+	}
+
+	/**
+	 * Constructor with bank ID
+	 * @param id Account ID
+	 * @param modelID　Transaction model ID
+	 * @param interval Default transaction interval
+	 * @param initBalance Initial account balance
+	 * @param start Start step
+	 * @param end End step
+	 * @param bankID Bank ID
+	 * @param attrs Other attributes
+	 */
+	public Account(String id, int modelID, int interval, float initBalance, long start, long end, int bankID, Map<String, String> attrs){
+    	this(id, modelID, interval, initBalance, start, end, attrs);
+    	this.bankID = bankID;
+	}
+
+	public int getBankID(){
+		return this.bankID;
 	}
 
 	public String getAttrValue(String name){
@@ -90,7 +112,7 @@ public class Account extends Client implements Steppable {
 		return this.endStep;
 	}
 
-	public void setCase(boolean flag){
+	void setSAR(boolean flag){
 		this.caseSubject = flag;
 	}
 
@@ -98,7 +120,7 @@ public class Account extends Client implements Steppable {
 		return this.caseSubject;
 	}
 
-	public void setBranch(Branch branch){
+	void setBranch(Branch branch){
 		this.branch = branch;
 	}
 

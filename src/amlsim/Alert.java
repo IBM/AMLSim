@@ -6,14 +6,14 @@ import paysim.PaySim;
 import java.util.*;
 
 /*
- * Group of fraud transactions and involving accounts
- * Fraud accounts in this class perform suspicious transactions based on a fraud rule
+ * Group of suspicious transactions and involving accounts as an AML typology
+ * Accounts in this class perform suspicious transactions based on the given typology (model)
  */
 public class Alert {
 
     private long alertID;  // Alert identifier
     private List<Account> members;  // Accounts involved in this alert
-    private Account mainAccount;   // Main account of the fraud alert
+    private Account mainAccount;   // Main account of this alert
     private AMLTypology model;    // Transaction model
     private AMLSim amlsim;  // AMLSim main object
 
@@ -95,10 +95,10 @@ public class Alert {
 
     /**
      * Set the main account
-     * @param fraudster Main account object
+     * @param account Main account object
      */
-    void setMainAccount(SARAccount fraudster){
-        this.mainAccount = fraudster;
+    void setMainAccount(SARAccount account){
+        this.mainAccount = account;
     }
 
     public AMLTypology getModel(){
@@ -106,7 +106,7 @@ public class Alert {
     }
 
     public boolean isSAR(){
-        return this.mainAccount != null;  // The alert group is fraud if and only if a subject account exists
+        return this.mainAccount != null;  // The alert group is SAR if and only if a main account exists
     }
 }
 

@@ -1,5 +1,5 @@
 //
-// Note: No specific bank models are used for this fraud transaction model class.
+// Note: No specific bank models are used for this AML typology model class.
 //
 
 package amlsim.model.aml;

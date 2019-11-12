@@ -29,16 +29,6 @@ public class CashInModel extends CashModel {
 
     private boolean isNextStep(long step){
         return false;
-//        double g = randValues[(int)step % rsize];
-//        double g1 = (g + 1.0) / 2;  // from 0.0 to 1.0
-//
-//        if(this.account.isCase()){
-//            long dt = round(FRAUD_INTERVAL * g1);
-//            return step % FRAUD_INTERVAL == dt;
-//        }else {
-//            long dt = round(NORMAL_INTERVAL * g1);
-//            return step % NORMAL_INTERVAL == dt;
-//        }
     }
 
     private float computeAmount(){

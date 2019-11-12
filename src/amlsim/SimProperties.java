@@ -105,18 +105,18 @@ public class SimProperties {
         return outputDir + outputProp.getString("diameter_log");
     }
 
-    public int getCashTxInterval(boolean isCashIn, boolean isFraud){
-        String key = isFraud ? "fraud_interval" : "normal_interval";
+    public int getCashTxInterval(boolean isCashIn, boolean isSAR){
+        String key = isSAR ? "fraud_interval" : "normal_interval";
         return isCashIn ? cashInProp.getInt(key) : cashOutProp.getInt(key);
     }
 
-    public float getCashTxMinAmount(boolean isCashIn, boolean isFraud){
-        String key = isFraud ? "fraud_min_amount" : "normal_min_amount";
+    public float getCashTxMinAmount(boolean isCashIn, boolean isSAR){
+        String key = isSAR ? "fraud_min_amount" : "normal_min_amount";
         return isCashIn ? cashInProp.getFloat(key) : cashOutProp.getFloat(key);
     }
 
-    public float getCashTxMaxAmount(boolean isCashIn, boolean isFraud){
-        String key = isFraud ? "fraud_max_amount" : "normal_max_amount";
+    public float getCashTxMaxAmount(boolean isCashIn, boolean isSAR){
+        String key = isSAR ? "fraud_max_amount" : "normal_max_amount";
         return isCashIn ? cashInProp.getFloat(key) : cashOutProp.getFloat(key);
     }
 }

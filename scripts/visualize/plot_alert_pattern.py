@@ -3,9 +3,6 @@ import csv
 import networkx as nx
 from collections import defaultdict
 
-import matplotlib
-
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
@@ -26,14 +23,14 @@ def plot_alert(tx_csv):
             step = int(row[0])
             src = row[3]
             dst = row[6]
-            isFraud = int(row[9]) > 0
+            isSAR = int(row[9]) > 0
             alertID = int(row[10])
             g.add_edge(src, dst)
             edges.append((step, src, dst))
             acct_alert[src].add(alertID)
             acct_alert[dst].add(alertID)
 
-            if isFraud:
+            if isSAR:
                 if alertID not in alert_st:
                     alert_st[alertID] = step
 
@@ -44,7 +41,7 @@ def plot_alert(tx_csv):
                 e_suspicious[step].add((dst, src))
 
     pos = nx.spring_layout(g)
-    subg = nx.DiGraph()
+    sub_g = nx.DiGraph()
 
     steps = list(range(30))  # sorted(set([e[0] for e in edges]))
 
@@ -56,18 +53,18 @@ def plot_alert(tx_csv):
             alertIDs = acct_alert[acct]
             return True in [alert_st.get(alert, -1) <= i <= alert_ed.get(alert, -1) for alert in alertIDs]
 
-        new_edges = [(src, dst) for (step, src, dst) in edges if step == steps[i]]
-        subg.add_edges_from(new_edges)
-        nodes = subg.nodes()
-        all_edges = subg.edges()
+        new_edges = [(_src, _dst) for (st, _src, _dst) in edges if st == steps[i]]
+        sub_g.add_edges_from(new_edges)
+        nodes = sub_g.nodes()
+        all_edges = sub_g.edges()
         node_colors = ["r" if within_acct(n) else "b" for n in nodes]
         edge_colors = ["r" if e in e_suspicious[i] else "k" for e in all_edges]
 
         plt.title("Step %d" % steps[i])
         plt.xlim([-1.0, 1.0])
         plt.ylim([-1.0, 1.0])
-        nx.draw_networkx_nodes(subg, pos, nodelist=nodes, node_color=node_colors, node_size=50)
-        nx.draw_networkx_edges(subg, pos, edgelist=all_edges, edge_color=edge_colors, arrowsize=5, width=0.5)
+        nx.draw_networkx_nodes(sub_g, pos, nodelist=nodes, node_color=node_colors, node_size=50)
+        nx.draw_networkx_edges(sub_g, pos, edgelist=all_edges, edge_color=edge_colors, arrowsize=5, width=0.5)
 
     fig = plt.figure()
     anim = animation.FuncAnimation(fig, show_graph, frames=len(steps))

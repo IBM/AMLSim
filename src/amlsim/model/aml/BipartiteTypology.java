@@ -1,5 +1,5 @@
 //
-// Note: No specific bank models are used for this fraud transaction model class.
+// Note: No specific bank models are used for this AML typology model class.
 //
 
 package amlsim.model.aml;
@@ -39,7 +39,7 @@ public class BipartiteTypology extends AMLTypology {
     @Override
     public void sendTransactions(long step, Account acct) {
         float amount = getRandomAmount();  // The amount of each transaction
-        List<Account> members = alert.getMembers();  // Fraud members
+        List<Account> members = alert.getMembers();  // All members
 
         int last_orig_index = members.size() / 2;  // The first half accounts are originators
         for(int i=0; i<last_orig_index; i++){

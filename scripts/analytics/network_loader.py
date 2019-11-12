@@ -30,7 +30,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
     :return: Transaction network as a NetworkX graph object
     """
     acct_id_idx = None
-    acct_fraud_idx = None
+    acct_sar_idx = None
     tx_src_idx = None
     tx_dst_idx = None
     tx_amt_idx = None
@@ -43,7 +43,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
         if data_type == "account_id":
             acct_id_idx = idx
         elif data_type == "sar_flag":
-            acct_fraud_idx = idx
+            acct_sar_idx = idx
     for idx, col in enumerate(schema_data["transaction"]):
         data_type = col.get("dataType")
         if data_type == "orig_id":
@@ -58,7 +58,7 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
 
     _g = nx.MultiDiGraph()
     num_accts = 0
-    num_fraud = 0
+    num_sar = 0
     num_txs = 0
     # Load account list CSV
     print("Load account list CSV file", acct_csv)
@@ -66,15 +66,15 @@ def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:
         reader = csv.reader(rf)
         next(reader)  # Skip header
         for row in reader:
-            acct_id = row[acct_id_idx]  # ACCOUNT_ID
-            is_fraud = row[acct_fraud_idx].lower() == "true"  # IS_FRAUD
-            attr = {ACCT_SAR: is_fraud}
+            acct_id = row[acct_id_idx]  # Account ID
+            is_sar = row[acct_sar_idx].lower() == "true"  # SAR flag
+            attr = {ACCT_SAR: is_sar}
             _g.add_node(acct_id, **attr)
             num_accts += 1
-            if is_fraud:
-                num_fraud += 1
+            if is_sar:
+                num_sar += 1
     print("Number of total accounts: %d" % num_accts)
-    print("Number of fraud accounts: %d (%.2f%%)" % (num_fraud, num_fraud/num_accts*100))
+    print("Number of SAR accounts: %d (%.2f%%)" % (num_sar, num_sar/num_accts*100))
 
     # Load transaction list CSV
     print("Loading transaction list CSV file", tx_csv)
@@ -149,7 +149,7 @@ class ResultGraphLoader(__TransactionGraphLoader):
         tx_path = os.path.join(output_dir, tx_file)
         self.g = load_result_csv(acct_path, tx_path, self.schema)
         self.num_normal_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_SAR).items() if not flag])
-        self.num_fraud_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_SAR).items() if flag])
+        self.num_sar_accts = len([n for n, flag in nx.get_node_attributes(self.g, ACCT_SAR).items() if flag])
 
     def count_hub_accounts(self, min_degree=DEGREE_STEP, max_degree=10):
         super(ResultGraphLoader, self).count_hub_accounts(min_degree, max_degree)
@@ -157,8 +157,8 @@ class ResultGraphLoader(__TransactionGraphLoader):
         # Extract the same statistical data for normal and alert account vertices
         normal_in_deg = Counter([v for k, v in self.g.in_degree().items() if not self.g.node[k][ACCT_SAR]])
         normal_out_deg = Counter([v for k, v in self.g.out_degree().items() if not self.g.node[k][ACCT_SAR]])
-        fraud_in_deg = Counter([v for k, v in self.g.in_degree().items() if self.g.node[k][ACCT_SAR]])
-        fraud_out_deg = Counter([v for k, v in self.g.out_degree().items() if self.g.node[k][ACCT_SAR]])
+        sar_in_deg = Counter([v for k, v in self.g.in_degree().items() if self.g.node[k][ACCT_SAR]])
+        sar_out_deg = Counter([v for k, v in self.g.out_degree().items() if self.g.node[k][ACCT_SAR]])
 
         print("Number of fan-in / fan-out patterns for %d normal accounts" % self.num_normal_accts)
         for th in range(min_degree, max_degree + 1, DEGREE_STEP):
@@ -169,11 +169,11 @@ class ResultGraphLoader(__TransactionGraphLoader):
             print("\tNumber of fan-in / fan-out patterns with %d or more neighbors: %d (%.2f%%)/ %d (%.2f%%)" %
                   (th, num_fan_in, ratio_fan_in * 100, num_fan_out, ratio_fan_out * 100))
 
-        print("Number of fan-in / fan-out patterns for %d fraud accounts" % self.num_fraud_accts)
+        print("Number of fan-in / fan-out patterns for %d SAR accounts" % self.num_sar_accts)
         for th in range(min_degree, max_degree + 1, DEGREE_STEP):
-            num_fan_in = sum([c for d, c in fraud_in_deg.items() if d >= th])
-            num_fan_out = sum([c for d, c in fraud_out_deg.items() if d >= th])
-            ratio_fan_in = num_fan_in / self.num_fraud_accts
-            ratio_fan_out = num_fan_out / self.num_fraud_accts
+            num_fan_in = sum([c for d, c in sar_in_deg.items() if d >= th])
+            num_fan_out = sum([c for d, c in sar_out_deg.items() if d >= th])
+            ratio_fan_in = num_fan_in / self.num_sar_accts
+            ratio_fan_out = num_fan_out / self.num_sar_accts
             print("\tNumber of fan-in / fan-out patterns with %d or more neighbors: %d (%.2f%%)/ %d (%.2f%%)" %
                   (th, num_fan_in, ratio_fan_in * 100, num_fan_out, ratio_fan_out * 100))

@@ -135,11 +135,6 @@
       "dataType": "transaction_type"
     },
     {
-      "name": "is_frgn_trxn",
-      "valueType": "boolean",
-      "defaultValue": false
-    },
-    {
       "name": "orig_acct",
       "valueType": "string",
       "dataType": "orig_id"
@@ -150,7 +145,7 @@
       "dataType": "dest_id"
     },
     {
-      "name": "is_fraud",
+      "name": "is_sar",
       "valueType": "boolean",
       "dataType": "sar_flag"
     },
@@ -172,7 +167,7 @@
       "dataType": "alert_type"
     },
     {
-      "name": "is_fraud",
+      "name": "is_sar",
       "valueType": "boolean",
       "dataType": "sar_flag"
     },

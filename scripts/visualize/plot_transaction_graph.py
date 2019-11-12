@@ -13,7 +13,7 @@ def load_log(tx_log):
     idx_amount = -1
     idx_orig = -1
     idx_dest = -1
-    idx_fraud = -1
+    idx_sar = -1
     idx_alert = -1
 
     for i, k in enumerate(header):
@@ -25,8 +25,8 @@ def load_log(tx_log):
             idx_orig = i
         elif k == "nameDest":
             idx_dest = i
-        elif k == "isFraud":
-            idx_fraud = i
+        elif k == "isSAR":
+            idx_sar = i
         elif k == "alertID":
             idx_alert = i
 
@@ -37,10 +37,9 @@ def load_log(tx_log):
         amount = float(row[idx_amount])
         orig = int(row[idx_orig])
         dest = int(row[idx_dest])
-        is_fraud = row[idx_fraud] == "1"
+        is_sar = row[idx_sar] == "1"
         alert_id = int(row[idx_alert])
-
-        g.add_edge(orig, dest, step=step, amount=amount, isFraud=is_fraud, alertID=alert_id)
+        g.add_edge(orig, dest, step=step, amount=amount, isSAR=is_sar, alertID=alert_id)
 
     rf.close()
 

@@ -57,9 +57,8 @@ public class TransactionRepository {
         this.limit = limit;
     }
 
-//    public void addTransaction(long step, String desc, float amt, long origID, long destID,  float origBefore,
     public void addTransaction(long step, String desc, float amt, String origID, String destID,  float origBefore,
-                               float origAfter, float destBefore, float destAfter, boolean fraud, long aid){
+                               float origAfter, float destBefore, float destAfter, boolean isSAR, long aid){
         if(count >= limit){
             if(count == limit){
                 System.err.println("Warning: the number of output transactions has reached the limit: " + limit);
@@ -78,10 +77,10 @@ public class TransactionRepository {
         this.origAfter[index] = origAfter;
         this.destBefore[index] = destBefore;
         this.destAfter[index] = destAfter;
-        this.isSAR[index] = fraud;
+        this.isSAR[index] = isSAR;
         this.alertIDs[index] = aid;
 
-        if(fraud){
+        if(isSAR){
             sarTxCounter.put(step, sarTxCounter.getOrDefault(step, 0) + 1);
         }else if(!desc.contains("CASH-")) {
             txCounter.put(step, txCounter.getOrDefault(step, 0) + 1);  // Exclude cash transactions for counter
@@ -104,7 +103,7 @@ public class TransactionRepository {
     public void writeCounterLog(long steps, String fname){
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(fname));
-            writer.write("step,normal,fraud\n");
+            writer.write("step,normal,SAR\n");
             for(long i=0; i<steps; i++){
                 int numTx = txCounter.getOrDefault(i, 0);
                 int numSARTx = sarTxCounter.getOrDefault(i, 0);

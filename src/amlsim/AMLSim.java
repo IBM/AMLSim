@@ -345,11 +345,11 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 
 
-	private void initBufWriter(String logFileName) {
+	private void initTxLogBufWriter(String logFileName) {
 		try {
 			FileWriter writer = new FileWriter(new File(logFileName));
 			this.bufWriter = new BufferedWriter(writer);
-			this.bufWriter.write("step,type,amount,nameOrig,oldbalanceOrg,newbalanceOrig,nameDest,oldbalanceDest,newbalanceDest,isFraud,alertID\n");
+			this.bufWriter.write("step,type,amount,nameOrig,oldbalanceOrg,newbalanceOrig,nameDest,oldbalanceDest,newbalanceDest,isSAR,alertID\n");
 			this.bufWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -370,7 +370,7 @@ public class AMLSim extends ParameterizedPaySim {
 
 		//Initiate the dumpfile output writer
         txLogFileName = simProp.getOutputTxLogFile();
-		initBufWriter(txLogFileName);
+		initTxLogBufWriter(txLogFileName);
 		logger.info("Transaction log file: " + txLogFileName);
 
 		//add the param list to the object
@@ -422,26 +422,22 @@ public class AMLSim extends ParameterizedPaySim {
 		System.out.println("Simulation name: " + AMLSim.simulatorName);
 	}
 
-//	private double getDoublePrecision(double d) {
-//		final int precision = 2;
-//		return (new BigDecimal(d)).setScale(precision, BigDecimal.ROUND_HALF_UP).doubleValue();
-//	}
-
-	public static void handleTransaction(long step, String desc, float amt, Account orig, Account dest, boolean fraud, long aid){
+	public static void handleTransaction(long step, String desc, float amt, Account orig, Account bene,
+										 boolean isSAR, long alertID){
         String origID = orig.getID();
 
 		float origBefore = (float)orig.getBalance();
 		orig.withdraw(amt);
 		float origAfter = (float)orig.getBalance();
 
-        String destID = dest.getID();
+        String beneID = bene.getID();
 
-		float destBefore = (float)dest.getBalance();
-		dest.deposit(amt);
-		float destAfter = (float)dest.getBalance();
+		float beneBefore = (float)bene.getBalance();
+		bene.deposit(amt);
+		float beneAfter = (float)bene.getBalance();
 
-		txs.addTransaction(step, desc, amt, origID, destID, origBefore, origAfter, destBefore, destAfter, fraud, aid);
-		diameter.addEdge(origID, destID);
+		txs.addTransaction(step, desc, amt, origID, beneID, origBefore, origAfter, beneBefore, beneAfter, isSAR, alertID);
+		diameter.addEdge(origID, beneID);
 	}
 
 	private void writeDiameter(long step, double[] result){

@@ -1,5 +1,5 @@
 //
-// Note: No specific bank models are used for this fraud transaction model class.
+// Note: No specific bank models are used for this AML typology model class.
 //
 
 package amlsim.model.aml;
@@ -76,13 +76,13 @@ public class FanOutTypology extends AMLTypology {
             return;
         }
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isSAR();
+        boolean isSAR = alert.isSAR();
         float amount = getRandomAmount();
 
         for(int i = 0; i< beneList.size(); i++){
             if(steps[i] == step){
                 Account bene = beneList.get(i);
-                sendTransaction(step, amount, orig, bene, isFraud, alertID);
+                sendTransaction(step, amount, orig, bene, isSAR, alertID);
             }
         }
     }

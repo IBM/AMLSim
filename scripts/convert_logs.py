@@ -718,7 +718,7 @@ class LogConverter:
         amt_idx = indices["amount"]
         orig_idx = indices["nameOrig"]
         dest_idx = indices["nameDest"]
-        sar_idx = indices["isFraud"]
+        sar_idx = indices["isSAR"]
         alert_idx = indices["alertID"]
         type_idx = indices["type"]
 

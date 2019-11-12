@@ -8,7 +8,7 @@
 // - Checks written for unusually large amounts (in relation to the suspect's known practices).
 // - A lack of account activity. This might indicate transactions in currency or the existence of other unknown bank accounts.
 //
-// Note: No specific bank models are used for this fraud transaction model class.
+// Note: No specific bank models are used for this AML typology model class.
 
 package amlsim.model.aml;
 

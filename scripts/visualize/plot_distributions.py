@@ -96,12 +96,10 @@ def plot_wcc_distribution(g, plot_img):
 
 
 def plot_aml_rule(aml_csv, plot_img):
-    """Plot the number of fraud patterns
-
-  :param aml_csv: Fraud pattern parameter CSV file
-  :param plot_img: Output image file (bar plot)
-  :return:
-  """
+    """Plot the number of AML typologies
+    :param aml_csv: AML typology pattern parameter CSV file
+    :param plot_img: Output image file (bar plot)
+    """
     aml_types = Counter()
 
     with open(aml_csv, "r") as rf:
@@ -122,23 +120,22 @@ def plot_aml_rule(aml_csv, plot_img):
 
     plt.clf()
     plt.bar(range(len(x)), y, tick_label=x)
-    plt.title("Fraud patterns")
-    plt.xlabel("Fraud type")
+    plt.title("AML typologies")
+    plt.xlabel("Typology name")
     plt.ylabel("Number of patterns")
     plt.savefig(plot_img)
 
 
 def plot_tx_count(tx_step_csv, plot_img):
-    """Plot the number of normal and fraud transactions (excludes cash transactions)
-
-  :param tx_step_csv: Statistics CSV file
-  :param plot_img: Output image file name
-  :return:
-  """
+    """Plot the number of normal and SAR transactions (excludes cash transactions)
+    :param tx_step_csv: Statistics CSV file
+    :param plot_img: Output image file name
+    :return:
+    """
 
     x = list()
-    normal = list()
-    fraud = list()
+    normal_tx_count = list()
+    sar_tx_count = list()
 
     with open(tx_step_csv, "r") as rf:
         reader = csv.reader(rf)
@@ -149,14 +146,14 @@ def plot_tx_count(tx_step_csv, plot_img):
                 num_n = int(row[1])
                 num_f = int(row[2])
                 x.append(step)
-                normal.append(num_n)
-                fraud.append(num_f)
+                normal_tx_count.append(num_n)
+                sar_tx_count.append(num_f)
 
     plt.clf()
-    p_n = plt.plot(x, normal, "b")
-    p_f = plt.plot(x, fraud, "r")
+    p_n = plt.plot(x, normal_tx_count, "b")
+    p_f = plt.plot(x, sar_tx_count, "r")
     plt.yscale('log')
-    plt.legend((p_n[0], p_f[0]), ("Normal", "Fraud"))
+    plt.legend((p_n[0], p_f[0]), ("Normal", "SAR"))
     plt.title("Number of transactions per step")
     plt.xlabel("Simulation step")
     plt.ylabel("Number of transactions")

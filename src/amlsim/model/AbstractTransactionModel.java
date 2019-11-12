@@ -77,15 +77,6 @@ public abstract class AbstractTransactionModel {
     public abstract void sendTransaction(long step);
 
     /**
-     * Generate a difference of the simulation step
-     * @return Difference of simulation step [step - FLUCTUATION, step + FLUCTUATION]
-     */
-    protected static int generateDiff(){
-        int t = rand.nextInt(FLUCTUATION * 2 + 1);
-        return t - FLUCTUATION;
-    }
-
-    /**
      * Generate the start transaction step (to decentralize transaction distribution)
      * @param range Simulation step range
      * @return random int value [0, range-1]
@@ -114,24 +105,24 @@ public abstract class AbstractTransactionModel {
     }
 
     /**
-     * Generate and register a transaction (for fraud transactions)
+     * Generate and register a transaction (for alert transactions)
      * @param step Current simulation step
      * @param amount Transaction amount
      * @param orig Origin account
      * @param dest Destination account
-     * @param isFraud Whether this transaction is fraud
-     * @param aid Alert ID
+     * @param isSAR Whether this transaction is SAR
+     * @param alertID Alert ID
      */
-    protected void sendTransaction(long step, float amount, Account orig, Account dest, boolean isFraud, long aid){
+    protected void sendTransaction(long step, float amount, Account orig, Account dest, boolean isSAR, long alertID){
         if(amount <= 0){  // Invalid transaction amount
             AMLSim.getLogger().warning("Warning: invalid transaction amount: " + amount);
             return;
         }
         String ttype = orig.getTxType(dest);
-        if(isFraud) {
+        if(isSAR) {
             AMLSim.getLogger().fine("Handle transaction: " + orig.getID() + " -> " + dest.getID());
         }
-        AMLSim.handleTransaction(step, ttype, amount, orig, dest, isFraud, aid);
+        AMLSim.handleTransaction(step, ttype, amount, orig, dest, isSAR, alertID);
     }
 
     /**

@@ -145,7 +145,7 @@
       "dataType": "timestamp"
     },
     {
-      "name": "is_fraud",
+      "name": "is_sar",
       "valueType": "boolean",
       "dataType": "sar_flag"
     },
@@ -153,11 +153,6 @@
       "name": "alert_id",
       "valueType": "string",
       "dataType": "alert_id"
-    },
-    {
-      "name": "is_frgn_trxn",
-      "valueType": "boolean",
-      "defaultValue": false
     }
   ],
   "alert_tx": [
@@ -172,7 +167,7 @@
       "dataType": "alert_type"
     },
     {
-      "name": "is_fraud",
+      "name": "is_sar",
       "valueType": "boolean",
       "dataType": "sar_flag"
     },

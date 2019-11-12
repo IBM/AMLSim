@@ -1,5 +1,5 @@
 //
-// Note: No specific bank models are used for this fraud transaction model class.
+// Note: No specific bank models are used for this AML typology model class.
 //
 
 package amlsim.model.aml;
@@ -9,7 +9,7 @@ import amlsim.Account;
 import java.util.*;
 
 /**
- * The main account (subject account of fraud) makes a transaction with one of the neighbor accounts
+ * The main account makes a transaction with one of the neighbor accounts
  * and the neighbor also makes transactions with its neighbors.
  * The beneficiary account and amount of each transaction are determined randomly.
  */

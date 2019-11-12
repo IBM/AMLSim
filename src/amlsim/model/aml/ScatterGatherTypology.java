@@ -60,17 +60,17 @@ public class ScatterGatherTypology extends AMLTypology {
     @Override
     public void sendTransactions(long step, Account acct) {
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isSAR();
+        boolean isSAR = alert.isSAR();
         int numTotalMembers = alert.getMembers().size();
         int numMidMembers = numTotalMembers - 2;
 
         for(int i=0; i<numMidMembers; i++){
             if(scatterSteps[i] == step){
                 Account _bene = intermediate.get(i);
-                sendTransaction(step, scatterAmount, orig, _bene, isFraud, alertID);
+                sendTransaction(step, scatterAmount, orig, _bene, isSAR, alertID);
             }else if(gatherSteps[i] == step) {
                 Account _orig = intermediate.get(i);
-                sendTransaction(step, gatherAmount, _orig, bene, isFraud, alertID);
+                sendTransaction(step, gatherAmount, _orig, bene, isSAR, alertID);
             }
         }
     }

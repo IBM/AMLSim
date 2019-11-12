@@ -1,5 +1,5 @@
 //
-// Note: No specific bank models are used for this fraud transaction model class.
+// Note: No specific bank models are used for this AML typology model class.
 //
 
 package amlsim.model.aml;
@@ -28,7 +28,7 @@ public class CycleTypology extends AMLTypology {
     public void setParameters(int modelID){
         amount = maxAmount;  // Initialize the transaction amount
 
-        List<Account> members = alert.getMembers();  // All fraud transaction members
+        List<Account> members = alert.getMembers();  // All members
         int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
 
@@ -79,7 +79,7 @@ public class CycleTypology extends AMLTypology {
     public void sendTransactions(long step, Account acct) {
         int length = alert.getMembers().size();
         long alertID = alert.getAlertID();
-        boolean isFraud = alert.isSAR();
+        boolean isSAR = alert.isSAR();
 
         // Create cycle transactions
         for(int i=0; i<length; i++) {
@@ -87,7 +87,7 @@ public class CycleTypology extends AMLTypology {
                 int j = (i + 1) % length;  // i, j: index of the previous, next account
                 Account src = alert.getMembers().get(i);  // The previous account
                 Account dst = alert.getMembers().get(j);  // The next account
-                sendTransaction(step, amount, src, dst, isFraud, alertID);
+                sendTransaction(step, amount, src, dst, isSAR, alertID);
 
                 // Update the next transaction amount
                 float margin = amount * MARGIN_RATIO;

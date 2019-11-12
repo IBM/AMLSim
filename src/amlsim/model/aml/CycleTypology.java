@@ -90,7 +90,7 @@ public class CycleTypology extends AMLTypology {
                 sendTransaction(step, amount, src, dst, isSAR, alertID);
 
                 // Update the next transaction amount
-                float margin = amount * MARGIN_RATIO;
+                float margin = amount * marginRatio;
                 amount = Math.max(amount - margin, minAmount);
             }
         }

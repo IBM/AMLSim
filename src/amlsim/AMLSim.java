@@ -60,6 +60,10 @@ public class AMLSim extends ParameterizedPaySim {
 	    return logger;
     }
 
+    public static SimProperties getSimProp(){
+		return simProp;
+	}
+
 	public void setCurrentLoop(int currentLoop){
 		AMLSim.currentLoop = currentLoop;
 	}

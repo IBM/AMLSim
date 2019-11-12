@@ -59,7 +59,7 @@ public class GatherScatterTypology extends AMLTypology {
 
     @Override
     public int getNumTransactions() {
-        return 0;
+        return origAccts.size() + beneAccts.size();
     }
 
     @Override
@@ -80,7 +80,7 @@ public class GatherScatterTypology extends AMLTypology {
         }else{
             int numScatters = scatterSteps.length;
             if(step == middleStep){  // Define the amount of scatter transactions
-                float margin = totalReceivedAmount * MARGIN_RATIO;
+                float margin = totalReceivedAmount * marginRatio;
                 scatterAmount = Math.max((totalReceivedAmount - margin) / numScatters, minAmount);
             }
             for(int i=0; i<numScatters; i++){

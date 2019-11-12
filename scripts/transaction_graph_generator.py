@@ -21,6 +21,8 @@ logger.setLevel(logging.DEBUG)
 MAIN_ACCT_KEY = "main_acct"
 IS_SAR_KEY = "is_sar"
 
+DEFAULT_MARGIN_RATIO = 0.1  # Each member will keep this ratio of the received amount
+
 
 # Utility functions parsing values
 def parse_int(value):
@@ -34,7 +36,7 @@ def parse_int(value):
         return None
 
 
-def parse_amount(value):
+def parse_float(value):
     """ Convert string to amount (float)
     :param value: string value
     :return: float value if the parameter can be converted to float, otherwise None
@@ -206,15 +208,19 @@ class TransactionGenerator:
 
         # Set default amounts, steps and model ID
         default_conf = self.conf["default"]
-        self.default_min_amount = parse_amount(default_conf.get("min_amount"))
-        self.default_max_amount = parse_amount(default_conf.get("max_amount"))
-        self.default_min_balance = parse_amount(default_conf.get("min_balance"))
-        self.default_max_balance = parse_amount(default_conf.get("max_balance"))
+        self.default_min_amount = parse_float(default_conf.get("min_amount"))
+        self.default_max_amount = parse_float(default_conf.get("max_amount"))
+        self.default_min_balance = parse_float(default_conf.get("min_balance"))
+        self.default_max_balance = parse_float(default_conf.get("max_balance"))
         self.default_start_step = parse_int(default_conf.get("start_step"))
         self.default_end_step = parse_int(default_conf.get("end_step"))
         self.default_start_range = parse_int(default_conf.get("start_range"))
         self.default_end_range = parse_int(default_conf.get("end_range"))
         self.default_model = parse_int(default_conf.get("transaction_model"))
+
+        self.margin_ratio = parse_float(default_conf.get("margin_ratio", DEFAULT_MARGIN_RATIO))
+        if not 0.0 <= self.margin_ratio <= 1.0:
+            raise ValueError("Margin ratio in AML typologies is %f. It must be within [0.0, 1.0]" % self.margin_ratio)
 
         # Get input file names and properties
         input_conf = self.conf["input"]
@@ -442,8 +448,8 @@ class TransactionGenerator:
                 if row[0].startswith("#"):
                     continue
                 num = int(row[idx_num])
-                min_balance = parse_amount(row[idx_min])
-                max_balance = parse_amount(row[idx_max])
+                min_balance = parse_float(row[idx_min])
+                max_balance = parse_float(row[idx_max])
                 start_day = parse_int(row[idx_start]) if idx_start is not None else -1
                 end_day = parse_int(row[idx_end]) if idx_end is not None else -1
                 country = row[idx_country]
@@ -621,12 +627,12 @@ class TransactionGenerator:
                 pattern_name = row[idx_type]
                 num_accounts = int(row[idx_accts])
                 schedule = int(row[idx_schedule])
-                individual_amount = parse_amount(row[idx_individual])
-                total_amount = parse_amount(row[idx_aggregated])
+                individual_amount = parse_float(row[idx_individual])
+                total_amount = parse_float(row[idx_aggregated])
                 num_transactions = parse_int(row[idx_count])
-                amount_difference = parse_amount(row[idx_difference])
+                amount_difference = parse_float(row[idx_difference])
                 period = parse_int(row[idx_period]) if idx_period is not None else self.total_steps
-                amount_rounded = parse_amount(row[idx_rounded]) if idx_rounded is not None else 0.0
+                amount_rounded = parse_float(row[idx_rounded]) if idx_rounded is not None else 0.0
                 orig_country = parse_flag(row[idx_orig_country]) if idx_orig_country is not None else False
                 bene_country = parse_flag(row[idx_bene_country]) if idx_bene_country is not None else False
                 orig_business = parse_flag(row[idx_orig_business]) if idx_orig_business is not None else False
@@ -799,7 +805,7 @@ class TransactionGenerator:
                 date = dates[i]  # Transaction date (timestamp)
 
                 add_edge(src, dst, amount, date)
-                margin = amount * 0.1  # Margin the beneficiary account can gain
+                margin = amount * self.margin_ratio  # Margin the beneficiary account can gain
                 amount = amount - margin  # max(amount - margin, min_amount)
 
         elif typology_name == "scatter_gather":  # Scatter-Gather (fan-out -> fan-in)
@@ -811,7 +817,7 @@ class TransactionGenerator:
             for i in range(1, num):
                 acct = members[i]
                 scatter_amount = individual_amount
-                margin = scatter_amount * 0.1  # Margin of the intermediate account
+                margin = scatter_amount * self.margin_ratio  # Margin of the intermediate account
                 gather_amount = scatter_amount - margin
                 scatter_date = random.randrange(start_date, middle_day)
                 gather_date = random.randrange(middle_day, end_date)
@@ -834,7 +840,7 @@ class TransactionGenerator:
                 add_edge(acct, main_acct, amount, date)
                 accumulated_amount += amount
 
-            margin = accumulated_amount * 0.1  # Margin of the intermediate (main) account
+            margin = accumulated_amount * self.margin_ratio  # Margin of the intermediate (main) account
             bene_accounts = sub_accounts[num_orig_accounts:]
             num_bene_accounts = len(bene_accounts)
             scatter_amount = (accumulated_amount - margin) / num_bene_accounts

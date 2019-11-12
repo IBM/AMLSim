@@ -24,7 +24,7 @@ public class ScatterGatherTypology extends AMLTypology {
     @Override
     public void setParameters(int modelID) {
         scatterAmount = maxAmount;
-        float margin = scatterAmount * MARGIN_RATIO;
+        float margin = scatterAmount * marginRatio;
         gatherAmount = Math.max(scatterAmount - margin, minAmount);
 
         orig = alert.getMainAccount();

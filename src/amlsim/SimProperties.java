@@ -19,8 +19,9 @@ public class SimProperties {
     private JSONObject cashOutProp;
     private String inputDir;
     private String outputDir;
+    private float marginRatio;
 
-    public SimProperties(String jsonName) throws IOException{
+    SimProperties(String jsonName) throws IOException{
         String jsonStr = loadTextFile(jsonName);
         JSONObject jsonObject = new JSONObject(jsonStr);
         generalProp = jsonObject.getJSONObject("general");
@@ -29,6 +30,7 @@ public class SimProperties {
         outputProp = jsonObject.getJSONObject("output");
         cashInProp = jsonObject.getJSONObject("default").getJSONObject("cash_in");
         cashOutProp = jsonObject.getJSONObject("default").getJSONObject("cash_out");
+        marginRatio = jsonObject.getJSONObject("default").getFloat("margin_ratio");
 
         String simName = generalProp.getString("simulation_name");
         inputDir = inputProp.getString("directory") + separator;
@@ -41,11 +43,11 @@ public class SimProperties {
         return new String(bytes);
     }
 
-    public String getSimName(){
+    String getSimName(){
         return generalProp.getString("simulation_name");
     }
 
-    public int getSeed(){
+    int getSeed(){
         return generalProp.getInt("random_seed");
     }
 
@@ -53,35 +55,39 @@ public class SimProperties {
         return generalProp.getInt("total_steps");
     }
 
-    public boolean isComputeDiameter(){
+    boolean isComputeDiameter(){
         return simProp.getBoolean("compute_diameter");
     }
 
-    public int getTransactionLimit(){
+    int getTransactionLimit(){
         return simProp.getInt("transaction_limit");
     }
 
-    public int getTransactionInterval(){
+    int getTransactionInterval(){
         return simProp.getInt("transaction_interval");
     }
 
-    public int getNumBranches(){
+    public float getMarginRatio(){
+        return marginRatio;
+    }
+
+    int getNumBranches(){
         return simProp.getInt("numBranches");
     }
 
-    public String getInputAcctFile(){
+    String getInputAcctFile(){
         return inputDir + inputProp.getString("accounts");
     }
 
-    public String getInputTxFile(){
+    String getInputTxFile(){
         return inputDir + inputProp.getString("transactions");
     }
 
-    public String getInputAlertMemberFile(){
+    String getInputAlertMemberFile(){
         return inputDir + inputProp.getString("alert_members");
     }
 
-    public String getOutputTxLogFile(){
+    String getOutputTxLogFile(){
         return outputDir + outputProp.getString("transaction_log");
     }
 
@@ -93,29 +99,29 @@ public class SimProperties {
         return outputDir + outputProp.getString("alert_transactions");
     }
 
-    public String getOutputDir(){
+    String getOutputDir(){
         return outputDir;
     }
 
-    public String getCounterLogFile(){
+    String getCounterLogFile(){
         return outputDir + outputProp.getString("counter_log");
     }
 
-    public String getDiameterLogFile(){
+    String getDiameterLogFile(){
         return outputDir + outputProp.getString("diameter_log");
     }
 
-    public int getCashTxInterval(boolean isCashIn, boolean isSAR){
+    int getCashTxInterval(boolean isCashIn, boolean isSAR){
         String key = isSAR ? "fraud_interval" : "normal_interval";
         return isCashIn ? cashInProp.getInt(key) : cashOutProp.getInt(key);
     }
 
-    public float getCashTxMinAmount(boolean isCashIn, boolean isSAR){
+    float getCashTxMinAmount(boolean isCashIn, boolean isSAR){
         String key = isSAR ? "fraud_min_amount" : "normal_min_amount";
         return isCashIn ? cashInProp.getFloat(key) : cashOutProp.getFloat(key);
     }
 
-    public float getCashTxMaxAmount(boolean isCashIn, boolean isSAR){
+    float getCashTxMaxAmount(boolean isCashIn, boolean isSAR){
         String key = isSAR ? "fraud_max_amount" : "normal_max_amount";
         return isCashIn ? cashInProp.getFloat(key) : cashOutProp.getFloat(key);
     }

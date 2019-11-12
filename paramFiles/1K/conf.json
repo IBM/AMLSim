@@ -15,6 +15,7 @@
     "start_range": -1,
     "end_range": -1,
     "transaction_model": 1,
+    "margin_ratio": 0.1,
 
     "cash_in": {
       "normal_interval": 100,

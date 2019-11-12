@@ -12,6 +12,7 @@
 
 package amlsim.model.aml;
 
+import amlsim.AMLSim;
 import amlsim.Account;
 import amlsim.Alert;
 import amlsim.model.AbstractTransactionModel;
@@ -22,23 +23,22 @@ import amlsim.model.AbstractTransactionModel;
 public abstract class AMLTypology extends AbstractTransactionModel {
 
     // Transaction model ID of AML typologies
-    public static final int AML_FAN_OUT = 1;
-    public static final int AML_FAN_IN = 2;
-    public static final int CYCLE = 3;
-    public static final int BIPARTITE = 4;
-    public static final int STACK = 5;
-    public static final int RANDOM = 6;
-    public static final int SCATTER_GATHER = 7;  // fan-out -> fan-in
-    public static final int GATHER_SCATTER = 8;  // fan-in -> fan-out
+    private static final int AML_FAN_OUT = 1;
+    private static final int AML_FAN_IN = 2;
+    private static final int CYCLE = 3;
+    private static final int BIPARTITE = 4;
+    private static final int STACK = 5;
+    private static final int RANDOM = 6;
+    private static final int SCATTER_GATHER = 7;  // fan-out -> fan-in
+    private static final int GATHER_SCATTER = 8;  // fan-in -> fan-out
 
     // Transaction scheduling ID
-    protected static final int FIXED_INTERVAL = 0;  // All accounts send money in order with the same interval
-    protected static final int RANDOM_INTERVAL = 1;  // All accounts send money in order with random intervals
-    protected static final int UNORDERED = 2;  // All accounts send money randomly
-    protected static final int SIMULTANEOUS = 3;  // All transactions are performed at single step simultaneously
+    static final int FIXED_INTERVAL = 0;  // All accounts send money in order with the same interval
+    static final int RANDOM_INTERVAL = 1;  // All accounts send money in order with random intervals
+    static final int UNORDERED = 2;  // All accounts send money randomly
+    static final int SIMULTANEOUS = 3;  // All transactions are performed at single step simultaneously
 
-    // TODO: Enable users to configure this parameter
-    protected final float MARGIN_RATIO = 0.1F;  // Each member will keep this ratio of the received amount
+    float marginRatio = AMLSim.getSimProp().getMarginRatio();  // Each member holds this ratio of the received amount
 
     /**
      * Create an AML typology object (alert transaction model)

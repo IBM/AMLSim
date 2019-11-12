@@ -28,7 +28,7 @@ public class CashOutModel extends CashModel {
     }
 
     private float computeAmount(){
-        if(this.account.isCase()){
+        if(this.account.isSAR()){
             return SUSPICIOUS_MIN + rand.nextFloat() * (SUSPICIOUS_MAX - SUSPICIOUS_MIN);
         }else{
             return NORMAL_MIN + rand.nextFloat() * (NORMAL_MAX - NORMAL_MIN);

@@ -13,15 +13,15 @@ public class Account extends Client implements Steppable {
 
     protected String id;
 
-    protected Map<String, String> extraAttributes;
+    private Map<String, String> extraAttributes;
 	protected AbstractTransactionModel model;
-	protected CashInModel cashInModel;
-	protected CashOutModel cashOutModel;
-	private boolean caseSubject = false;
+	private CashInModel cashInModel;
+	private CashOutModel cashOutModel;
+	private boolean isSAR = false;
 	private Random rand = new Random();
 	private Branch branch = null;
-    private Map<String, Account> origs = new HashMap<>();  // Originator account ID --> Account object
-    private Map<String, Account> dests = new HashMap<>();  // Beneficiary account ID --> Account object
+    private Map<String, Account> origAccts = new HashMap<>();  // Originator account ID --> Account object
+    private Map<String, Account> beneAccts = new HashMap<>();  // Beneficiary account ID --> Account object
 	private int bankID = 0;  // Bank ID
 
     private Account prevOrig = null;  // Previous originator account
@@ -113,11 +113,11 @@ public class Account extends Client implements Steppable {
 	}
 
 	void setSAR(boolean flag){
-		this.caseSubject = flag;
+		this.isSAR = flag;
 	}
 
-	public boolean isCase(){
-		return this.caseSubject;
+	public boolean isSAR(){
+		return this.isSAR;
 	}
 
 	void setBranch(Branch branch){
@@ -129,8 +129,8 @@ public class Account extends Client implements Steppable {
 	}
 
 	public void addDest(Account dest){
-		dests.put(dest.id, dest);
-		dest.origs.put(this.id, this);
+		beneAccts.put(dest.id, dest);
+		dest.origAccts.put(this.id, this);
 	}
 
 	public void addTxType(Account dest, String ttype){
@@ -139,7 +139,6 @@ public class Account extends Client implements Steppable {
 	}
 
 	public String getTxType(Account dest){
-//		long destID = dest.id;
         String destID = dest.id;
 
 		if(this.tx_types.containsKey(destID)){
@@ -153,26 +152,26 @@ public class Account extends Client implements Steppable {
 	}
 
 	/**
-	 * Get previous (origin) accounts
-	 * @return Origin account list
+	 * Get previous (originator) accounts
+	 * @return Originator account list
 	 */
-	public List<Account> getOrigs(){
-		return new ArrayList<>(this.origs.values());
+	public List<Account> getOrigList(){
+		return new ArrayList<>(this.origAccts.values());
 	}
 
 	/**
-	 * Get next (destination) accounts
-	 * @return Destination account list
+	 * Get next (beneficiary) accounts
+	 * @return Beneficiary account list
 	 */
-	public List<Account> getDests(){
-		return new ArrayList<>(this.dests.values());
+	public List<Account> getBeneList(){
+		return new ArrayList<>(this.beneAccts.values());
 	}
 
 	/**
 	 * Register this account to the specified alert group
 	 * @param ag Alert group
 	 */
-	public void addAlertGroup(Alert ag){
+	void addAlertGroup(Alert ag){
 		this.alerts.add(ag);
 	}
 
@@ -239,8 +238,8 @@ public class Account extends Client implements Steppable {
 		this.setNumDeposits(c.getNumDeposits());
 		this.setNumTransfers(c.getNumTransfers());
 		this.setNumWithdraws(c.getNumWithdraws());
-		this.origs = c.origs;
-		this.dests = c.dests;
+		this.origAccts = c.origAccts;
+		this.beneAccts = c.beneAccts;
 	}
 
 	public String getName() {

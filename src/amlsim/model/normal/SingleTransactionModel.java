@@ -27,7 +27,7 @@ public class SingleTransactionModel extends AbstractTransactionModel {
     }
 
     public void sendTransaction(long step){
-        List<Account> dests = this.account.getDests();
+        List<Account> dests = this.account.getBeneList();
         int numDests = dests.size();
 
         if(step < this.startStep || this.endStep < step || numDests == 0){

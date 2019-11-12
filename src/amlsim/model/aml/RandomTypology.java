@@ -51,7 +51,7 @@ public class RandomTypology extends AMLTypology {
         long alertID = alert.getAlertID();
         if(!isValidStep(step))return;
 
-        List<Account> beneList = nextOrig.getDests();
+        List<Account> beneList = nextOrig.getBeneList();
         int numBenes = beneList.size();
         if(numBenes == 0)return;
 

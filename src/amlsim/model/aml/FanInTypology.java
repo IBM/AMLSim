@@ -9,7 +9,7 @@ import amlsim.Account;
 import java.util.*;
 
 /**
- * Multiple accounts send money to the subject account
+ * Multiple accounts send money to the main account
  */
 public class FanInTypology extends AMLTypology {
 
@@ -30,7 +30,7 @@ public class FanInTypology extends AMLTypology {
 
         // Set members
         List<Account> members = alert.getMembers();
-        bene = alert.isSAR() ? alert.getMainAccount() : members.get(0);  // The subject account is the receiver
+        bene = alert.isSAR() ? alert.getMainAccount() : members.get(0);  // The main account is the beneficiary
         for(Account orig : members){  // The rest of accounts are originators
             if(orig != bene) origList.add(orig);
         }

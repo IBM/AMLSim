@@ -207,7 +207,7 @@
     {"name": "alert_type", "dataType": "alert_type"},
     {"name": "acct_id", "dataType": "account_id"},
     {"name": "acct_name", "dataType": "account_name"},
-    {"name": "is_subject", "dataType": "subject_flag"},
+    {"name": "is_sar", "dataType": "sar_flag"},
     {"name": "model_id", "dataType": "model_id"},
     {"name": "start", "dataType": "date", "defaultValue": 0},
     {"name": "end", "dataType": "date", "defaultValue": 1000000},

@@ -122,7 +122,7 @@ class Schema:
             self.alert_acct_reason_idx = None
             self.alert_acct_id_idx = None
             self.alert_acct_name_idx = None
-            self.alert_acct_subject_idx = None
+            self.alert_acct_sar_idx = None
             self.alert_acct_model_idx = None
             self.alert_acct_schedule_idx = None
             self.alert_acct_bank_idx = None
@@ -278,8 +278,8 @@ class Schema:
                 self.alert_acct_id_idx = idx
             elif dtype == "account_name":
                 self.alert_acct_name_idx = idx
-            elif dtype == "subject_flag":
-                self.alert_acct_subject_idx = idx
+            elif dtype == "sar_flag":
+                self.alert_acct_sar_idx = idx
             elif dtype == "model_id":
                 self.alert_acct_model_idx = idx
             elif dtype == "schedule_id":
@@ -462,14 +462,14 @@ class Schema:
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
-    def get_alert_acct_row(self, _alert_id, _reason, _acct_id, _acct_name, _is_subject,
+    def get_alert_acct_row(self, _alert_id, _reason, _acct_id, _acct_name, _is_sar,
                            _model_id, _schedule_id, _bank_id, **attr):
         row = list(self.alert_acct_defaults)
         row[self.alert_acct_alert_idx] = _alert_id
         row[self.alert_acct_reason_idx] = _reason
         row[self.alert_acct_id_idx] = _acct_id
         row[self.alert_acct_name_idx] = _acct_name
-        row[self.alert_acct_subject_idx] = _is_subject
+        row[self.alert_acct_sar_idx] = _is_sar
         row[self.alert_acct_model_idx] = _model_id
         row[self.alert_acct_schedule_idx] = _schedule_id
         row[self.alert_acct_bank_idx] = _bank_id
@@ -889,8 +889,8 @@ if __name__ == "__main__":
         print("Usage: python %s [ConfJSON]" % argv[0])
         exit(1)
 
-    converter = LogConverter(argv[1])
+    conf_json = argv[1]
+    converter = LogConverter(conf_json)
     converter.convert_alert_members()
     converter.convert_acct_tx()
     converter.output_sar_cases()
-    # converter.output_subject_accounts()

@@ -1,6 +1,5 @@
 package amlsim.model.normal;
 
-import amlsim.AMLSim;
 import amlsim.Account;
 import amlsim.model.AbstractTransactionModel;
 
@@ -28,7 +27,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
     public void sendTransaction(long step) {
 
         float amount = getTransactionAmount();  // this.balance;
-        List<Account> dests = this.account.getDests();
+        List<Account> dests = this.account.getBeneList();
         int numDests = dests.size();
         if(numDests == 0){
             return;

@@ -111,9 +111,8 @@ python3 scripts/convert_logs.py conf.json
 
 
 
-## Remove all log and generated image files from `outputs` directory
+## Remove all log and generated image files from `outputs` directory and a temporal directory
 ```bash
 sh scripts/clean_logs.sh
 ```
-
 

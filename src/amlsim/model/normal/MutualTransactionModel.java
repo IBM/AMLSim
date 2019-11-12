@@ -28,7 +28,7 @@ public class MutualTransactionModel extends AbstractTransactionModel {
 
         Account counterpart = this.account.getPrevOrig();
         if(counterpart == null){
-            List<Account> origs = this.account.getOrigs();
+            List<Account> origs = this.account.getOrigList();
             if(origs.isEmpty()) {
                 return;
             }else{
@@ -36,7 +36,7 @@ public class MutualTransactionModel extends AbstractTransactionModel {
             }
         }
         float amount = getTransactionAmount();  // this.balance;
-        if(!this.account.getDests().contains(counterpart)) {
+        if(!this.account.getBeneList().contains(counterpart)) {
             this.account.addDest(counterpart);    // Add a new destination
         }
 

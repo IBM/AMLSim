@@ -1,7 +1,6 @@
 package amlsim.model.normal;
 
 import amlsim.Account;
-import amlsim.AMLSim;
 import amlsim.model.AbstractTransactionModel;
 
 
@@ -30,10 +29,10 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
 
     @Override
     public void sendTransaction(long step) {
-        if(!isValidStep(step) || this.account.getDests().isEmpty()){
+        if(!isValidStep(step) || this.account.getBeneList().isEmpty()){
             return;
         }
-        int numDests = this.account.getDests().size();
+        int numDests = this.account.getBeneList().size();
         if(index >= numDests){
             index = 0;
         }
@@ -43,7 +42,7 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
 
         for(int i=0; i<eachCount; i++) {
             float amount = getTransactionAmount();  // this.balance;
-            Account dest = this.account.getDests().get(index);
+            Account dest = this.account.getBeneList().get(index);
             this.sendTransaction(step, amount, dest);
             index++;
             if(index >= numDests) break;

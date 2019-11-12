@@ -66,11 +66,12 @@ AML typology transaction pattern list
 - `transaction_count` Minimum transaction count
 - `amount_difference` Proportion of transaction difference
 - `period` Lookback period (number of days)
-- `amount_rounded` Proportion of transactions with rounded amounts
-- `orig_country` Whether the originator country is suspicious
-- `bene_country` Whether the beneficiary country is suspicious
-- `orig_business` Whether the originator business type is suspicious
-- `bene_business` Whether the beneficiary business type is suspicious
+- `amount_rounded` Proportion of transactions with rounded amounts (optional)
+- `orig_country` Whether the originator country is suspicious (optional)
+- `bene_country` Whether the beneficiary country is suspicious (optional)
+- `orig_business` Whether the originator business type is suspicious (optional)
+- `bene_business` Whether the beneficiary business type is suspicious (optional)
+- `is_internal` Whether all involved accounts with the same bank ID (optional, default is False) 
 - `is_sar` Whether the alert is SAR (True) or false alert (False)
 
 

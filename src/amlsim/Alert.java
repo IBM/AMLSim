@@ -71,7 +71,7 @@ public class Alert {
 
     /**
      * Get the main account
-     * @return If this alert is SAR, return the subject account. Otherwise, return null.
+     * @return If this alert is SAR, return the main account. Otherwise, return null.
      */
     public Account getMainAccount(){
         return mainAccount;
@@ -79,7 +79,7 @@ public class Alert {
 
     /**
      * Get the primary account
-     * @return If this alert is SAR, return the subject account.
+     * @return If this alert is SAR, return the main account.
      * If this alert is a false-alert and has one or more members, return the first element of the member list.
      * If this alert has no members, return null.
      */

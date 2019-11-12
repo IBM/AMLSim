@@ -30,7 +30,7 @@ public class FanInTransactionModel extends AbstractTransactionModel {
 
     @Override
     public void sendTransaction(long step) {
-        List<Account> origs = this.account.getOrigs();  // Sender accounts
+        List<Account> origs = this.account.getOrigList();  // Sender accounts
         int numOrigs = origs.size();
         if(!isValidStep(step) || numOrigs == 0){
             return;

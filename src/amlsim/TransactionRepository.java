@@ -34,7 +34,7 @@ public class TransactionRepository {
     private Map<Long, Integer> txCounter;
     private Map<Long, Integer> sarTxCounter;
 
-    public TransactionRepository(int size) {
+    TransactionRepository(int size) {
         this.txCounter = new HashMap<>();
         this.sarTxCounter = new HashMap<>();
 
@@ -53,12 +53,12 @@ public class TransactionRepository {
         this.alertIDs = new long[size];
     }
 
-    public void setLimit(int limit){
+    void setLimit(int limit){
         this.limit = limit;
     }
 
-    public void addTransaction(long step, String desc, float amt, String origID, String destID,  float origBefore,
-                               float origAfter, float destBefore, float destAfter, boolean isSAR, long aid){
+    void addTransaction(long step, String desc, float amt, String origID, String destID, float origBefore,
+                        float origAfter, float destBefore, float destAfter, boolean isSAR, long aid){
         if(count >= limit){
             if(count == limit){
                 System.err.println("Warning: the number of output transactions has reached the limit: " + limit);
@@ -100,9 +100,9 @@ public class TransactionRepository {
         return (int)(d * 100) / 100.0;
     }
 
-    public void writeCounterLog(long steps, String fname){
+    void writeCounterLog(long steps, String logFile){
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(fname));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
             writer.write("step,normal,SAR\n");
             for(long i=0; i<steps; i++){
                 int numTx = txCounter.getOrDefault(i, 0);
@@ -115,9 +115,8 @@ public class TransactionRepository {
         }
     }
 
-    public void flushLog(){
+    void flushLog(){
         // Flush transaction logs to the CSV file
-
         try {
             FileWriter writer1 = new FileWriter(new File(AMLSim.getTxLogFileName()), true);
             BufferedWriter writer = new BufferedWriter(writer1);

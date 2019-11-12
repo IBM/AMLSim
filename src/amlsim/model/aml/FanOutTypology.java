@@ -9,7 +9,7 @@ import amlsim.Account;
 import java.util.*;
 
 /**
- * The subject account sends money to multiple members
+ * The main account distributes money to multiple members
  */
 public class FanOutTypology extends AMLTypology {
 

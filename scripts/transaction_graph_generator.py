@@ -53,6 +53,118 @@ def parse_flag(value):
     return type(value) == str and value.lower() == "true"
 
 
+def get_positive_or_none(value):
+    """ Get positive value or None
+    :param value: Numerical value or None
+    :return: If the value is positive, return this value. Otherwise, return None.
+    """
+    if value is None:
+        return None
+    else:
+        return value if value > 0 else None
+
+
+def directed_configuration_model(_in_deg, _out_deg, seed=0):
+    """Generate a directed random graph with the given degree sequences without self loop.
+    Based on nx.generators.degree_seq.directed_configuration_model
+    :param _in_deg: Each list entry corresponds to the in-degree of a node.
+    :param _out_deg: Each list entry corresponds to the out-degree of a node.
+    :param seed: Seed for random number generator
+    :return: MultiDiGraph without self loop
+    """
+    if not sum(_in_deg) == sum(_out_deg):
+        raise nx.NetworkXError('Invalid degree sequences. Sequences must have equal sums.')
+
+    random.seed(seed)
+    n_in = len(_in_deg)
+    n_out = len(_out_deg)
+    if n_in < n_out:
+        _in_deg.extend((n_out - n_in) * [0])
+    else:
+        _out_deg.extend((n_in - n_out) * [0])
+
+    num_nodes = len(_in_deg)
+    _g = nx.empty_graph(num_nodes, nx.MultiDiGraph())
+    if num_nodes == 0 or max(_in_deg) == 0:
+        return _g  # No edges
+
+    in_tmp_list = list()
+    out_tmp_list = list()
+    for n in _g.nodes():
+        in_tmp_list.extend(_in_deg[n] * [n])
+        out_tmp_list.extend(_out_deg[n] * [n])
+    random.shuffle(in_tmp_list)
+    random.shuffle(out_tmp_list)
+
+    num_edges = len(in_tmp_list)
+    for i in range(num_edges):
+        _src = out_tmp_list[i]
+        _dst = in_tmp_list[i]
+        if _src == _dst:  # ID conflict causes self-loop
+            for j in range(i + 1, num_edges):
+                if _src != in_tmp_list[j]:
+                    in_tmp_list[i], in_tmp_list[j] = in_tmp_list[j], in_tmp_list[i]  # Swap ID
+                    break
+
+    _g.add_edges_from(zip(out_tmp_list, in_tmp_list))
+    for idx, (_src, _dst) in enumerate(_g.edges()):
+        if _src == _dst:
+            print("Self loop from/to %d at %d" % (_src, idx))
+    return _g
+
+
+def get_degrees(deg_csv, num_v):
+    """
+    :param deg_csv: Degree distribution parameter CSV file
+    :param num_v: Number of total account vertices
+    :return: In-degree and out-degree sequence list
+    """
+    _in_deg = list()  # In-degree sequence
+    _out_deg = list()  # Out-degree sequence
+    with open(deg_csv, "r") as rf:  # Load in/out-degree sequences from parameter CSV file for each account
+        reader = csv.reader(rf)
+        next(reader)
+        for row in reader:
+            if row[0].startswith("#"):
+                continue
+            nv = int(row[0])
+            _in_deg.extend(int(row[1]) * [nv])
+            _out_deg.extend(int(row[2]) * [nv])
+
+    in_len, out_len = len(_in_deg), len(_out_deg)
+    assert in_len == out_len, "In-degree (%d) and Out-degree (%d) Sequences must have equal length." \
+                              % (in_len, out_len)
+    total_v = len(_in_deg)
+
+    # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
+    if total_v > num_v:
+        diff = total_v - num_v  # The number of extra accounts to be removed
+        in_tmp = list()
+        out_tmp = list()
+        for i in range(total_v):
+            num_in = _in_deg[i]
+            num_out = _out_deg[i]
+            if num_in == num_out and diff > 0:  # Remove extra elements with the same degree
+                diff -= 1
+            else:
+                in_tmp.append(num_in)
+                out_tmp.append(num_out)
+        _in_deg = in_tmp
+        _out_deg = out_tmp
+
+    # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
+    else:
+        repeats = num_v // total_v  # Number of repetitions of degree sequences
+        _in_deg = _in_deg * repeats
+        _out_deg = _out_deg * repeats
+        remain = num_v - total_v * repeats  # Number of extra accounts
+        _in_deg.extend([1] * remain)  # Add 1-degree account vertices
+        _out_deg.extend([1] * remain)
+
+    assert sum(_in_deg) == sum(_out_deg), "Sequences must have equal sums."
+    return _in_deg, _out_deg
+
+
 class InputSchema:
 
     def __init__(self, input_json):
@@ -158,34 +270,6 @@ class TransactionGenerator:
         self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
         self.main_acct_candidates = set(self.hubs)  # set(self.g.nodes())
 
-    def count_patterns(self, threshold=2):
-        """Count the number of fan-in and fan-out patterns in the generated transaction graph
-        """
-        in_deg = Counter(self.g.in_degree().values())  # in-degree, count
-        out_deg = Counter(self.g.out_degree().values())  # out-degree, count
-        for th in range(2, threshold + 1):
-            num_fan_in = sum([c for d, c in in_deg.items() if d >= th])
-            num_fan_out = sum([c for d, c in out_deg.items() if d >= th])
-            print("\tNumber of fan-in / fan-out patterns with", th, "neighbors:", num_fan_in, "/", num_fan_out)
-
-        main_in_deg = Counter()
-        main_out_deg = Counter()
-        for sub_g in self.alert_groups.values():
-            main_acct = sub_g.graph[MAIN_ACCT_KEY]
-            main_in_deg[self.g.in_degree(main_acct)] += 1
-            main_out_deg[self.g.out_degree(main_acct)] += 1
-        for th in range(2, threshold + 1):
-            num_fan_in = sum([c for d, c in main_in_deg.items() if d >= threshold])
-            num_fan_out = sum([c for d, c in main_out_deg.items() if d >= threshold])
-            print("\tNumber of alerted fan-in / fan-out patterns with", th, "neighbors", num_fan_in, "/", num_fan_out)
-
-    # Highrisk country and business
-    def is_highrisk_country(self, country):
-        return country in self.highrisk_countries
-
-    def is_highrisk_business(self, business):
-        return business in self.highrisk_business
-
     # Account existence check
     def check_account_exist(self, aid):
         if not self.g.has_node(aid):
@@ -230,51 +314,19 @@ class TransactionGenerator:
             members = [main_acct] + sub_accts
             return main_acct, members
 
-        # found = False
-        # main_acct = None
-        # members = list()
-        # while not found:
-        #     candidates = set()
-        #     while len(candidates) < num:  # Get sufficient alert members
-        #         hub = random.choice(self.hubs)
-        #         candidates.update([hub] + list(self.g.adj[hub].keys()))  # Find neighbors
-        #     members = np.random.choice(list(candidates), num, False)
-        #     candidates_set = set(members) & self.main_acct_candidates
-        #     if not candidates_set:
-        #         continue
-        #     main_acct = random.choice(list(candidates_set))  # Choose one main account from members randomly
-        #     found = True
-        #     self.main_acct_candidates.remove(main_acct)
-        # return main_acct, members
-
-    def get_account_vertices(self, num, suspicious=None):
-        """Get account vertices randomly
-        :param num: Number of total account vertices
-        :param suspicious: If True, extract only suspicious accounts. If False, extract only non-suspicious accounts.
-        If None (default), extract them from all accounts.
-        :return: Account ID list
-        """
-        if suspicious is None:
-            candidates = self.g.nodes()
-        else:
-            candidates = [n for n in self.g.nodes() if self.g.node[n]["suspicious"] == suspicious]  # True/False
-        return random.sample(candidates, num)
-
     def load_account_list(self):
         """Load and add account vertices from a CSV file
-        :return:
         """
         acct_file = os.path.join(self.input_dir, self.account_file)
         if self.is_aggregated:
-            self.load_account_param(acct_file)
+            self.load_account_list_param(acct_file)
         else:
-            self.load_account_raw(acct_file)
+            self.load_account_list_raw(acct_file)
 
-    def load_account_raw(self, acct_file):
+    def load_account_list_raw(self, acct_file):
         """Load and add account vertices from a CSV file with raw account info
         header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
-        :param acct_file: Account list file path
-        :return:
+        :param acct_file: Raw account list file path
         """
         if self.default_min_balance is None:
             raise KeyError("Option 'default_min_balance' is required to load raw account list")
@@ -284,30 +336,11 @@ class TransactionGenerator:
             raise KeyError("Option 'default_max_balance' is required to load raw account list")
         max_balance = self.default_max_balance
 
-        if self.default_start_step is None or self.default_start_step < 0:
-            start_day = None  # No limitation
-        else:
-            start_day = self.default_start_step
-
-        if self.default_end_step is None or self.default_end_step <= 0:
-            end_day = None  # No limitation
-        else:
-            end_day = self.default_end_step
-
-        if self.default_start_range is None or self.default_start_range <= 0:
-            start_range = None  # No limitation
-        else:
-            start_range = self.default_start_range
-
-        if self.default_end_range is None or self.default_end_range <= 0:
-            end_range = None  # No limitation
-        else:
-            end_range = self.default_end_range
-
-        if self.default_model is None:
-            default_model = 1
-        else:
-            default_model = self.default_model
+        start_day = get_positive_or_none(self.default_start_step)
+        end_day = get_positive_or_none(self.default_end_step)
+        start_range = get_positive_or_none(self.default_start_range)
+        end_range = get_positive_or_none(self.default_end_range)
+        default_model = self.default_model if self.default_model is not None else 1
 
         self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
                                 "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
@@ -335,7 +368,7 @@ class TransactionGenerator:
 
             count = 0
             for row in reader:
-                if row[0].startswith("#"):
+                if row[0].startswith("#"):  # Comment line
                     continue
                 aid = row[idx_aid]
                 first_name = row[idx_first_name]
@@ -363,13 +396,11 @@ class TransactionGenerator:
                 self.add_account(aid, init_balance, start, end, default_country, default_acct_type, model, **attr)
                 count += 1
 
-    def load_account_param(self, acct_file):
+    def load_account_list_param(self, acct_file):
         """Load and add account vertices from a CSV file with aggregated parameters
         Each row may represent two or more accounts
         :param acct_file: Account parameter file path
-        :return:
         """
-
         idx_num = None  # Number of accounts per row
         idx_min = None  # Minimum initial balance
         idx_max = None  # Maximum initial balance
@@ -426,115 +457,16 @@ class TransactionGenerator:
                     acct_id += 1
 
         self.num_accounts = acct_id
-        print("Created %d accounts." % self.num_accounts)
+        print("Generated %d accounts." % self.num_accounts)
 
-    # Generate base transactions from same degree sequences of transaction CSV
     def generate_normal_transactions(self):
-
-        def get_degrees(deg_csv, num_v):
-            """
-            :param deg_csv: Degree distribution parameter CSV file
-            :param num_v: Number of total account vertices
-            :return: In-degree and out-degree sequence list
-            """
-            _in_deg = list()  # In-degree sequence
-            _out_deg = list()  # Out-degree sequence
-            with open(deg_csv, "r") as rf:  # Load in/out-degree sequences from parameter CSV file for each account
-                reader = csv.reader(rf)
-                next(reader)
-                for row in reader:
-                    if row[0].startswith("#"):
-                        continue
-                    nv = int(row[0])
-                    _in_deg.extend(int(row[1]) * [nv])
-                    _out_deg.extend(int(row[2]) * [nv])
-
-            in_len, out_len = len(_in_deg), len(_out_deg)
-            assert in_len == out_len, "In-degree (%d) and Out-degree (%d) Sequences must have equal length." \
-                                      % (in_len, out_len)
-            total_v = len(_in_deg)
-
-            # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
-            if total_v > num_v:
-                diff = total_v - num_v  # The number of extra accounts to be removed
-                in_tmp = list()
-                out_tmp = list()
-                for i in range(total_v):
-                    num_in = _in_deg[i]
-                    num_out = _out_deg[i]
-                    if num_in == num_out and diff > 0:  # Remove extra elements with the same degree
-                        diff -= 1
-                    else:
-                        in_tmp.append(num_in)
-                        out_tmp.append(num_out)
-                _in_deg = in_tmp
-                _out_deg = out_tmp
-
-            # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
-            else:
-                repeats = num_v // total_v  # Number of repetitions of degree sequences
-                _in_deg = _in_deg * repeats
-                _out_deg = _out_deg * repeats
-                remain = num_v - total_v * repeats  # Number of extra accounts
-                _in_deg.extend([1] * remain)  # Add 1-degree account vertices
-                _out_deg.extend([1] * remain)
-
-            assert sum(_in_deg) == sum(_out_deg), "Sequences must have equal sums."
-            return _in_deg, _out_deg
-
-        def _directed_configuration_model(_in_deg, _out_deg, seed=0):
-            """Generate a directed random graph with the given degree sequences without self loop.
-            Based on nx.generators.degree_seq.directed_configuration_model
-            :param _in_deg: Each list entry corresponds to the in-degree of a node.
-            :param _out_deg: Each list entry corresponds to the out-degree of a node.
-            :param seed: Seed for random number generator
-            :return: MultiDiGraph without self loop
-            """
-            if not sum(_in_deg) == sum(_out_deg):
-                raise nx.NetworkXError('Invalid degree sequences. Sequences must have equal sums.')
-
-            random.seed(seed)
-            n_in = len(_in_deg)
-            n_out = len(_out_deg)
-            if n_in < n_out:
-                _in_deg.extend((n_out - n_in) * [0])
-            else:
-                _out_deg.extend((n_in - n_out) * [0])
-
-            num_nodes = len(_in_deg)
-            _g = nx.empty_graph(num_nodes, nx.MultiDiGraph())
-            if num_nodes == 0 or max(_in_deg) == 0:
-                return _g  # No edges
-
-            in_tmp_list = list()
-            out_tmp_list = list()
-            for n in _g.nodes():
-                in_tmp_list.extend(_in_deg[n] * [n])
-                out_tmp_list.extend(_out_deg[n] * [n])
-            random.shuffle(in_tmp_list)
-            random.shuffle(out_tmp_list)
-
-            num_edges = len(in_tmp_list)
-            for i in range(num_edges):
-                _src = out_tmp_list[i]
-                _dst = in_tmp_list[i]
-                if _src == _dst:  # ID conflict causes self-loop
-                    for j in range(i + 1, num_edges):
-                        if _src != in_tmp_list[j]:
-                            in_tmp_list[i], in_tmp_list[j] = in_tmp_list[j], in_tmp_list[i]  # Swap ID
-                            break
-
-            _g.add_edges_from(zip(out_tmp_list, in_tmp_list))
-            for idx, (_src, _dst) in enumerate(_g.edges()):
-                if _src == _dst:
-                    print("Self loop from/to %d at %d" % (_src, idx))
-            return _g
-
-        # Generate a directed graph from degree sequences (not transaction graph)
-        # TODO: Add options to call scale-free generator functions directly instead of loading degree CSV files
+        """Generate a base directed graph from degree sequences
+        TODO: Add options to call scale-free generator functions directly instead of loading degree CSV files
+        :return: Directed graph as the base transaction graph (not complete transaction graph)
+        """
         deg_file = os.path.join(self.input_dir, self.degree_file)
         in_deg, out_deg = get_degrees(deg_file, self.num_accounts)
-        g = _directed_configuration_model(in_deg, out_deg, self.seed)
+        g = directed_configuration_model(in_deg, out_deg, self.seed)
 
         print("Add %d base transactions" % g.number_of_edges())
         nodes = self.g.nodes()
@@ -912,7 +844,7 @@ class TransactionGenerator:
                 date = random.randrange(middle_day, end_date)
                 add_edge(main_acct, acct, scatter_amount, date)
 
-        # Add user-defined typology implementations here
+        # TODO: Please add user-defined typology implementations here
 
         else:
             print("Warning: unknown pattern type: %s" % typology_name)
@@ -1001,7 +933,29 @@ class TransactionGenerator:
                     writer.writerow(values)
                     acct_count += 1
 
-        print("Exported %d members for %d alerts to %s" % (acct_count, len(self.alert_groups), alert_member_file))
+        print("Exported %d members for %d AML typologies to %s" %
+              (acct_count, len(self.alert_groups), alert_member_file))
+
+    def count_fan_in_out_patterns(self, threshold=2):
+        """Count the number of fan-in and fan-out patterns in the generated transaction graph
+        """
+        in_deg = Counter(self.g.in_degree().values())  # in-degree, count
+        out_deg = Counter(self.g.out_degree().values())  # out-degree, count
+        for th in range(2, threshold + 1):
+            num_fan_in = sum([c for d, c in in_deg.items() if d >= th])
+            num_fan_out = sum([c for d, c in out_deg.items() if d >= th])
+            print("\tNumber of fan-in / fan-out patterns with", th, "neighbors:", num_fan_in, "/", num_fan_out)
+
+        main_in_deg = Counter()
+        main_out_deg = Counter()
+        for sub_g in self.alert_groups.values():
+            main_acct = sub_g.graph[MAIN_ACCT_KEY]
+            main_in_deg[self.g.in_degree(main_acct)] += 1
+            main_out_deg[self.g.out_degree(main_acct)] += 1
+        for th in range(2, threshold + 1):
+            num_fan_in = sum([c for d, c in main_in_deg.items() if d >= threshold])
+            num_fan_out = sum([c for d, c in main_out_deg.items() if d >= threshold])
+            print("\tNumber of alerted fan-in / fan-out patterns with", th, "neighbors", num_fan_in, "/", num_fan_out)
 
 
 if __name__ == "__main__":
@@ -1021,12 +975,12 @@ if __name__ == "__main__":
     txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
     if degree_threshold > 0:
         print("Generated normal transaction network")
-        txg.count_patterns(degree_threshold)
+        txg.count_fan_in_out_patterns(degree_threshold)
     txg.set_main_acct_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
     if degree_threshold > 0:
         print("Added alert transaction patterns")
-        txg.count_patterns(degree_threshold)
+        txg.count_fan_in_out_patterns(degree_threshold)
     txg.write_account_list()  # Export accounts to a CSV file
     txg.write_transaction_list()  # Export transactions to a CSV file
     txg.write_alert_account_list()  # Export alert accounts to a CSV file

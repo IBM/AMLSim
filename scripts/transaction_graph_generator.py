@@ -11,7 +11,7 @@ import json
 import os
 import sys
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,6 +76,8 @@ class TransactionGenerator:
         self.hubs = list()  # Hub vertices
         self.main_acct_candidates = set()  # Set of the main account candidates
         self.attr_names = list()  # Additional account attribute names
+        self.bank_to_accts = defaultdict(set)  # Bank ID -> account set
+        self.acct_to_bank = dict()  # Account ID -> bank ID
 
         with open(conf_file, "r") as rf:
             self.conf = json.load(rf)
@@ -154,14 +156,14 @@ class TransactionGenerator:
         """
         self.degrees = self.g.degree(self.g.nodes())
         self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
-        self.main_acct_candidates = set(self.g.nodes())
+        self.main_acct_candidates = set(self.hubs)  # set(self.g.nodes())
 
     def count_patterns(self, threshold=2):
         """Count the number of fan-in and fan-out patterns in the generated transaction graph
         """
         in_deg = Counter(self.g.in_degree().values())  # in-degree, count
         out_deg = Counter(self.g.out_degree().values())  # out-degree, count
-        for th in range(2, threshold+1):
+        for th in range(2, threshold + 1):
             num_fan_in = sum([c for d, c in in_deg.items() if d >= th])
             num_fan_out = sum([c for d, c in out_deg.items() if d >= th])
             print("\tNumber of fan-in / fan-out patterns with", th, "neighbors:", num_fan_in, "/", num_fan_out)
@@ -172,7 +174,7 @@ class TransactionGenerator:
             main_acct = sub_g.graph[MAIN_ACCT_KEY]
             main_in_deg[self.g.in_degree(main_acct)] += 1
             main_out_deg[self.g.out_degree(main_acct)] += 1
-        for th in range(2, threshold+1):
+        for th in range(2, threshold + 1):
             num_fan_in = sum([c for d, c in main_in_deg.items() if d >= threshold])
             num_fan_out = sum([c for d, c in main_out_deg.items() if d >= threshold])
             print("\tNumber of alerted fan-in / fan-out patterns with", th, "neighbors", num_fan_in, "/", num_fan_out)
@@ -196,28 +198,54 @@ class TransactionGenerator:
         else:
             return True
 
-    def get_alert_members(self, num):
-        """Get account vertices randomly (high-degree vertices are likely selected)
+    def get_alert_members(self, num, is_internal=False):
+        """Choose accounts randomly from one or more banks.
         :param num: Number of total account vertices
+        :param is_internal: If True, choose members from a single bank. Otherwise, choose members from all banks.
         :return: Main account and account ID list
         """
-        found = False
-        main_acct = None
-        members = list()
+        if num <= 1:
+            raise ValueError("The number of members must be more than 1")
 
-        while not found:
-            candidates = set()
-            while len(candidates) < num:  # Get sufficient alert members
-                hub = random.choice(self.hubs)
-                candidates.update([hub] + list(self.g.adj[hub].keys()))
-            members = np.random.choice(list(candidates), num, False)
-            candidates_set = set(members) & self.main_acct_candidates
-            if not candidates_set:
-                continue
-            main_acct = random.choice(list(candidates_set))  # Choose one main account from members randomly
-            found = True
-            self.main_acct_candidates.remove(main_acct)
-        return main_acct, members
+        if is_internal:  # Choose members from the same bank as the main account
+            main_acct = random.sample(self.main_acct_candidates, 1)[0]
+            bank_id = self.acct_to_bank[main_acct]
+            self.remove_typology_candidate(main_acct)
+
+            bank_accts = self.bank_to_accts[bank_id]
+            sub_accts = random.sample(bank_accts, num - 1)
+            for n in sub_accts:
+                self.remove_typology_candidate(n)
+
+            members = [main_acct] + sub_accts
+            return main_acct, members
+
+        else:  # Choose members from all banks
+            main_acct = random.sample(self.main_acct_candidates, 1)[0]
+            self.remove_typology_candidate(main_acct)
+
+            sub_accts = random.sample(self.acct_to_bank.keys(), num - 1)
+            for n in sub_accts:
+                self.remove_typology_candidate(n)
+            members = [main_acct] + sub_accts
+            return main_acct, members
+
+        # found = False
+        # main_acct = None
+        # members = list()
+        # while not found:
+        #     candidates = set()
+        #     while len(candidates) < num:  # Get sufficient alert members
+        #         hub = random.choice(self.hubs)
+        #         candidates.update([hub] + list(self.g.adj[hub].keys()))  # Find neighbors
+        #     members = np.random.choice(list(candidates), num, False)
+        #     candidates_set = set(members) & self.main_acct_candidates
+        #     if not candidates_set:
+        #         continue
+        #     main_acct = random.choice(list(candidates_set))  # Choose one main account from members randomly
+        #     found = True
+        #     self.main_acct_candidates.remove(main_acct)
+        # return main_acct, members
 
     def get_account_vertices(self, num, suspicious=None):
         """Get account vertices randomly
@@ -378,7 +406,7 @@ class TransactionGenerator:
                 else:
                     print("Warning: unknown key: %s" % k)
 
-            aid = 0
+            acct_id = 0
             for row in reader:
                 if row[0].startswith("#"):
                     continue
@@ -394,10 +422,10 @@ class TransactionGenerator:
 
                 for i in range(num):
                     init_balance = random.uniform(min_balance, max_balance)  # Generate amount
-                    self.add_account(aid, init_balance, start_day, end_day, country, business, model_id, bank_id)
-                    aid += 1
+                    self.add_account(acct_id, init_balance, start_day, end_day, country, business, model_id, bank_id)
+                    acct_id += 1
 
-        self.num_accounts = aid
+        self.num_accounts = acct_id
         print("Created %d accounts." % self.num_accounts)
 
     # Generate base transactions from same degree sequences of transaction CSV
@@ -516,9 +544,9 @@ class TransactionGenerator:
             dst = nodes[dst_i]
             self.add_transaction(src, dst)  # Add edges to transaction graph
 
-    def add_account(self, aid, init_balance, start, end, country, business, model_id, bank_id=0, **attr):
+    def add_account(self, acct_id, init_balance, start, end, country, business, model_id, bank_id=0, **attr):
         """Add an account vertex
-        :param aid: Account ID
+        :param acct_id: Account ID
         :param init_balance: Initial amount
         :param start: The day when the account opened
         :param end: The day when the account closed
@@ -530,24 +558,35 @@ class TransactionGenerator:
         :return:
         """
         # Add an account vertex with an ID and attributes if and only if an account with the same ID is not yet added
-        if self.check_account_absent(aid):
-            self.g.add_node(aid, label="account", init_balance=init_balance, start=start, end=end, country=country,
+        if self.check_account_absent(acct_id):
+            self.g.add_node(acct_id, label="account", init_balance=init_balance, start=start, end=end, country=country,
                             business=business, is_sar=False, model_id=model_id, bank_id=bank_id, **attr)
+            self.bank_to_accts[bank_id].add(acct_id)
+            self.acct_to_bank[acct_id] = bank_id
 
-    def add_transaction(self, src, dst, amount=None, date=None, ttype=None):
+    def remove_typology_candidate(self, acct):
+        """Remove an account vertex from AML typology member candidates
+        :param acct: Account ID
+        """
+        self.main_acct_candidates.discard(acct)
+        bank_id = self.acct_to_bank[acct]
+        del self.acct_to_bank[acct]
+        self.bank_to_accts[bank_id].discard(acct)
+
+    def add_transaction(self, orig, bene, amount=None, date=None, ttype=None):
         """Add a transaction edge
-        :param src: Source account ID
-        :param dst: Destination account ID
+        :param orig: Originator account ID
+        :param bene: Beneficiary account ID
         :param amount: Transaction amount
         :param date: Transaction date
         :param ttype: Transaction type description
         :return:
         """
-        self.check_account_exist(src)  # Ensure the source and destination accounts exist
-        self.check_account_exist(dst)
-        if src == dst:
-            raise ValueError("Self loop from/to %s is not allowed for transaction networks" % str(src))
-        self.g.add_edge(src, dst, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=ttype)
+        self.check_account_exist(orig)  # Ensure the originator and beneficiary accounts exist
+        self.check_account_exist(bene)
+        if orig == bene:
+            raise ValueError("Self loop from/to %s is not allowed for transaction networks" % str(orig))
+        self.g.add_edge(orig, bene, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=ttype)
         self.tx_id += 1
         if self.tx_id % 1000000 == 0:
             print("Added %d transactions" % self.tx_id)
@@ -598,6 +637,7 @@ class TransactionGenerator:
         idx_bene_country = None
         idx_orig_business = None
         idx_bene_business = None
+        idx_internal = None
         idx_sar = None
 
         with open(alert_file, "r") as rf:
@@ -633,6 +673,8 @@ class TransactionGenerator:
                     idx_orig_business = i
                 elif k == "bene_business":
                     idx_bene_business = i
+                elif k == "is_internal":  # Internal-bank transaction flag
+                    idx_internal = i
                 elif k == "is_sar":  # SAR flag
                     idx_sar = i
                 else:
@@ -657,7 +699,8 @@ class TransactionGenerator:
                 bene_country = parse_flag(row[idx_bene_country]) if idx_bene_country is not None else False
                 orig_business = parse_flag(row[idx_orig_business]) if idx_orig_business is not None else False
                 bene_business = parse_flag(row[idx_bene_business]) if idx_bene_business is not None else False
-                is_sar = parse_flag(row[idx_sar ])
+                is_internal = parse_flag(row[idx_internal]) if idx_internal is not None else False
+                is_sar = parse_flag(row[idx_sar])
 
                 if pattern_name not in self.alert_types:
                     print("Warning: pattern type name (%s) must be one of %s"
@@ -670,16 +713,15 @@ class TransactionGenerator:
                     num_transactions = num_accounts
 
                 for i in range(num_patterns):
-                    # Add an AML typology
                     self.add_aml_typology(is_sar, pattern_name, num_accounts, individual_amount, total_amount,
-                                          num_transactions, schedule, amount_difference, period, amount_rounded,
-                                          orig_country, bene_country, orig_business, bene_business)
+                                          num_transactions, is_internal, schedule, period, amount_difference,
+                                          amount_rounded, orig_country, bene_country, orig_business, bene_business)
                     count += 1
                     if count % 1000 == 0:
                         print("Write %d alerts" % count)
 
-    def add_aml_typology(self, is_sar, typology_name, num_accounts, individual_amount, total_amount,
-                         num_transactions=None, schedule=1, amount_difference=None, period=None, amount_rounded=None,
+    def add_aml_typology(self, is_sar, typology_name, num_accounts, individual_amount, total_amount, num_transactions,
+                         is_internal=False, schedule=1, period=None, amount_difference=None, amount_rounded=None,
                          orig_country=False, bene_country=False, orig_business=False, bene_business=False):
         """Add an AML typology transaction set
         :param is_sar: Whether the alerted transaction set is SAR (True) or false-alert (False)
@@ -689,16 +731,17 @@ class TransactionGenerator:
         :param individual_amount: Initial individual amount
         :param total_amount: Minimum total amount
         :param num_transactions: Minimum number of transactions
+        :param is_internal: If True, choose members from a single bank. Otherwise, choose members from all banks.
         :param schedule: AML pattern transaction schedule model ID
-        :param amount_difference: Proportion of maximum transaction difference (currently unused)
         :param period: Number of days as the overall transaction period (currently unused)
+        :param amount_difference: Proportion of maximum transaction difference (currently unused)
         :param amount_rounded: Proportion of number of transactions with rounded amounts (currently unused)
         :param orig_country: Whether the originator country is suspicious (currently unused)
         :param bene_country: Whether the beneficiary country is suspicious (currently unused)
         :param orig_business: Whether the originator business type is suspicious (currently unused)
         :param bene_business: Whether the beneficiary business type is suspicious (currently unused)
         """
-        main_acct, members = self.get_alert_members(num_accounts)
+        main_acct, members = self.get_alert_members(num_accounts, is_internal)
 
         start_date = 0
         end_date = self.total_steps
@@ -731,7 +774,7 @@ class TransactionGenerator:
             if num_transactions is None:
                 num_transactions = num_members - 1
             for src in itertools.cycle(src_list):  # Generate transactions for the specified number
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
+                amount = individual_amount
                 date = random.randrange(start_date, end_date)
                 add_edge(src, dst, amount, date)
                 transaction_count += 1
@@ -745,7 +788,7 @@ class TransactionGenerator:
             if num_transactions is None:
                 num_transactions = num_members - 1
             for dst in itertools.cycle(dst_list):  # Generate transactions for the specified number
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
+                amount = individual_amount
                 date = random.randrange(start_date, end_date)
                 add_edge(src, dst, amount, date)
 
@@ -760,7 +803,7 @@ class TransactionGenerator:
             if num_transactions is None:  # Number of transactions
                 num_transactions = len(src_list) * len(dst_list)
             for src, dst in itertools.product(src_list, dst_list):  # All-to-all transaction edges
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
+                amount = individual_amount
                 date = random.randrange(start_date, end_date)
                 add_edge(src, dst, amount, date)
 
@@ -777,7 +820,7 @@ class TransactionGenerator:
                 num_transactions = len(src_list) * len(mid_list) + len(mid_list) * len(dst_list)
 
             for src, dst in itertools.product(src_list, mid_list):  # all-to-all transactions
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
+                amount = individual_amount
                 date = random.randrange(start_date, end_date)
                 add_edge(src, dst, amount, date)
                 transaction_count += 1
@@ -785,7 +828,7 @@ class TransactionGenerator:
                 if transaction_count > num_transactions and accumulated_amount >= total_amount:
                     break
             for src, dst in itertools.product(mid_list, dst_list):  # all-to-all transactions
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
+                amount = individual_amount
                 date = random.randrange(start_date, end_date)
                 add_edge(src, dst, amount, date)
                 transaction_count += 1
@@ -796,25 +839,25 @@ class TransactionGenerator:
         elif typology_name == "random":  # Random transactions among members
             dst_list = [n for n in members if n != main_acct]
             for dst in dst_list:
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
+                amount = individual_amount
                 date = random.randrange(start_date, end_date)
                 add_edge(main_acct, dst, amount, date)
             for dst in dst_list:
                 nb1 = random.choice(dst_list)
                 if dst != nb1:
-                    amount = individual_amount  # random.uniform(min_amount, max_amount)
+                    amount = individual_amount
                     date = random.randrange(start_date, end_date)
                     add_edge(dst, nb1, amount, date)
                 nb2 = random.choice(dst_list)
                 if dst != nb2:
-                    amount = individual_amount  # random.uniform(min_amount, max_amount)
+                    amount = individual_amount
                     date = random.randrange(start_date, end_date)
                     add_edge(nb2, dst, amount, date)
 
         elif typology_name == "cycle":  # Cycle transactions
             start_index = list(members).index(main_acct)  # Index of member list indicates the main account
             num = len(members)  # Number of involved accounts
-            amount = individual_amount  # max_amount  # Initial transaction amount
+            amount = individual_amount  # Initial transaction amount
             dates = sorted([random.randrange(start_date, end_date) for _ in range(num)])  # Ordered transaction date
             for i in range(num):
                 src_i = (start_index + i) % num
@@ -835,7 +878,7 @@ class TransactionGenerator:
             middle_day = (start_date + end_date) // 2
             for i in range(1, num):
                 acct = members[i]
-                scatter_amount = individual_amount  # random.uniform(min_amount, max_amount)
+                scatter_amount = individual_amount
                 margin = scatter_amount * 0.1  # Margin of the intermediate account
                 gather_amount = scatter_amount - margin
                 scatter_date = random.randrange(start_date, middle_day)
@@ -853,7 +896,7 @@ class TransactionGenerator:
             accumulated_amount = 0.0
             for i in range(num_orig_accounts):
                 acct = orig_accounts[i]
-                amount = individual_amount  # random.uniform(min_amount, max_amount)
+                amount = individual_amount
                 date = random.randrange(start_date, middle_day)
 
                 add_edge(acct, main_acct, amount, date)

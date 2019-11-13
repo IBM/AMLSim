@@ -1,4 +1,4 @@
-count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,is_internal,is_sar
-2,cycle,0,5,100,1000,5,20,30,0.5,False,False
-2,scatter_gather,0,7,100,1000,10,20,30,0.5,False,True
-2,gather_scatter,0,11,100,1000,11,20,30,0.5,False,True
+count,type,schedule_id,accounts,individual_amount,aggregated_amount,transaction_count,amount_difference,period,amount_rounded,bank_id,is_sar
+2,cycle,0,5,100,1000,5,20,30,0.5,,False
+2,scatter_gather,0,7,100,1000,10,20,30,0.5,,True
+2,gather_scatter,0,11,100,1000,11,20,30,0.5,,True

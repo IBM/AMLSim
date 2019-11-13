@@ -22,7 +22,7 @@ public class Account extends Client implements Steppable {
 	private Branch branch = null;
     private Map<String, Account> origAccts = new HashMap<>();  // Originator account ID --> Account object
     private Map<String, Account> beneAccts = new HashMap<>();  // Beneficiary account ID --> Account object
-	private int bankID = 0;  // Bank ID
+	private String bankID = "";  // Bank ID
 
     private Account prevOrig = null;  // Previous originator account
 	private Account prevDest = null;  // Previous beneficiary account
@@ -92,12 +92,12 @@ public class Account extends Client implements Steppable {
 	 * @param bankID Bank ID
 	 * @param attrs Other attributes
 	 */
-	public Account(String id, int modelID, int interval, float initBalance, long start, long end, int bankID, Map<String, String> attrs){
+	public Account(String id, int modelID, int interval, float initBalance, long start, long end, String bankID, Map<String, String> attrs){
     	this(id, modelID, interval, initBalance, start, end, attrs);
     	this.bankID = bankID;
 	}
 
-	public int getBankID(){
+	public String getBankID() {
 		return this.bankID;
 	}
 

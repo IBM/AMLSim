@@ -35,6 +35,7 @@ __pycache__/
 # Param files for testing
 paramFiles/*_*/
 paramFiles/city*/
+paramFiles/bank*/
 sample/*_*/
 
 # Output CSV, Log(txt) and image files

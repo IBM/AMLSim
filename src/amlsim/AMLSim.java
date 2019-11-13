@@ -213,7 +213,7 @@ public class AMLSim extends ParameterizedPaySim {
 			float initBalance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
 			int start = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
 			int end = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
-			int bankID = Integer.parseInt(elements[columnIndex.get("BANK_ID")]);
+			String bankID = elements[columnIndex.get("BANK_ID")];
 
 			Map<String, String> extraValues = new HashMap<>();
 			for(String column : extraColumns){

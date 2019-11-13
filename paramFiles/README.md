@@ -17,7 +17,7 @@ Account configuration list
   - 3: Mutual
   - 4: Forward
   - 5: Periodical
-- `bank_id` Bank ID which these accounts belong to (optional, default is 0)
+- `bank_id` Bank ID which these accounts belong to (optional)
 
 
 Raw account list
@@ -71,7 +71,7 @@ AML typology transaction pattern list
 - `bene_country` Whether the beneficiary country is suspicious (optional)
 - `orig_business` Whether the originator business type is suspicious (optional)
 - `bene_business` Whether the beneficiary business type is suspicious (optional)
-- `is_internal` Whether all involved accounts with the same bank ID (optional, default is False) 
+- `bank_id` Bank ID which member accounts belong to (optional: if absent or empty value, no limitation for the bank ID) 
 - `is_sar` Whether the alert is SAR (True) or false alert (False)
 
 

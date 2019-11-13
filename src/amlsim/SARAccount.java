@@ -12,7 +12,7 @@ public class SARAccount extends Account {
 
 	private int count = 0;
 
-	SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, int bankID, Map<String, String> attrs){
+	SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, String bankID, Map<String, String> attrs){
 		super(id, modelID, interval, init_balance, start, end, bankID, attrs);
 	}
 

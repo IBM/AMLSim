@@ -220,7 +220,9 @@ class TransactionGenerator:
 
         self.margin_ratio = parse_float(default_conf.get("margin_ratio", DEFAULT_MARGIN_RATIO))
         if not 0.0 <= self.margin_ratio <= 1.0:
-            raise ValueError("Margin ratio in AML typologies is %f. It must be within [0.0, 1.0]" % self.margin_ratio)
+            raise ValueError("Margin ratio in AML typologies is %f, must be within [0.0, 1.0]" % self.margin_ratio)
+
+        self.default_bank_id = default_conf.get("bank_id")  # Default bank ID if not specified at parameter files
 
         # Get input file names and properties
         input_conf = self.conf["input"]
@@ -288,21 +290,24 @@ class TransactionGenerator:
         else:
             return True
 
-    def get_alert_members(self, num, is_internal=False):
-        """Choose accounts randomly from one or more banks.
+    def get_typology_members(self, num, bank_id=""):
+        """Choose accounts randomly from one or multiple banks.
         :param num: Number of total account vertices
-        :param is_internal: If True, choose members from a single bank. Otherwise, choose members from all banks.
+        :param bank_id: It chooses members from a single bank with the ID. If empty, it chooses members from all banks.
         :return: Main account and account ID list
         """
         if num <= 1:
             raise ValueError("The number of members must be more than 1")
 
-        if is_internal:  # Choose members from the same bank as the main account
-            main_acct = random.sample(self.main_acct_candidates, 1)[0]
-            bank_id = self.acct_to_bank[main_acct]
-            self.remove_typology_candidate(main_acct)
+        if bank_id in self.bank_to_accts:  # Choose members from the same bank as the main account
+            # main_acct = random.sample(self.main_acct_candidates, 1)[0]
+            # _bank_id = self.acct_to_bank[main_acct]
+            # self.remove_typology_candidate(main_acct)
 
             bank_accts = self.bank_to_accts[bank_id]
+            main_candidates = self.main_acct_candidates & bank_accts
+            main_acct = random.sample(main_candidates, 1)[0]
+            self.remove_typology_candidate(main_acct)
             sub_accts = random.sample(bank_accts, num - 1)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
@@ -310,7 +315,7 @@ class TransactionGenerator:
             members = [main_acct] + sub_accts
             return main_acct, members
 
-        else:  # Choose members from all banks
+        elif bank_id == "":  # Choose members from all accounts
             main_acct = random.sample(self.main_acct_candidates, 1)[0]
             self.remove_typology_candidate(main_acct)
 
@@ -319,6 +324,9 @@ class TransactionGenerator:
                 self.remove_typology_candidate(n)
             members = [main_acct] + sub_accts
             return main_acct, members
+
+        else:
+            raise KeyError("No such bank ID: %s" % bank_id)
 
     def load_account_list(self):
         """Load and add account vertices from a CSV file
@@ -455,7 +463,7 @@ class TransactionGenerator:
                 country = row[idx_country]
                 business = row[idx_business]
                 model_id = parse_int(row[idx_model])
-                bank_id = parse_int(row[idx_bank]) if idx_bank is not None else 0
+                bank_id = row[idx_bank] if idx_bank is not None else self.default_bank_id
 
                 for i in range(num):
                     init_balance = random.uniform(min_balance, max_balance)  # Generate amount
@@ -482,7 +490,7 @@ class TransactionGenerator:
             dst = nodes[dst_i]
             self.add_transaction(src, dst)  # Add edges to transaction graph
 
-    def add_account(self, acct_id, init_balance, start, end, country, business, model_id, bank_id=0, **attr):
+    def add_account(self, acct_id, init_balance, start, end, country, business, model_id, bank_id=None, **attr):
         """Add an account vertex
         :param acct_id: Account ID
         :param init_balance: Initial amount
@@ -495,6 +503,9 @@ class TransactionGenerator:
         :param attr: Optional attributes
         :return:
         """
+        if bank_id is None:
+            bank_id = self.default_bank_id
+
         # Add an account vertex with an ID and attributes if and only if an account with the same ID is not yet added
         if self.check_account_absent(acct_id):
             self.g.add_node(acct_id, label="account", init_balance=init_balance, start=start, end=end, country=country,
@@ -575,7 +586,7 @@ class TransactionGenerator:
         idx_bene_country = None
         idx_orig_business = None
         idx_bene_business = None
-        idx_internal = None
+        idx_bank = None
         idx_sar = None
 
         with open(alert_file, "r") as rf:
@@ -611,8 +622,8 @@ class TransactionGenerator:
                     idx_orig_business = i
                 elif k == "bene_business":
                     idx_bene_business = i
-                elif k == "is_internal":  # Internal-bank transaction flag
-                    idx_internal = i
+                elif k == "bank_id":  # Bank ID for internal-bank transactions
+                    idx_bank = i
                 elif k == "is_sar":  # SAR flag
                     idx_sar = i
                 else:
@@ -637,7 +648,7 @@ class TransactionGenerator:
                 bene_country = parse_flag(row[idx_bene_country]) if idx_bene_country is not None else False
                 orig_business = parse_flag(row[idx_orig_business]) if idx_orig_business is not None else False
                 bene_business = parse_flag(row[idx_bene_business]) if idx_bene_business is not None else False
-                is_internal = parse_flag(row[idx_internal]) if idx_internal is not None else False
+                bank_id = row[idx_bank] if idx_bank is not None else ""
                 is_sar = parse_flag(row[idx_sar])
 
                 if pattern_name not in self.alert_types:
@@ -652,14 +663,14 @@ class TransactionGenerator:
 
                 for i in range(num_patterns):
                     self.add_aml_typology(is_sar, pattern_name, num_accounts, individual_amount, total_amount,
-                                          num_transactions, is_internal, schedule, period, amount_difference,
+                                          num_transactions, bank_id, schedule, period, amount_difference,
                                           amount_rounded, orig_country, bene_country, orig_business, bene_business)
                     count += 1
                     if count % 1000 == 0:
                         print("Write %d alerts" % count)
 
     def add_aml_typology(self, is_sar, typology_name, num_accounts, individual_amount, total_amount, num_transactions,
-                         is_internal=False, schedule=1, period=None, amount_difference=None, amount_rounded=None,
+                         bank_id="", schedule=1, period=None, amount_difference=None, amount_rounded=None,
                          orig_country=False, bene_country=False, orig_business=False, bene_business=False):
         """Add an AML typology transaction set
         :param is_sar: Whether the alerted transaction set is SAR (True) or false-alert (False)
@@ -669,7 +680,7 @@ class TransactionGenerator:
         :param individual_amount: Initial individual amount
         :param total_amount: Minimum total amount
         :param num_transactions: Minimum number of transactions
-        :param is_internal: If True, choose members from a single bank. Otherwise, choose members from all banks.
+        :param bank_id: If not empty, choose members from the specified bank ID. Otherwise, choose members from all banks.
         :param schedule: AML pattern transaction schedule model ID
         :param period: Number of days as the overall transaction period (currently unused)
         :param amount_difference: Proportion of maximum transaction difference (currently unused)
@@ -679,7 +690,7 @@ class TransactionGenerator:
         :param orig_business: Whether the originator business type is suspicious (currently unused)
         :param bene_business: Whether the beneficiary business type is suspicious (currently unused)
         """
-        main_acct, members = self.get_alert_members(num_accounts, is_internal)
+        main_acct, members = self.get_typology_members(num_accounts, bank_id)
 
         start_date = 0
         end_date = self.total_steps

@@ -77,7 +77,7 @@ def powerlaw_cluster_generator(_n, _edge_factor):
 if __name__ == "__main__":
     argv = sys.argv
     if len(argv) < 4:
-        print("Usage: python %s [NumVertices] [EdgeFactor] [DegCSV]" % argv[0])
+        print("Usage: python3 %s [NumVertices] [EdgeFactor] [DegCSV]" % argv[0])
         exit(1)
 
     n = int(argv[1])

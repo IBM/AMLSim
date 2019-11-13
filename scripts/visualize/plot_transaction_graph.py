@@ -72,7 +72,7 @@ def plot_graph(g):
 if __name__ == "__main__":
     argv = sys.argv
     if len(argv) < 3:
-        print("Usage: python %s [TxLog] [AlertID]" % argv[0])
+        print("Usage: python3 %s [TxLog] [AlertID]" % argv[0])
         exit(1)
 
     log_name = argv[1]

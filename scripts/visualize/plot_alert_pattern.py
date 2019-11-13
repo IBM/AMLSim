@@ -3,79 +3,74 @@ import csv
 import networkx as nx
 from collections import defaultdict
 
+import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib import animation
+import warnings
+
+warnings.filterwarnings('ignore', category=matplotlib.cbook.deprecation.MatplotlibDeprecationWarning)
 
 
-def plot_alert(tx_csv):
-    g = nx.Graph()
-    edges = list()
-    alert_st = dict()
-    alert_ed = dict()
-    acct_alert = defaultdict(set)
-    e_suspicious = defaultdict(set)
+def plot_alerts(acct_csv, tx_csv, ids):
+    g = nx.DiGraph()
+    bank_accts = defaultdict(list)
+
+    with open(acct_csv, "r") as rf:
+        reader = csv.reader(rf)
+        next(reader)
+
+        for row in reader:
+            alert_id = row[0]
+            if alert_id not in ids:
+                continue
+            acct_id = row[3]
+            bank_id = row[9]
+            g.add_node(acct_id, bank_id=bank_id)
+            bank_accts[bank_id].append(acct_id)
 
     with open(tx_csv, "r") as rf:
         reader = csv.reader(rf)
         next(reader)
 
         for row in reader:
-            step = int(row[0])
-            src = row[3]
-            dst = row[6]
-            isSAR = int(row[9]) > 0
-            alertID = int(row[10])
-            g.add_edge(src, dst)
-            edges.append((step, src, dst))
-            acct_alert[src].add(alertID)
-            acct_alert[dst].add(alertID)
+            alert_id = row[0]
+            if alert_id not in ids:
+                continue
+            orig_id = row[4]
+            bene_id = row[5]
+            amount = row[7]
+            date = row[8].split("T")[0]  # Extract only the date
+            label = amount + "\n" + date
+            g.add_edge(orig_id, bene_id, amount=amount, date=date, label=label)
 
-            if isSAR:
-                if alertID not in alert_st:
-                    alert_st[alertID] = step
-
-                if alertID not in alert_ed or alert_ed[alertID] < step:
-                    alert_ed[alertID] = step
-
-                e_suspicious[step].add((src, dst))
-                e_suspicious[step].add((dst, src))
-
+    bank_ids = bank_accts.keys()
+    cmap = plt.get_cmap("tab10")
     pos = nx.spring_layout(g)
-    sub_g = nx.DiGraph()
 
-    steps = list(range(30))  # sorted(set([e[0] for e in edges]))
+    plt.figure(figsize=(12.0, 8.0))
+    plt.axis('off')
 
-    def show_graph(i):
-        if i != 0:
-            plt.cla()
+    for i, bank_id in enumerate(bank_ids):
+        color = cmap(i)
+        accts = bank_accts[bank_id]
+        nx.draw_networkx_nodes(g, pos, accts, node_size=200, node_color=color, label=bank_id)
+        nx.draw_networkx_labels(g, pos, {n: n for n in accts})
 
-        def within_acct(acct):
-            alertIDs = acct_alert[acct]
-            return True in [alert_st.get(alert, -1) <= i <= alert_ed.get(alert, -1) for alert in alertIDs]
+    edge_labels = nx.get_edge_attributes(g, "label")
+    nx.draw_networkx_edges(g, pos)
+    nx.draw_networkx_edge_labels(g, pos, edge_labels, font_size=6)
 
-        new_edges = [(_src, _dst) for (st, _src, _dst) in edges if st == steps[i]]
-        sub_g.add_edges_from(new_edges)
-        nodes = sub_g.nodes()
-        all_edges = sub_g.edges()
-        node_colors = ["r" if within_acct(n) else "b" for n in nodes]
-        edge_colors = ["r" if e in e_suspicious[i] else "k" for e in all_edges]
-
-        plt.title("Step %d" % steps[i])
-        plt.xlim([-1.0, 1.0])
-        plt.ylim([-1.0, 1.0])
-        nx.draw_networkx_nodes(sub_g, pos, nodelist=nodes, node_color=node_colors, node_size=50)
-        nx.draw_networkx_edges(sub_g, pos, edgelist=all_edges, edge_color=edge_colors, arrowsize=5, width=0.5)
-
-    fig = plt.figure()
-    anim = animation.FuncAnimation(fig, show_graph, frames=len(steps))
-    anim.save('tx.gif', writer='imagemagick', fps=1)
+    plt.legend(numpoints = 1)
+    plt.savefig("alert_pattern.png")
 
 
 if __name__ == "__main__":
     argv = sys.argv
 
-    if len(argv) < 2:
-        print("Usage: python %s [TxCSV]" % argv[0])
+    if len(argv) < 4:
+        print("Usage: python3 %s [AlertAcct] [AlertTx] [AlertID...]" % argv[0])
         exit(1)
 
-    plot_alert(argv[1])
+    alert_acct_csv = argv[1]
+    alert_tx_csv = argv[2]
+    alert_ids = set(argv[2:])
+    plot_alerts(alert_acct_csv, alert_tx_csv, alert_ids)

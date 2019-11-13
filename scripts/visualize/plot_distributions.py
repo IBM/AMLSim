@@ -230,7 +230,7 @@ if __name__ == "__main__":
     argv = sys.argv
 
     if len(argv) < 2:
-        print("Usage: python %s [ConfJSON]" % argv[0])
+        print("Usage: python3 %s [ConfJSON]" % argv[0])
         exit(1)
 
     conf_json = argv[1]

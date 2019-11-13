@@ -17,8 +17,9 @@ public class SimProperties {
     private JSONObject outputProp;
     private JSONObject cashInProp;
     private JSONObject cashOutProp;
-    private String inputDir;
-    private String outputDir;
+//    private String inputDir;
+//    private String outputDir;
+    private String workDir;
     private float marginRatio;
 
     SimProperties(String jsonName) throws IOException{
@@ -26,15 +27,17 @@ public class SimProperties {
         JSONObject jsonObject = new JSONObject(jsonStr);
         generalProp = jsonObject.getJSONObject("general");
         simProp = jsonObject.getJSONObject("simulator");
-        inputProp = jsonObject.getJSONObject("temporal");
+        inputProp = jsonObject.getJSONObject("temporal");  // Input directory of this simulator is temporal directory
         outputProp = jsonObject.getJSONObject("output");
         cashInProp = jsonObject.getJSONObject("default").getJSONObject("cash_in");
         cashOutProp = jsonObject.getJSONObject("default").getJSONObject("cash_out");
         marginRatio = jsonObject.getJSONObject("default").getFloat("margin_ratio");
 
-        String simName = generalProp.getString("simulation_name");
-        inputDir = inputProp.getString("directory") + separator;
-        outputDir = inputDir + separator + simName + separator;
+        String simName = getSimName();  // generalProp.getString("simulation_name");
+        workDir = inputProp.getString("directory") + separator + simName + separator;
+        System.out.println("Working directory: " + workDir);
+//        inputDir = inputProp.getString("directory") + separator;
+//        outputDir = inputDir + separator + simName + separator;
     }
 
     private static String loadTextFile(String jsonName) throws IOException{
@@ -76,39 +79,39 @@ public class SimProperties {
     }
 
     String getInputAcctFile(){
-        return inputDir + inputProp.getString("accounts");
+        return workDir + inputProp.getString("accounts");
     }
 
     String getInputTxFile(){
-        return inputDir + inputProp.getString("transactions");
+        return workDir + inputProp.getString("transactions");
     }
 
     String getInputAlertMemberFile(){
-        return inputDir + inputProp.getString("alert_members");
+        return workDir + inputProp.getString("alert_members");
     }
 
     String getOutputTxLogFile(){
-        return outputDir + outputProp.getString("transaction_log");
+        return workDir + outputProp.getString("transaction_log");
     }
 
     public String getOutputAlertMemberFile(){
-        return outputDir + outputProp.getString("alert_members");
+        return workDir + outputProp.getString("alert_members");
     }
 
     public String getOutputAlertTxFile(){
-        return outputDir + outputProp.getString("alert_transactions");
+        return workDir + outputProp.getString("alert_transactions");
     }
 
     String getOutputDir(){
-        return outputDir;
+        return workDir;
     }
 
     String getCounterLogFile(){
-        return outputDir + outputProp.getString("counter_log");
+        return workDir + outputProp.getString("counter_log");
     }
 
     String getDiameterLogFile(){
-        return outputDir + outputProp.getString("diameter_log");
+        return workDir + outputProp.getString("diameter_log");
     }
 
     int getCashTxInterval(boolean isCashIn, boolean isSAR){

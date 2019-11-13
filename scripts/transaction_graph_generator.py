@@ -234,8 +234,8 @@ class TransactionGenerator:
         self.is_aggregated = input_conf["is_aggregated_accounts"]
 
         # Get output file names
-        output_conf = self.conf["temporal"]  # The destination directory is temporal
-        self.output_dir = output_conf["directory"]
+        output_conf = self.conf["temporal"]  # The output directory of this graph generator is the temporal directory
+        self.output_dir = os.path.join(output_conf["directory"], general_conf["simulation_name"])
         self.out_tx_file = output_conf["transactions"]
         self.out_account_file = output_conf["accounts"]
         self.out_alert_member_file = output_conf["alert_members"]

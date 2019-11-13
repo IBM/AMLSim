@@ -578,11 +578,11 @@ class LogConverter:
             conf = json.load(rf)
 
         general_conf = conf["general"]
-        input_conf = conf["temporal"]
+        input_conf = conf["temporal"]  # Input directory of this converter is temporal directory
         output_conf = conf["output"]
 
         self.sim_name = general_conf["simulation_name"]
-        self.input_dir = input_conf["directory"]
+        self.input_dir = os.path.join(input_conf["directory"], self.sim_name)
         self.work_dir = output_conf["directory"]
         if not os.path.isdir(self.work_dir):
             os.makedirs(self.work_dir)
@@ -594,7 +594,7 @@ class LogConverter:
         self.schema = Schema(os.path.join(param_dir, schema_file), base_date)
 
         # Input files
-        self.log_file = os.path.join(self.input_dir, self.sim_name, output_conf["transaction_log"])
+        self.log_file = os.path.join(self.input_dir, output_conf["transaction_log"])
         self.in_acct_file = input_conf["accounts"]  # Account list file from the transaction graph generator
         self.group_file = input_conf["alert_members"]  # Alert account list file from the transaction graph generator
 

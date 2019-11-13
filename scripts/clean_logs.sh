@@ -10,6 +10,4 @@ rm -f ${OUTPUT}/*.gif
 
 if [ -d ${TMP} ]; then
 rm -rf ${TMP:?}/*/
-rm -f ${TMP}/*.csv
 fi
-

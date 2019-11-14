@@ -1,6 +1,6 @@
-count,min_balance,max_balance,country,business_type,model
-2000,50000,100000,US,I,1
-2000,50000,100000,US,I,2
-2000,50000,100000,US,I,3
-2000,50000,100000,US,I,4
-2000,50000,100000,US,I,5
+count,min_balance,max_balance,country,business_type,model,bank_id
+2000,50000,100000,US,I,1,bank
+2000,50000,100000,US,I,2,bank
+2000,50000,100000,US,I,3,bank
+2000,50000,100000,US,I,4,bank
+2000,50000,100000,US,I,5,bank

@@ -17,7 +17,6 @@ import java.util.logging.*;
 public class AMLSim extends ParameterizedPaySim {
 
     private static SimProperties simProp;
-	public static final boolean TX_OPT = true;  // Optimized transaction
 	private static final int TX_SIZE = 10000000;  // Transaction buffer size
 	private static TransactionRepository txs = new TransactionRepository(TX_SIZE);
 	private static Logger logger = Logger.getLogger("AMLSim");

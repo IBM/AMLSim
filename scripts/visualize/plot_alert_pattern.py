@@ -1,5 +1,7 @@
+import os
 import sys
 import csv
+import json
 import networkx as nx
 from collections import defaultdict
 
@@ -10,18 +12,21 @@ import warnings
 warnings.filterwarnings('ignore', category=matplotlib.cbook.deprecation.MatplotlibDeprecationWarning)
 
 
-def plot_alerts(acct_csv, tx_csv, ids):
+def plot_alerts(_conf_json, _output_png):
     g = nx.DiGraph()
     bank_accts = defaultdict(list)
+
+    with open(_conf_json, "r") as rf:
+        conf = json.load(rf)
+    data_dir = conf["output"]["directory"]
+    acct_csv = os.path.join(data_dir, conf["output"]["alert_members"])
+    tx_csv = os.path.join(data_dir, conf["output"]["alert_transactions"])
 
     with open(acct_csv, "r") as rf:
         reader = csv.reader(rf)
         next(reader)
 
         for row in reader:
-            alert_id = row[0]
-            if alert_id not in ids:
-                continue
             acct_id = row[3]
             bank_id = row[9]
             g.add_node(acct_id, bank_id=bank_id)
@@ -32,9 +37,6 @@ def plot_alerts(acct_csv, tx_csv, ids):
         next(reader)
 
         for row in reader:
-            alert_id = row[0]
-            if alert_id not in ids:
-                continue
             orig_id = row[4]
             bene_id = row[5]
             amount = row[7]
@@ -44,7 +46,8 @@ def plot_alerts(acct_csv, tx_csv, ids):
 
     bank_ids = bank_accts.keys()
     cmap = plt.get_cmap("tab10")
-    pos = nx.spring_layout(g)
+    # pos = nx.spring_layout(g)
+    pos = nx.nx_agraph.graphviz_layout(g)
 
     plt.figure(figsize=(12.0, 8.0))
     plt.axis('off')
@@ -52,25 +55,25 @@ def plot_alerts(acct_csv, tx_csv, ids):
     for i, bank_id in enumerate(bank_ids):
         color = cmap(i)
         accts = bank_accts[bank_id]
-        nx.draw_networkx_nodes(g, pos, accts, node_size=200, node_color=color, label=bank_id)
-        nx.draw_networkx_labels(g, pos, {n: n for n in accts})
+        nx.draw_networkx_nodes(g, pos, accts, node_size=300, node_color=color, label=bank_id)
+        nx.draw_networkx_labels(g, pos, {n: n for n in accts}, font_size=10)
 
     edge_labels = nx.get_edge_attributes(g, "label")
     nx.draw_networkx_edges(g, pos)
     nx.draw_networkx_edge_labels(g, pos, edge_labels, font_size=6)
 
     plt.legend(numpoints = 1)
-    plt.savefig("alert_pattern.png")
+    plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    plt.savefig(_output_png, dpi=120)
 
 
 if __name__ == "__main__":
     argv = sys.argv
 
-    if len(argv) < 4:
-        print("Usage: python3 %s [AlertAcct] [AlertTx] [AlertID...]" % argv[0])
+    if len(argv) < 3:
+        print("Usage: python3 %s [ConfJSON] [OutputPNG]" % argv[0])
         exit(1)
 
-    alert_acct_csv = argv[1]
-    alert_tx_csv = argv[2]
-    alert_ids = set(argv[2:])
-    plot_alerts(alert_acct_csv, alert_tx_csv, alert_ids)
+    conf_json = argv[1]
+    output_png = argv[2]
+    plot_alerts(conf_json, output_png)

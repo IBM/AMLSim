@@ -17,8 +17,6 @@ public class SimProperties {
     private JSONObject outputProp;
     private JSONObject cashInProp;
     private JSONObject cashOutProp;
-//    private String inputDir;
-//    private String outputDir;
     private String workDir;
     private float marginRatio;
 
@@ -36,8 +34,6 @@ public class SimProperties {
         String simName = getSimName();  // generalProp.getString("simulation_name");
         workDir = inputProp.getString("directory") + separator + simName + separator;
         System.out.println("Working directory: " + workDir);
-//        inputDir = inputProp.getString("directory") + separator;
-//        outputDir = inputDir + separator + simName + separator;
     }
 
     private static String loadTextFile(String jsonName) throws IOException{

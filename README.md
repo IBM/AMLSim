@@ -18,12 +18,12 @@ This project aims at building a multi-agent simulator of anti-money laundering -
     - [SLF4J](https://www.slf4j.org/download.html) version 1.7.25
     - [MySQL Connector for Java](https://dev.mysql.com/downloads/connector/j/5.1.html) version 5.1
 - Python 3.7 (The following packages can be installed with `pip3 install -r requirements.txt`)
-    - NumPy
-    - networkx 1.11 (We do not support version 2.* due to performance issues for large graphs)
-    - matplotlib
+    - numpy
+    - networkx==1.11 (We do not support version 2.* due to performance issues for large graphs)
+    - matplotlib==2.2.3 (The latest version is not compatible)
+    - pygraphviz
     - powerlaw
     - python-dateutil
-
 
 
 # Directory Structure

@@ -46,26 +46,10 @@ public class CashInModel extends CashModel {
 
     @Override
     public void sendTransaction(long step) {
-//        List<AMLTransaction> txs = new ArrayList<>();
         if(isNextStep(step)){
-            if(AMLSim.TX_OPT){  // Do not create AMLTransaction objects
-                Branch branch = account.getBranch();
-                float amount = computeAmount();
-                sendTransaction(step, amount, account, branch, "CASH-IN");
-            }else {
-//                Branch branch = account.getBranch();
-//                float amount = computeAmount();
-//                AMLTransaction tx = new AMLTransaction(step, account, (short) 0, amount, "CASH-IN");
-//                tx.setClientDestAfter(branch);
-//                account.deposit(amount);
-//                txs.add(tx);
-            }
+            Branch branch = account.getBranch();
+            float amount = computeAmount();
+            sendTransaction(step, amount, account, branch, "CASH-IN");
         }
-//        return txs;
     }
-
-//    @Override
-//    public void sent() {
-//
-//    }
 }

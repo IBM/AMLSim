@@ -25,7 +25,6 @@ public class Account extends Client implements Steppable {
 	private String bankID = "";  // Bank ID
 
     private Account prevOrig = null;  // Previous originator account
-	private Account prevDest = null;  // Previous beneficiary account
 	List<Alert> alerts = new ArrayList<>();
     private Map<String, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
 
@@ -133,7 +132,7 @@ public class Account extends Client implements Steppable {
 		dest.origAccts.put(this.id, this);
 	}
 
-	public void addTxType(Account dest, String ttype){
+	void addTxType(Account dest, String ttype){
 		this.tx_types.put(dest.id, ttype);
 		all_tx_types.add(ttype);
 	}
@@ -226,21 +225,21 @@ public class Account extends Client implements Steppable {
 		return prevOrig;
 	}
 
-	public Account getPrevDest(){
-		return prevDest;
-	}
-
-	public void setClient(Account c){
-		this.id = c.getID();
-		this.setBalance(c.getBalance());
-		this.setCurrency(c.getCurrency());
-		this.setName(c.getName());
-		this.setNumDeposits(c.getNumDeposits());
-		this.setNumTransfers(c.getNumTransfers());
-		this.setNumWithdraws(c.getNumWithdraws());
-		this.origAccts = c.origAccts;
-		this.beneAccts = c.beneAccts;
-	}
+//	public Account getPrevDest(){
+//		return prevDest;
+//	}
+//
+//	public void setClient(Account c){
+//		this.id = c.getID();
+//		this.setBalance(c.getBalance());
+//		this.setCurrency(c.getCurrency());
+//		this.setName(c.getName());
+//		this.setNumDeposits(c.getNumDeposits());
+//		this.setNumTransfers(c.getNumTransfers());
+//		this.setNumWithdraws(c.getNumWithdraws());
+//		this.origAccts = c.origAccts;
+//		this.beneAccts = c.beneAccts;
+//	}
 
 	public String getName() {
         return this.id;

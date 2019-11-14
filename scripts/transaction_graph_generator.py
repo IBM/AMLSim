@@ -573,18 +573,13 @@ class TransactionGenerator:
 
         idx_num = None
         idx_type = None
-        idx_accts = None
         idx_schedule = None
-        idx_individual = None
-        idx_aggregated = None
-        idx_count = None
-        idx_difference = None
-        idx_period = None
-        idx_rounded = None
-        idx_orig_country = None
-        idx_bene_country = None
-        idx_orig_business = None
-        idx_bene_business = None
+        idx_min_accts = None
+        idx_max_accts = None
+        idx_min_amt = None
+        idx_max_amt = None
+        idx_min_period = None
+        idx_max_period = None
         idx_bank = None
         idx_sar = None
 
@@ -597,30 +592,20 @@ class TransactionGenerator:
                     idx_num = i
                 elif k == "type":
                     idx_type = i
-                elif k == "accounts":
-                    idx_accts = i
-                elif k == "individual_amount":
-                    idx_individual = i
                 elif k == "schedule_id":
                     idx_schedule = i
-                elif k == "aggregated_amount":
-                    idx_aggregated = i
-                elif k == "transaction_count":
-                    idx_count = i
-                elif k == "amount_difference":
-                    idx_difference = i
-                elif k == "period":
-                    idx_period = i
-                elif k == "amount_rounded":
-                    idx_rounded = i
-                elif k == "orig_country":
-                    idx_orig_country = i
-                elif k == "bene_country":
-                    idx_bene_country = i
-                elif k == "orig_business":
-                    idx_orig_business = i
-                elif k == "bene_business":
-                    idx_bene_business = i
+                elif k == "min_accounts":
+                    idx_min_accts = i
+                elif k == "max_accounts":
+                    idx_max_accts = i
+                elif k == "min_amount":
+                    idx_min_amt = i
+                elif k == "max_amount":
+                    idx_max_amt = i
+                elif k == "min_period":
+                    idx_min_period = i
+                elif k == "max_period":
+                    idx_max_period = i
                 elif k == "bank_id":  # Bank ID for internal-bank transactions
                     idx_bank = i
                 elif k == "is_sar":  # SAR flag
@@ -634,62 +619,52 @@ class TransactionGenerator:
                 if row[0].startswith("#"):
                     continue
                 num_patterns = int(row[idx_num])  # Number of alert patterns
-                pattern_name = row[idx_type]
-                num_accounts = int(row[idx_accts])
+                typology_name = row[idx_type]
                 schedule = int(row[idx_schedule])
-                individual_amount = parse_float(row[idx_individual])
-                total_amount = parse_float(row[idx_aggregated])
-                num_transactions = parse_int(row[idx_count])
-                amount_difference = parse_float(row[idx_difference])
-                period = parse_int(row[idx_period]) if idx_period is not None else self.total_steps
-                amount_rounded = parse_float(row[idx_rounded]) if idx_rounded is not None else 0.0
-                orig_country = parse_flag(row[idx_orig_country]) if idx_orig_country is not None else False
-                bene_country = parse_flag(row[idx_bene_country]) if idx_bene_country is not None else False
-                orig_business = parse_flag(row[idx_orig_business]) if idx_orig_business is not None else False
-                bene_business = parse_flag(row[idx_bene_business]) if idx_bene_business is not None else False
+                min_accts = int(row[idx_min_accts])
+                max_accts = int(row[idx_max_accts])
+                min_amount = parse_float(row[idx_min_amt])
+                max_amount = parse_float(row[idx_max_amt])
+                min_period = parse_int(row[idx_min_period])
+                max_period = parse_int(row[idx_max_period])
                 bank_id = row[idx_bank] if idx_bank is not None else ""
                 is_sar = parse_flag(row[idx_sar])
 
-                if pattern_name not in self.alert_types:
+                if typology_name not in self.alert_types:
                     print("Warning: pattern type name (%s) must be one of %s"
-                          % (pattern_name, str(self.alert_types.keys())))
+                          % (typology_name, str(self.alert_types.keys())))
                     continue
 
-                if num_transactions is not None and num_transactions < num_accounts:
-                    print("Warning: number of transactions (%d) "
-                          "is smaller than the number of accounts (%d)" % (num_transactions, num_accounts))
-                    num_transactions = num_accounts
-
                 for i in range(num_patterns):
-                    self.add_aml_typology(is_sar, pattern_name, num_accounts, individual_amount, total_amount,
-                                          num_transactions, bank_id, schedule)
+                    num_accts = random.randrange(min_accts, max_accts + 1)
+                    init_amount = random.uniform(min_amount, max_amount)
+                    period = random.randrange(min_period, max_period + 1)
+                    self.add_aml_typology(is_sar, typology_name, num_accts, init_amount, period, bank_id, schedule)
                     count += 1
                     if count % 1000 == 0:
-                        print("Write %d alerts" % count)
+                        print("Created %d alerts" % count)
 
-    def add_aml_typology(self, is_sar, typology_name, num_members, init_amount, total_amount, num_transactions,
-                         bank_id="", schedule=1):
+    def add_aml_typology(self, is_sar, typology_name, num_accounts, init_amount, period, bank_id="", schedule=1):
         """Add an AML typology transaction set
         :param is_sar: Whether the alerted transaction set is SAR (True) or false-alert (False)
         :param typology_name: Name of pattern type
             ("fan_in", "fan_out", "cycle", "random", "stack", "scatter_gather" or "gather_scatter")
-        :param num_members: Number of transaction members (accounts)
+        :param num_accounts: Number of transaction members (accounts)
         :param init_amount: Initial individual amount
-        :param total_amount: Minimum total amount
-        :param num_transactions: Minimum number of transactions
+        :param period: Period (number of days) for all transactions
         :param bank_id: Bank ID which it chooses members from. If empty, it chooses members from all banks.
         :param schedule: AML pattern transaction schedule model ID
         """
         # main_acct, members = self.get_typology_members(num_accounts, bank_id)
         if bank_id == "" and len(self.bank_to_accts) >= 2:
             is_external = True
-        elif bank_id not in self.bank_to_accts:  # Invalid bank ID
+        elif bank_id != "" and bank_id not in self.bank_to_accts:  # Invalid bank ID
             raise KeyError("No such bank ID: %s" % bank_id)
         else:
             is_external = False
 
-        start_date = 0
-        end_date = self.total_steps
+        start_date = random.randrange(0, self.total_steps - period)
+        end_date = start_date + period
 
         # Create subgraph structure with transaction attributes
         model_id = self.alert_types[typology_name]  # alert model ID
@@ -708,7 +683,9 @@ class TransactionGenerator:
             :param _date: Transaction timestamp
             """
             sub_g.add_edge(_orig, _bene, amount=_amount, date=_date)
-            self.g.add_edge(_orig, _bene, amount=_date, date=_date)
+            # if self.g.has_edge(_orig, _bene):
+            #     print("edge exists:", _orig, _bene)
+            self.add_transaction(_orig, _bene, amount=_amount, date=_date)
 
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
             main_acct = random.sample(self.main_acct_candidates, 1)[0]
@@ -720,15 +697,15 @@ class TransactionGenerator:
                 sub_bank_id = random.choice([b for b in self.get_all_bank_ids() if b != main_bank_id])
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_members - 1)
+            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_accounts - 1)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
 
             for orig in sub_accts:
-                amount = init_amount
+                gather_amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, main_acct, amount, date)
+                add_edge(orig, main_acct, gather_amount, date)
 
         elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
             main_acct = random.sample(self.main_acct_candidates, 1)[0]
@@ -740,15 +717,15 @@ class TransactionGenerator:
                 sub_bank_id = random.choice([b for b in self.get_all_bank_ids() if b != main_bank_id])
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_members - 1)
+            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_accounts - 1)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
 
             for bene in sub_accts:
-                amount = init_amount
+                gather_amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(main_acct, bene, amount, date)
+                add_edge(main_acct, bene, gather_amount, date)
 
         elif typology_name == "bipartite":  # bipartite (originator accounts -> many-to-many -> beneficiary accounts)
             orig_bank_id = random.choice(self.get_all_bank_ids())
@@ -757,8 +734,8 @@ class TransactionGenerator:
             else:
                 bene_bank_id = orig_bank_id
 
-            num_orig_accts = num_members // 2  # The former half members are originator accounts
-            num_bene_accts = num_members - num_orig_accts  # The latter half members are beneficiary accounts
+            num_orig_accts = num_accounts // 2  # The former half members are originator accounts
+            num_bene_accts = num_accounts - num_orig_accts  # The latter half members are beneficiary accounts
 
             orig_accts = random.sample(self.bank_to_accts[orig_bank_id], num_orig_accts)
             for n in orig_accts:
@@ -772,9 +749,9 @@ class TransactionGenerator:
                 add_node(n, bene_bank_id)
 
             for orig, bene in itertools.product(orig_accts, bene_accts):  # All-to-all transaction edges
-                amount = init_amount
+                gather_amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, bene, amount, date)
+                add_edge(orig, bene, gather_amount, date)
 
         elif typology_name == "stack":  # stacked bipartite layers
             if is_external:
@@ -787,9 +764,9 @@ class TransactionGenerator:
                 orig_bank_id = mid_bank_id = bene_bank_id = random.sample(self.get_all_bank_ids(), 1)[0]
 
             # First and second 1/3 of members: originator and intermediate accounts
-            num_orig_accts = num_mid_accts = num_members // 3
+            num_orig_accts = num_mid_accts = num_accounts // 3
             # Last 1/3 of members: beneficiary accounts
-            num_bene_accts = num_members - num_orig_accts * 2
+            num_bene_accts = num_accounts - num_orig_accts * 2
 
             orig_accts = random.sample(self.bank_to_accts[orig_bank_id], num_orig_accts)
             for n in orig_accts:
@@ -807,17 +784,17 @@ class TransactionGenerator:
                 add_node(n, bene_bank_id)
 
             for orig, bene in itertools.product(orig_accts, mid_accts):  # all-to-all transactions
-                amount = init_amount
+                gather_amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, bene, amount, date)
+                add_edge(orig, bene, gather_amount, date)
 
             for orig, bene in itertools.product(mid_accts, bene_accts):  # all-to-all transactions
-                amount = init_amount
+                gather_amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, bene, amount, date)
+                add_edge(orig, bene, gather_amount, date)
 
         elif typology_name == "random":  # Random transactions among members
-            amount = init_amount
+            gather_amount = init_amount
             date = random.randrange(start_date, end_date)
 
             if is_external:
@@ -825,13 +802,13 @@ class TransactionGenerator:
                 bank_id_iter = itertools.cycle(all_bank_ids)
                 prev_acct = None
                 main_acct = None
-                for _ in range(num_members):
+                for _ in range(num_accounts):
                     bank_id = next(bank_id_iter)
                     next_acct = random.sample(self.bank_to_accts[bank_id], 1)[0]
                     if prev_acct is None:
                         main_acct = next_acct
                     else:
-                        add_edge(prev_acct, next_acct, amount, date)
+                        add_edge(prev_acct, next_acct, gather_amount, date)
                     self.remove_typology_candidate(next_acct)
                     add_node(next_acct, bank_id)
                     prev_acct = next_acct
@@ -841,24 +818,24 @@ class TransactionGenerator:
                 bank_id = self.acct_to_bank[main_acct]
                 self.remove_typology_candidate(main_acct)
                 add_node(main_acct, bank_id)
-                sub_accts = random.sample(self.bank_to_accts[bank_id], num_members - 1)
+                sub_accts = random.sample(self.bank_to_accts[bank_id], num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
                     add_node(n, bank_id)
                 prev_acct = main_acct
-                for _ in range(num_members - 1):
+                for _ in range(num_accounts - 1):
                     next_acct = random.choice([n for n in sub_accts if n != prev_acct])
-                    add_edge(prev_acct, next_acct, amount, date)
+                    add_edge(prev_acct, next_acct, gather_amount, date)
                     prev_acct = next_acct
 
         elif typology_name == "cycle":  # Cycle transactions
-            amount = init_amount
-            dates = sorted([random.randrange(start_date, end_date) for _ in range(num_members)])  # Transaction dates
+            gather_amount = init_amount
+            dates = sorted([random.randrange(start_date, end_date) for _ in range(num_accounts)])  # Transaction dates
 
             if is_external:
                 all_accts = list()
                 all_bank_ids = self.get_all_bank_ids()
-                remain_num = num_members
+                remain_num = num_accounts
 
                 while all_bank_ids:
                     num_accts_per_bank = remain_num // len(all_bank_ids)
@@ -878,22 +855,22 @@ class TransactionGenerator:
                 bank_id = self.acct_to_bank[main_acct]
                 self.remove_typology_candidate(main_acct)
                 add_node(main_acct, bank_id)
-                sub_accts = random.sample(self.bank_to_accts[bank_id], num_members - 1)
+                sub_accts = random.sample(self.bank_to_accts[bank_id], num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
                     add_node(n, bank_id)
                 all_accts = [main_acct] + sub_accts
 
-            for i in range(num_members):
+            for i in range(num_accounts):
                 orig_i = i
-                bene_i = (i + 1) % num_members
+                bene_i = (i + 1) % num_accounts
                 orig_acct = all_accts[orig_i]
                 bene_acct = all_accts[bene_i]
                 date = dates[i]
 
-                add_edge(orig_acct, bene_acct, amount, date)
-                margin = amount * self.margin_ratio  # Margin the beneficiary account can gain
-                amount = amount - margin  # max(amount - margin, min_amount)
+                add_edge(orig_acct, bene_acct, gather_amount, date)
+                margin = gather_amount * self.margin_ratio  # Margin the beneficiary account can gain
+                gather_amount = gather_amount - margin  # max(amount - margin, min_amount)
 
         elif typology_name == "scatter_gather":  # Scatter-Gather (fan-out -> fan-in)
             if is_external:
@@ -908,7 +885,7 @@ class TransactionGenerator:
             main_acct = orig_acct = random.sample(self.bank_to_accts[orig_bank_id], 1)[0]
             self.remove_typology_candidate(orig_acct)
             add_node(orig_acct, orig_bank_id)
-            mid_accts = random.sample(self.bank_to_accts[mid_bank_id], num_members - 2)
+            mid_accts = random.sample(self.bank_to_accts[mid_bank_id], num_accounts - 2)
             for n in mid_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, mid_bank_id)
@@ -940,7 +917,7 @@ class TransactionGenerator:
             else:
                 orig_bank_id = mid_bank_id = bene_bank_id = random.sample(self.get_all_bank_ids(), 1)[0]
 
-            num_orig_accts = num_bene_accts = (num_members - 1) // 2
+            num_orig_accts = num_bene_accts = (num_accounts - 1) // 2
 
             orig_accts = random.sample(self.bank_to_accts[orig_bank_id], num_orig_accts)
             for n in orig_accts:
@@ -959,11 +936,10 @@ class TransactionGenerator:
 
             for i in range(num_orig_accts):
                 orig_acct = orig_accts[i]
-                amount = init_amount
+                gather_amount = init_amount
                 date = random.randrange(start_date, mid_date)
-
-                add_edge(orig_acct, mid_acct, amount, date)
-                accumulated_amount += amount
+                add_edge(orig_acct, mid_acct, gather_amount, date)
+                accumulated_amount += gather_amount
 
             margin = accumulated_amount * self.margin_ratio  # Margin of the intermediate (main) account
             scatter_amount = (accumulated_amount - margin) / num_bene_accts
@@ -972,6 +948,7 @@ class TransactionGenerator:
                 bene_acct = bene_accts[i]
                 date = random.randrange(mid_date, end_date)
                 add_edge(mid_acct, bene_acct, scatter_amount, date)
+            # print(orig_accts, mid_acct, bene_accts)
 
         # TODO: Please add user-defined typology implementations here
 
@@ -983,7 +960,6 @@ class TransactionGenerator:
         sub_g.graph[MAIN_ACCT_KEY] = main_acct  # Main account ID
         sub_g.graph[IS_SAR_KEY] = is_sar  # SAR flag
         self.alert_groups[self.alert_id] = sub_g
-        # print(self.alert_id, sub_g.edges(data=True))
 
         # Add the SAR flag to all member account vertices
         if is_sar:

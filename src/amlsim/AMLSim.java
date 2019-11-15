@@ -86,7 +86,7 @@ public class AMLSim extends ParameterizedPaySim {
 		return numOfSteps;
 	}
 
-    private Account getClientFromID(String id){
+    private Account getAccountFromID(String id){
 		int index = this.idMap.get(id);
 		return (Account) this.getClients().get(index);
 	}
@@ -247,8 +247,8 @@ public class AMLSim extends ParameterizedPaySim {
 
             String ttype = elements[columnIndex.get("ttype")];
 
-			Account src = getClientFromID(srcID);
-			Account dst = getClientFromID(dstID);
+			Account src = getAccountFromID(srcID);
+			Account dst = getAccountFromID(dstID);
 			src.addDest(dst);
 			src.addTxType(dst, ttype);
 		}
@@ -266,21 +266,21 @@ public class AMLSim extends ParameterizedPaySim {
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
 			long alertID = Long.parseLong(elements[columnIndex.get("alertID")]);
-            String clientID = elements[columnIndex.get("clientID")];
-
+            String accountID = elements[columnIndex.get("accountID")];
+			boolean isMain = elements[columnIndex.get("isMain")].toLowerCase().equals("true");
 			boolean isSAR = elements[columnIndex.get("isSAR")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
 			float minAmount = Float.parseFloat(elements[columnIndex.get("minAmount")]);
 			float maxAmount = Float.parseFloat(elements[columnIndex.get("maxAmount")]);
-			int minStep = Integer.parseInt(elements[columnIndex.get("startStep")]);
-			int maxStep = Integer.parseInt(elements[columnIndex.get("endStep")]);
+			int startStep = Integer.parseInt(elements[columnIndex.get("startStep")]);
+			int endStep = Integer.parseInt(elements[columnIndex.get("endStep")]);
 			int scheduleID = Integer.parseInt(elements[columnIndex.get("scheduleID")]);
 
 			if(minAmount > maxAmount){
 				throw new IllegalArgumentException(String.format("minAmount %f is larger than maxAmount %f", minAmount, maxAmount));
 			}
-			if(minStep > maxStep){
-				throw new IllegalArgumentException(String.format("startStep %d is larger than endStep %d", minStep, maxStep));
+			if(startStep > endStep){
+				throw new IllegalArgumentException(String.format("startStep %d is larger than endStep %d", startStep, endStep));
 			}
 
 			Alert alert;
@@ -289,18 +289,20 @@ public class AMLSim extends ParameterizedPaySim {
 				AMLTypology model = alert.getModel();
 				model.updateMinAmount(minAmount);
 				model.updateMaxAmount(maxAmount);
+				model.updateStartStep(startStep);
+				model.updateEndStep(endStep);
 
 			}else{  // Create a new AML typology object
-				AMLTypology model = AMLTypology.createTypology(modelID, minAmount, maxAmount, minStep, maxStep);
+				AMLTypology model = AMLTypology.createTypology(modelID, minAmount, maxAmount, startStep, endStep);
 				alert = new Alert(alertID, model, this);
 				alertGroups.put(alertID, alert);
 			}
-			Account account = getClientFromID(clientID);
+			Account account = getAccountFromID(accountID);
 			alert.addMember(account);
-			if(isSAR){
+			if(isMain){
 				alert.setMainAccount((SARAccount) account);
-				account.setSAR(true);
 			}
+			account.setSAR(isSAR);
 			scheduleModels.put(alertID, scheduleID);
 		}
 		for(long alertID : scheduleModels.keySet()){

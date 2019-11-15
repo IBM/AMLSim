@@ -55,6 +55,9 @@ public class GatherScatterTypology extends AMLTypology {
         for(int i=0; i<numBeneMembers; i++){
             scatterSteps[i] = getRandomStepRange(middleStep, endStep);
         }
+//        System.out.println(startStep + " " + middleStep + " " + endStep);
+//        System.out.println(Arrays.toString(gatherSteps));
+//        System.out.println(Arrays.toString(scatterSteps));
     }
 
     @Override
@@ -66,30 +69,33 @@ public class GatherScatterTypology extends AMLTypology {
     public void sendTransactions(long step, Account acct) {
         long alertID = alert.getAlertID();
         boolean isSAR = alert.isSAR();
+        int numGathers = gatherSteps.length;
+        int numScatters = scatterSteps.length;
 
-        if(step < middleStep){
-            for(int i=0; i<gatherSteps.length; i++){
+        if(step <= middleStep){
+            for(int i=0; i<numGathers; i++){
                 if(gatherSteps[i] == step){
                     Account orig = origAccts.get(i);
                     Account bene = alert.getMainAccount();
                     float amount = getRandomAmount();
                     sendTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
+//                    System.out.println(alertID + ": " + step + ": " + orig + " -> " + bene);
                 }
             }
         }else{
-            int numScatters = scatterSteps.length;
-            if(step == middleStep){  // Define the amount of scatter transactions
-                float margin = totalReceivedAmount * marginRatio;
-                scatterAmount = Math.max((totalReceivedAmount - margin) / numScatters, minAmount);
-            }
             for(int i=0; i<numScatters; i++){
                 if(scatterSteps[i] == step){
                     Account orig = alert.getMainAccount();
                     Account bene = beneAccts.get(i);
                     sendTransaction(step, scatterAmount, orig, bene, isSAR, alertID);
+//                    System.out.println(alertID + ": " + step + ": " + orig + " -> " + bene);
                 }
             }
+        }
+        if(step == middleStep){  // Define the amount of scatter transactions
+            float margin = totalReceivedAmount * marginRatio;
+            scatterAmount = Math.max((totalReceivedAmount - margin) / numScatters, minAmount);
         }
     }
 

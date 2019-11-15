@@ -137,6 +137,14 @@ public abstract class AMLTypology extends AbstractTransactionModel {
         this.maxAmount = Math.max(this.maxAmount, maxAmount);
     }
 
+    public void updateStartStep(long startStep){
+        this.startStep = Math.min(this.startStep, startStep);
+    }
+
+    public void updateEndStep(long endStep){
+        this.endStep = Math.max(this.endStep, endStep);
+    }
+
     /**
      * Generate a random amount
      * @return A random amount within "minAmount" and "maxAmount"

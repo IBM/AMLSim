@@ -30,12 +30,12 @@ hs_err_pid*
 # Temporal files
 tmp/
 __pycache__/
+/*.png
 
 
 # Param files for testing
-paramFiles/*_*/
 paramFiles/city*/
-paramFiles/bank*/
+paramFiles/bank_*/
 sample/*_*/
 
 # Output CSV, Log(txt) and image files

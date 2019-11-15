@@ -804,7 +804,7 @@ class LogConverter:
         for row in reader:
             reason = row[indices["reason"]]
             alert_id = int(row[indices["alertID"]])
-            client_id = row[indices["clientID"]]
+            account_id = row[indices["accountID"]]
             is_sar = row[indices["isSAR"]].lower() == "true"
             model_id = row[indices["modelID"]]
             schedule_id = row[indices["scheduleID"]]
@@ -812,10 +812,10 @@ class LogConverter:
 
             if alert_id not in self.reports:
                 self.reports[alert_id] = AMLTypology(reason)
-            self.reports[alert_id].add_member(client_id, is_sar)
+            self.reports[alert_id].add_member(account_id, is_sar)
 
             attr = {name: row[index] for name, index in indices.items()}
-            output_row = self.schema.get_alert_acct_row(alert_id, reason, client_id, client_id, is_sar,
+            output_row = self.schema.get_alert_acct_row(alert_id, reason, account_id, account_id, is_sar,
                                                         model_id, schedule_id, bank_id, **attr)
             writer.writerow(output_row)
 

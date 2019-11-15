@@ -17,7 +17,7 @@ public class Alert {
     private AMLTypology model;    // Transaction model
     private AMLSim amlsim;  // AMLSim main object
 
-    public Alert(long alertID, AMLTypology model, AMLSim sim){
+    Alert(long alertID, AMLTypology model, AMLSim sim){
         this.alertID = alertID;
         this.members = new ArrayList<>();
         this.mainAccount = null;
@@ -30,7 +30,7 @@ public class Alert {
      * Add transactions
      * @param step Current simulation step
      */
-    public void registerTransactions(long step, Account acct){
+    void registerTransactions(long step, Account acct){
         if(model.isValidStep(step)){
             model.sendTransactions(step, acct);
         }
@@ -40,7 +40,7 @@ public class Alert {
      * Involve an account in this alert
      * @param acct Account object
      */
-    public void addMember(Account acct){
+    void addMember(Account acct){
         this.members.add(acct);
         acct.addAlertGroup(this);
     }
@@ -106,7 +106,7 @@ public class Alert {
     }
 
     public boolean isSAR(){
-        return this.mainAccount != null;  // The alert group is SAR if and only if a main account exists
+        return this.mainAccount != null && this.mainAccount.isSAR();
     }
 }
 

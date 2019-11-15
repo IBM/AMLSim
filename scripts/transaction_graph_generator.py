@@ -505,10 +505,11 @@ class TransactionGenerator:
         if bank_id is None:
             bank_id = self.default_bank_id
 
-        # Add an account vertex with an ID and attributes if and only if an account with the same ID is not yet added
+        # Add an account vertex with an ID and attributes if and only if it is not yet added
         if self.check_account_absent(acct_id):
-            self.g.add_node(acct_id, label="account", init_balance=init_balance, start=start, end=end, country=country,
-                            business=business, is_sar=False, model_id=model_id, bank_id=bank_id, **attr)
+            self.g.add_node(acct_id, label="account", init_balance=init_balance, start=start, end=end,
+                            country=country, business=business, is_sar=False,
+                            model_id=model_id, bank_id=bank_id, **attr)
             self.bank_to_accts[bank_id].add(acct_id)
             self.acct_to_bank[acct_id] = bank_id
 
@@ -683,8 +684,6 @@ class TransactionGenerator:
             :param _date: Transaction timestamp
             """
             sub_g.add_edge(_orig, _bene, amount=_amount, date=_date)
-            # if self.g.has_edge(_orig, _bene):
-            #     print("edge exists:", _orig, _bene)
             self.add_transaction(_orig, _bene, amount=_amount, date=_date)
 
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
@@ -727,7 +726,7 @@ class TransactionGenerator:
                 date = random.randrange(start_date, end_date)
                 add_edge(main_acct, bene, gather_amount, date)
 
-        elif typology_name == "bipartite":  # bipartite (originator accounts -> many-to-many -> beneficiary accounts)
+        elif typology_name == "bipartite":  # bipartite (originators -> many-to-many -> beneficiaries)
             orig_bank_id = random.choice(self.get_all_bank_ids())
             if is_external:
                 bene_bank_id = random.choice([b for b in self.get_all_bank_ids() if b != orig_bank_id])
@@ -830,7 +829,7 @@ class TransactionGenerator:
 
         elif typology_name == "cycle":  # Cycle transactions
             gather_amount = init_amount
-            dates = sorted([random.randrange(start_date, end_date) for _ in range(num_accounts)])  # Transaction dates
+            dates = sorted([random.randrange(start_date, end_date) for _ in range(num_accounts)])
 
             if is_external:
                 all_accts = list()
@@ -933,6 +932,7 @@ class TransactionGenerator:
 
             accumulated_amount = 0.0
             mid_date = (start_date + end_date) // 2
+            # print(start_date, mid_date, end_date)
 
             for i in range(num_orig_accts):
                 orig_acct = orig_accts[i]
@@ -940,6 +940,7 @@ class TransactionGenerator:
                 date = random.randrange(start_date, mid_date)
                 add_edge(orig_acct, mid_acct, gather_amount, date)
                 accumulated_amount += gather_amount
+                # print(orig_acct, "->", date, "->", mid_acct)
 
             margin = accumulated_amount * self.margin_ratio  # Margin of the intermediate (main) account
             scatter_amount = (accumulated_amount - margin) / num_bene_accts
@@ -948,6 +949,7 @@ class TransactionGenerator:
                 bene_acct = bene_accts[i]
                 date = random.randrange(mid_date, end_date)
                 add_edge(mid_acct, bene_acct, scatter_amount, date)
+                # print(mid_acct, "->", date, "->", bene_acct)
             # print(orig_accts, mid_acct, bene_accts)
 
         # TODO: Please add user-defined typology implementations here
@@ -1015,23 +1017,25 @@ class TransactionGenerator:
         print("Output alert member list to:", alert_member_file)
         with open(alert_member_file, "w") as wf:
             writer = csv.writer(wf)
-            base_attrs = ["alertID", "reason", "clientID", "isSAR", "modelID", "minAmount", "maxAmount",
+            base_attrs = ["alertID", "reason", "accountID", "isMain", "isSAR", "modelID", "minAmount", "maxAmount",
                           "startStep", "endStep", "scheduleID", "bankID"]
             writer.writerow(base_attrs + self.attr_names)
             for gid, sub_g in self.alert_groups.items():
+                main_id = sub_g.graph[MAIN_ACCT_KEY]
                 model_id = sub_g.graph["model_id"]
                 schedule_id = sub_g.graph["scheduleID"]
                 reason = sub_g.graph["reason"]
                 start = sub_g.graph["start"]
                 end = sub_g.graph["end"]
                 for n in sub_g.nodes():
+                    is_main = "true" if n == main_id else "false"
                     is_sar = "true" if sub_g.graph[IS_SAR_KEY] else "false"
                     min_amt = '{:.2f}'.format(min(get_out_edge_attrs(sub_g, n, "amount")))
                     max_amt = '{:.2f}'.format(max(get_out_edge_attrs(sub_g, n, "amount")))
                     min_step = start
                     max_step = end
                     bank_id = sub_g.node[n]["bank_id"]
-                    values = [gid, reason, n, is_sar, model_id, min_amt, max_amt,
+                    values = [gid, reason, n, is_main, is_sar, model_id, min_amt, max_amt,
                               min_step, max_step, schedule_id, bank_id]
                     prop = self.g.node[n]
                     for attr_name in self.attr_names:

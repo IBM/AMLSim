@@ -38,7 +38,7 @@ public class FanInTypology extends AMLTypology {
         // Set transaction schedule
         int numOrigs = origList.size();
         int totalStep = (int)(endStep - startStep + 1);
-        int defaultInterval = totalStep / numOrigs;
+        int defaultInterval = Math.max(totalStep / numOrigs, 1);
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
 
         steps = new long[numOrigs];

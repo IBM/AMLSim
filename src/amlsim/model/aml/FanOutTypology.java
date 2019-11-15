@@ -38,7 +38,7 @@ public class FanOutTypology extends AMLTypology {
         // Set schedule
         int numBenes = beneList.size();
         int totalStep = (int)(endStep - startStep + 1);
-        int defaultInterval = totalStep / numBenes;
+        int defaultInterval = Math.max(totalStep / numBenes, 1);
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
 
         steps = new long[numBenes];

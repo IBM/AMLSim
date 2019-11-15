@@ -3,9 +3,11 @@ Please download external jar files (except `paysim.jar`) from the following site
 
 
 - [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 18
-  - Doiwnload "mason18.zip" from the homepage and extract the jar file.
-- [PaySim](https://github.com/EdgarLopezPhD/PaySim)
+  - Download "mason18.zip" from the homepage and extract the jar file.
+- [PaySim](http://edgarlopez.net/simulation-tools/paysim/)
   - Please use `paysim.jar` under `jars` directory which already exists.
+  The latest version of [the GitHub repository](https://github.com/EdgarLopezPhD/PaySim)
+  is not compatible with our implementation.
 - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) version 3.6.1
   - Download "commons-math3-3.6.1-bin.tar.gz" and extract the following jar files.
     - commons-math3-3.6.1.jar
@@ -21,6 +23,6 @@ Please download external jar files (except `paysim.jar`) from the following site
     - [Sux for Java](http://sux.di.unimi.it/) version 4.2.0
     - [JSAP](http://www.martiansoftware.com/jsap/) version 2.1
     - [SLF4J](https://www.slf4j.org/download.html) version 1.7.25
-- [MySQL Connector for Java](https://dev.mysql.com/downloads/connector/j/5.1.html) version 5.1
+- [MySQL Connector for Java](https://dev.mysql.com/downloads/connector/j/5.1.html) version 5.1.48
 
 

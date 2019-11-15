@@ -33,7 +33,7 @@ public class CycleTypology extends AMLTypology {
         steps = new long[length];
 
         int totalStep = (int)(endStep - startStep + 1);
-        int defaultInterval = totalStep / length;
+        int defaultInterval = Math.max(totalStep / length, 1);
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
 
         if(modelID == FIXED_INTERVAL){  // Ordered, same interval

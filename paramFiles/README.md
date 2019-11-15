@@ -53,25 +53,21 @@ The transaction network generator constructs a directed graph from the degree di
 [Configuration Model](https://networkx.github.io/documentation/networkx-1.11/reference/generated/networkx.generators.degree_seq.directed_configuration_model.html).
 
 ### alertPatterns.csv
-AML typology transaction pattern list
+AML typology transaction pattern parameters (CSV columns)
+
 - `count` Number of typologies (transaction sets)
 - `type` Name of transaction type (`fan_in`, `fan_out`, `cycle`...) as the AML typology
 - `schedule_id` Transaction scheduling ID of the typology
   - 0: All member accounts send money in order with the same interval (number of days)
   - 1: All member accounts send money in order with random intervals
   - 2: All member accounts send money randomly
-- `accounts`: Number of involved accounts
-- `individual_amount` Initial individual transaction amount
-- `aggregated_amount` Minimum aggregated (total) transaction amount
-- `transaction_count` Minimum transaction count
-- `amount_difference` Proportion of transaction difference
-- `period` Lookback period (number of days)
-- `amount_rounded` Proportion of transactions with rounded amounts (optional)
-- `orig_country` Whether the originator country is suspicious (optional)
-- `bene_country` Whether the beneficiary country is suspicious (optional)
-- `orig_business` Whether the originator business type is suspicious (optional)
-- `bene_business` Whether the beneficiary business type is suspicious (optional)
-- `bank_id` Bank ID which member accounts belong to (optional: if absent or empty value, no limitation for the bank ID) 
+- `min_accounts`: Minimum number of involved accounts
+- `max_accounts`: Maximum number of involved accounts
+- `min_amount` Minimum initial transaction amount
+- `max_amount` Maximum initial transaction amount
+- `min_period` Minimum overall transaction period (number of days)
+- `max_period` Maximum overall transaction period (number of days)
+- `bank_id` Bank ID which member accounts belong to (optional: if empty, no limitation for the bank ID) 
 - `is_sar` Whether the alert is SAR (True) or false alert (False)
 
 

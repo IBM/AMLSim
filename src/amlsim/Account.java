@@ -194,7 +194,7 @@ public class Account extends Client implements Steppable {
 		AMLSim amlsim = (AMLSim) state;
 		long step = state.schedule.getSteps();
 		for(Alert ag : alerts){
-            if(this == ag.getPrimaryAccount()){
+            if(this == ag.getMainAccount()){
                 ag.registerTransactions(step, this);
             }
 		}
@@ -224,22 +224,6 @@ public class Account extends Client implements Steppable {
 	public Account getPrevOrig(){
 		return prevOrig;
 	}
-
-//	public Account getPrevDest(){
-//		return prevDest;
-//	}
-//
-//	public void setClient(Account c){
-//		this.id = c.getID();
-//		this.setBalance(c.getBalance());
-//		this.setCurrency(c.getCurrency());
-//		this.setName(c.getName());
-//		this.setNumDeposits(c.getNumDeposits());
-//		this.setNumTransfers(c.getNumTransfers());
-//		this.setNumWithdraws(c.getNumWithdraws());
-//		this.origAccts = c.origAccts;
-//		this.beneAccts = c.beneAccts;
-//	}
 
 	public String getName() {
         return this.id;

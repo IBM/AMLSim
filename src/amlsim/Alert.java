@@ -71,33 +71,17 @@ public class Alert {
 
     /**
      * Get the main account
-     * @return If this alert is SAR, return the main account. Otherwise, return null.
+     * @return The main account if exists.
      */
     public Account getMainAccount(){
         return mainAccount;
     }
 
     /**
-     * Get the primary account
-     * @return If this alert is SAR, return the main account.
-     * If this alert is a false-alert and has one or more members, return the first element of the member list.
-     * If this alert has no members, return null.
-     */
-    Account getPrimaryAccount(){
-        if(isSAR()){
-            return getMainAccount();
-        }else if(members.isEmpty()){
-            return null;
-        }else{
-            return members.get(0);
-        }
-    }
-
-    /**
      * Set the main account
      * @param account Main account object
      */
-    void setMainAccount(SARAccount account){
+    void setMainAccount(Account account){
         this.mainAccount = account;
     }
 

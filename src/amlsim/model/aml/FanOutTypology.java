@@ -30,7 +30,8 @@ public class FanOutTypology extends AMLTypology {
     public void setParameters(int scheduleID){
         // Set members
         List<Account> members = alert.getMembers();
-        orig = alert.isSAR() ? alert.getMainAccount() : members.get(0);
+        Account mainAccount = alert.getMainAccount();
+        orig = mainAccount != null ? mainAccount : members.get(0);
         for(Account bene : members){
             if(orig != bene) beneList.add(bene);
         }

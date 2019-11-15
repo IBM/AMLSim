@@ -30,7 +30,8 @@ public class FanInTypology extends AMLTypology {
 
         // Set members
         List<Account> members = alert.getMembers();
-        bene = alert.isSAR() ? alert.getMainAccount() : members.get(0);  // The main account is the beneficiary
+        Account mainAccount = alert.getMainAccount();
+        bene = mainAccount != null ? mainAccount : members.get(0);  // The main account is the beneficiary
         for(Account orig : members){  // The rest of accounts are originators
             if(orig != bene) origList.add(orig);
         }
@@ -47,7 +48,6 @@ public class FanInTypology extends AMLTypology {
             Arrays.fill(steps, step);
         }else if(schedulingID == FIXED_INTERVAL){
             int range = (int)(endStep - startStep + 1);
-//            System.out.printf("%d -> %d -> %d\n", startStep, range, endStep);
             if(numOrigs < range){
                 interval = range / numOrigs;
                 for(int i=0; i<numOrigs; i++){
@@ -79,7 +79,7 @@ public class FanInTypology extends AMLTypology {
     public void sendTransactions(long step, Account acct){
         long alertID = alert.getAlertID();
         boolean isSAR = alert.isSAR();
-        float amount = getRandomAmount();  // / origs.size();
+        float amount = getRandomAmount();
 
         for(int i = 0; i< origList.size(); i++){
             if(steps[i] == step){

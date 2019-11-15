@@ -300,7 +300,7 @@ public class AMLSim extends ParameterizedPaySim {
 			Account account = getAccountFromID(accountID);
 			alert.addMember(account);
 			if(isMain){
-				alert.setMainAccount((SARAccount) account);
+				alert.setMainAccount(account);
 			}
 			account.setSAR(isSAR);
 			scheduleModels.put(alertID, scheduleID);

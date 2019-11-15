@@ -24,7 +24,7 @@ public class StackTypology extends AMLTypology {
         return orig_members * mid_members + mid_members + bene_members;
     }
 
-    public StackTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
+    StackTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 

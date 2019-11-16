@@ -21,14 +21,14 @@ def load_csv(tx_log, schema_json):
     :return: Transaction Graph
     :rtype: nx.Graph
     """
+    with open(schema_json, "r") as rf:
+        schema = json.load(rf)
+
     g = nx.DiGraph()
     with open(tx_log, "r") as rf:
         reader = csv.reader(rf)
         header = next(reader)
         for idx, col in enumerate(header):
-            # data_type = tx_col.get("dataType")
-            # if data_type is None:
-            #   continue
             if col == "nameOrig":
                 src_idx = idx
             elif col == "nameDest":

@@ -1,7 +1,0 @@
-count,type,schedule_id,min_accounts,max_accounts,min_amount,max_amount,min_period,max_period,bank_id,is_sar
-20,cycle,0,3,6,2700,3000,10,30,bank_a,True
-30,scatter_gather,0,5,10,2700,3000,10,30,bank_b,True
-50,gather_scatter,0,7,11,2700,3000,10,30,bank_c,True
-20,cycle,0,3,6,50,200,30,90,bank_a,False
-30,scatter_gather,0,5,10,50,200,30,90,bank_b,False
-50,gather_scatter,0,7,11,50,200,30,90,bank_c,False

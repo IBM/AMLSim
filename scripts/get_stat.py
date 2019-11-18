@@ -5,7 +5,7 @@ import sys
 import json
 import networkx as nx
 
-from analytics.network_loader import BaseGraphLoader, ResultGraphLoader
+from analytics import ResultGraphLoader
 
 #
 # class GraphStat:

@@ -89,7 +89,7 @@ def plot_alerts(_g, _bank_accts, _output_png):
     nx.draw_networkx_edges(_g, pos)
     nx.draw_networkx_edge_labels(_g, pos, edge_labels, font_size=6)
 
-    plt.legend(numpoints = 1)
+    plt.legend(numpoints=1)
     plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
     plt.savefig(_output_png, dpi=120)
 

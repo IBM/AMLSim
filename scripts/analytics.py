@@ -19,7 +19,13 @@ DEGREE_STEP = 5  # Interval of degrees
 
 
 def load_base_csv(acct_csv, tx_csv, schema_data):
-    pass
+    """Load account and transaction list CSV from the transaction graph generator (before running AMLSim)
+    :param acct_csv: Account list CSV
+    :param tx_csv: Transaction list CSV
+    :param schema_data: Schema data from JSON file
+    :return: Base transaction network as a NetworkX graph object
+    """
+    return None
 
 
 def load_result_csv(acct_csv: str, tx_csv: str, schema_data) -> nx.MultiDiGraph:

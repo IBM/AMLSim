@@ -10,12 +10,15 @@ from collections import Counter, defaultdict
 import networkx as nx
 import powerlaw
 from datetime import datetime, timedelta
+import numpy as np
 
 import matplotlib
 import matplotlib.pyplot as plt
 import warnings
 
-warnings.filterwarnings('ignore', category=matplotlib.cbook.deprecation.MatplotlibDeprecationWarning)
+category = matplotlib.cbook.deprecation.MatplotlibDeprecationWarning
+warnings.filterwarnings('ignore', category=category)
+warnings.filterwarnings('ignore', category=UserWarning)
 
 
 def get_date_list(_g):
@@ -92,9 +95,11 @@ def construct_graph(_acct_csv, _tx_csv, _schema):
             bene = row[bene_idx]
             tx_type = row[type_idx]
             amount = float(row[amt_idx])
-            date = datetime.strptime(row[date_idx].split("T")[0], "%Y-%m-%d")
+            date_str = row[date_idx].split("T")[0]
+            date = datetime.strptime(date_str, "%Y-%m-%d")
             is_sar = row[sar_idx].lower() == "true"
-            _g.add_edge(orig, bene, amount=amount, date=date, type=tx_type, is_sar=is_sar)
+            _g.add_edge(orig, bene, amount=amount, date=date,
+                        type=tx_type, is_sar=is_sar)
 
     return _g
 
@@ -143,10 +148,112 @@ def plot_wcc_distribution(_g, plot_img):
     plt.savefig(plot_img)
 
 
-def plot_aml_rule(aml_csv, plot_img):
+def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
+
+    alert_member_count = Counter()
+    alert_tx_count = Counter()
+    alert_amounts = defaultdict(list)
+    alert_dates = defaultdict(list)
+    alert_sar_flag = defaultdict(bool)
+    alert_types = dict()
+    label_alerts = defaultdict(list)  # label -> alert IDs
+
+    alert_idx = None
+    amt_idx = None
+    date_idx = None
+    type_idx = None
+    bank_idx = None
+    sar_idx = None
+
+    acct_schema = _schema["alert_member"]
+    for i, col in enumerate(acct_schema):
+        data_type = col.get("dataType")
+        if data_type == "alert_id":
+            alert_idx = i
+        elif data_type == "alert_type":
+            type_idx = i
+        elif data_type == "model_id":
+            bank_idx = i
+        elif data_type == "sar_flag":
+            sar_idx = i
+
+    with open(_alert_acct_csv, "r") as _rf:
+        reader = csv.reader(_rf)
+        next(reader)
+
+        for row in reader:
+            alert_id = row[alert_idx]
+            alert_type = row[type_idx]
+            bank_id = row[bank_idx]
+            is_sar = row[sar_idx].lower() == "true"
+
+            alert_member_count[alert_id] += 1
+            alert_sar_flag[alert_id] = is_sar
+            alert_types[alert_id] = alert_type
+            label = alert_type + ":" + ("SAR" if is_sar else "Normal")
+            label_alerts[label].append(alert_id)
+
+    tx_schema = _schema["alert_tx"]
+    for i, col in enumerate(tx_schema):
+        data_type = col.get("dataType")
+        if data_type == "alert_id":
+            alert_idx = i
+        elif data_type == "amount":
+            amt_idx = i
+        elif data_type == "timestamp":
+            date_idx = i
+
+    with open(_alert_tx_csv, "r") as _rf:
+        reader = csv.reader(_rf)
+        next(reader)
+
+        for row in reader:
+            alert_id = row[alert_idx]
+            amount = float(row[amt_idx])
+            date_str = row[date_idx].split("T")[0]
+            date = datetime.strptime(date_str, "%Y-%m-%d")
+
+            alert_tx_count[alert_id] += 1
+            alert_amounts[alert_id].append(amount)
+            alert_dates[alert_id].append(date)
+
+    # Scatter plot for all alerts
+    # ax1: Number of member accounts and transaction amount range
+    # ax2: Number of transactions and transaction period
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 12))
+    cmap = plt.get_cmap("tab10")
+    for i, (label, alerts) in enumerate(label_alerts.items()):
+        color = cmap(i)
+        x = [alert_member_count[a] for a in alerts]
+        y_med = np.array([np.median(alert_amounts[a]) for a in alerts])
+        y_min = np.array([min(alert_amounts[a]) for a in alerts])
+        y_max = np.array([max(alert_amounts[a]) for a in alerts])
+        y_err = [y_med - y_min, y_max - y_med]
+        ax1.scatter(x, y_med, s=50, color=color, label=label, edgecolors="none")
+        ax1.errorbar(x, y_med, yerr=y_err, ecolor=color, ls="none")
+        for j, alert_id in enumerate(alerts):
+            ax1.annotate(alert_id, (x[j], y_med[j]))
+
+        x = [alert_tx_count[a] for a in alerts]
+        y_period = [(max(alert_dates[a]) - min(alert_dates[a])).days + 1
+                    for a in alerts]
+        ax2.scatter(x, y_period, s=100, color=color, label=label, edgecolors="none")
+        for j, alert_id in enumerate(alerts):
+            ax2.annotate(alert_id, (x[j], y_period[j]))
+
+    ax1.set_xlabel("Number of member accounts")
+    ax1.set_ylabel("Min/Median/Max transaction amount")
+    ax1.legend()
+    ax2.set_xlabel("Number of transactions")
+    ax2.set_ylabel("Transaction period")
+    ax2.legend()
+    plt.savefig(_plot_img)
+
+
+def plot_aml_rule(aml_csv, _plot_img):
     """Plot the number of AML typologies
     :param aml_csv: AML typology pattern parameter CSV file
-    :param plot_img: Output image file (bar plot)
+    :param _plot_img: Output image file (bar plot)
     """
     aml_types = Counter()
     num_idx = None
@@ -179,13 +286,13 @@ def plot_aml_rule(aml_csv, plot_img):
     plt.title("AML typologies")
     plt.xlabel("Typology name")
     plt.ylabel("Number of patterns")
-    plt.savefig(plot_img)
+    plt.savefig(_plot_img)
 
 
-def plot_tx_count(_g, plot_img):
-    """Plot the number of normal and SAR transactions (excludes cash transactions)
+def plot_tx_count(_g, _plot_img):
+    """Plot the number of normal and SAR transactions
     :param _g: Transaction graph
-    :param plot_img: Output image file path
+    :param _plot_img: Output image file path
     """
     date_list = get_date_list(_g)
     normal_tx_count = Counter()
@@ -210,14 +317,15 @@ def plot_tx_count(_g, plot_img):
     plt.title("Number of transactions per step")
     plt.xlabel("Simulation step")
     plt.ylabel("Number of transactions")
-    plt.savefig(plot_img)
+    plt.savefig(_plot_img)
 
 
-def plot_clustering_coefficient(_g, plot_img, interval=10):
+def plot_clustering_coefficient(_g, _plot_img, interval=10):
     """Plot the clustering coefficient transition
     :param _g: Transaction graph
-    :param plot_img: Output image file
-    :param interval: Simulation step interval for plotting (it takes too much time to compute clustering coefficient)
+    :param _plot_img: Output image file
+    :param interval: Simulation step interval for plotting
+    (it takes too much time to compute clustering coefficient)
     :return:
     """
     date_list = get_date_list(_g)
@@ -234,8 +342,6 @@ def plot_clustering_coefficient(_g, plot_img, interval=10):
         gg.add_edges_from(edges[t])
         if i % interval == 0:
             v = nx.average_clustering(gg) if gg.number_of_nodes() else 0.0
-            # date_str = datetime.strftime(t, "%Y-%m-%d")
-            # print("Date: %s, Coefficient: %f" % (date_str, v))
             sample_dates.append(t)
             values.append(v)
 
@@ -244,7 +350,7 @@ def plot_clustering_coefficient(_g, plot_img, interval=10):
     plt.title("Clustering Coefficient Transition")
     plt.xlabel("date")
     plt.ylabel("Clustering Coefficient")
-    plt.savefig(plot_img)
+    plt.savefig(_plot_img)
 
 
 def plot_diameter(dia_csv, plot_img):
@@ -313,7 +419,7 @@ if __name__ == "__main__":
     g = construct_graph(acct_path, tx_path, schema)
     output_path = os.path.join(output_dir, sim_name)
     if os.path.isdir(output_path):
-        print("Warning: this output directory %s already exists." % output_path)
+        print("Warning: output directory %s already exists." % output_path)
     else:
         os.makedirs(output_path)
 
@@ -329,15 +435,25 @@ if __name__ == "__main__":
     plot_wcc_distribution(g, os.path.join(output_path, wcc_plot))
 
     param_dir = conf["input"]["directory"]
-    alert_param = conf["input"]["alert_patterns"]
-    plot_aml_rule(os.path.join(param_dir, alert_param), os.path.join(output_path, alert_plot))
+    alert_param_file = conf["input"]["alert_patterns"]
+    param_path = os.path.join(param_dir, alert_param_file)
+    plot_path = os.path.join(output_path, alert_plot)
+    plot_aml_rule(param_path, plot_path)
 
+    alert_acct_csv = conf["output"]["alert_members"]
+    alert_tx_csv = conf["output"]["alert_transactions"]
+    alert_acct_path = os.path.join(data_dir, alert_acct_csv)
+    alert_tx_path = os.path.join(data_dir, alert_tx_csv)
+
+    plot_alert_stat(alert_acct_path, alert_tx_path, schema, "alert_dist.png")
     plot_tx_count(g, os.path.join(output_path, count_plot))
 
     plot_clustering_coefficient(g, os.path.join(output_path, cc_plot))
 
     dia_log = conf["output"]["diameter_log"]
     if os.path.exists(dia_log):
-        plot_diameter(os.path.join(tmp_dir, sim_name, dia_log), os.path.join(output_path, dia_plot))
+        dia_path = os.path.join(tmp_dir, sim_name, dia_log)
+        plot_img = os.path.join(output_path, dia_plot)
+        plot_diameter(dia_path, plot_img)
     else:
         print("Diameter log file %s not found." % dia_log)

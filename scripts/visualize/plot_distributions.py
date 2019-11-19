@@ -19,6 +19,7 @@ import warnings
 category = matplotlib.cbook.deprecation.MatplotlibDeprecationWarning
 warnings.filterwarnings('ignore', category=category)
 warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 
 def get_date_list(_g):
@@ -98,41 +99,125 @@ def construct_graph(_acct_csv, _tx_csv, _schema):
             date_str = row[date_idx].split("T")[0]
             date = datetime.strptime(date_str, "%Y-%m-%d")
             is_sar = row[sar_idx].lower() == "true"
-            _g.add_edge(orig, bene, amount=amount, date=date,
-                        type=tx_type, is_sar=is_sar)
+            _g.add_edge(orig, bene, amount=amount, date=date, type=tx_type, is_sar=is_sar)
 
     return _g
 
 
-def plot_degree_distribution(_g, plot_img):
+def plot_degree_distribution(_g, _conf, _plot_img):
     """Plot degree distribution for accounts (vertices)
     :param _g: Transaction graph
-    :param plot_img: Degree distribution image (log-log plot)
+    :param _conf: Configuration object
+    :param _plot_img: Degree distribution image (log-log plot)
     :return:
     """
-    degrees = list(_g.degree().values())
-    deg_seq = sorted(set(degrees), reverse=True)
-    deg_hist = [degrees.count(x) for x in deg_seq]
+    # Load parameter files
+    _input_conf = _conf["input"]
+    _input_dir = _input_conf["directory"]
+    _input_acct = _input_conf["accounts"]
+    _input_deg = _input_conf["degree"]
+    input_acct_path = os.path.join(_input_dir, _input_acct)
+    input_deg_path = os.path.join(_input_dir, _input_deg)
 
-    pw_result = powerlaw.Fit(degrees)
+    total_num_accts = 0
+    with open(input_acct_path, "r") as _rf:
+        reader = csv.reader(_rf)
+        header = next(reader)
+        count_idx = None
+        for i, col in enumerate(header):
+            if col == "count":
+                count_idx = i
+                break
+        for row in reader:
+            total_num_accts += int(row[count_idx])
+
+    deg_num_accts = 0
+    in_degrees = list()
+    in_deg_seq = list()
+    in_deg_hist = list()
+    out_degrees = list()
+    out_deg_seq = list()
+    out_deg_hist = list()
+    with open(input_deg_path, "r") as _rf:
+        reader = csv.reader(_rf)
+        next(reader)
+        for row in reader:
+            deg = int(row[0])
+            in_num = int(row[1])
+            out_num = int(row[2])
+            if in_num > 0:
+                in_degrees.extend([deg] * in_num)
+                in_deg_seq.append(deg)
+                in_deg_hist.append(in_num)
+                deg_num_accts += in_num
+            if out_num > 0:
+                out_degrees.extend([deg] * out_num)
+                out_deg_seq.append(deg)
+                out_deg_hist.append(out_num)
+
+    multiplier = total_num_accts // deg_num_accts
+    # print(total_num_accts, deg_num_accts, multiplier)
+    in_degrees = [d * multiplier for d in in_degrees]
+    in_deg_hist = [d * multiplier for d in in_deg_hist]
+    out_degrees = [d * multiplier for d in out_degrees]
+    out_deg_hist = [d * multiplier for d in out_deg_hist]
+
+    # ax1, ax2: Expected in/out-degree distributions from parameter files
+    # ax3, ax4: Output in/out-degree distributions from the output transaction list
+    plt.clf()
+    fig, axs = plt.subplots(2, 2, figsize=(16, 12))
+    ax1, ax2, ax3, ax4 = axs[0, 0], axs[0, 1], axs[1, 0], axs[1, 1]
+
+    pw_result = powerlaw.Fit(in_degrees)
     alpha = pw_result.power_law.alpha
     alpha_text = "alpha = %f" % alpha
-    print(alpha_text)
+    ax1.loglog(in_deg_seq, in_deg_hist, "bo-")
+    ax1.set_title("Expected in-degree distribution")
+    plt.text(0.1, 0.1, alpha_text, transform=ax1.transAxes)
+    ax1.set_xlabel("In-degree")
+    ax1.set_ylabel("Number of account vertices")
 
-    plt.clf()
-    fig, ax = plt.subplots(1, 1)
-    ax.loglog(deg_seq, deg_hist, 'bo-')
-    plt.text(0.1, 0.1, alpha_text, transform=ax.transAxes)
-    plt.title("Degree Distribution")
-    plt.xlabel("Degree")
-    plt.ylabel("Number of accounts")
-    plt.savefig(plot_img)
+    pw_result = powerlaw.Fit(out_degrees)
+    alpha = pw_result.power_law.alpha
+    alpha_text = "alpha = %f" % alpha
+    ax2.loglog(out_deg_seq, out_deg_hist, "ro-")
+    ax2.set_title("Expected out-degree distribution")
+    plt.text(0.1, 0.1, alpha_text, transform=ax2.transAxes)
+    ax2.set_xlabel("Out-degree")
+    ax2.set_ylabel("Number of account vertices")
+
+    # Get degree from the output transaction list
+    in_degrees = list(_g.in_degree().values())
+    in_deg_seq = sorted(set(in_degrees), reverse=True)
+    in_deg_hist = [in_degrees.count(x) for x in in_deg_seq]
+    pw_result = powerlaw.Fit(in_degrees)
+    alpha = pw_result.power_law.alpha
+    alpha_text = "alpha = %f" % alpha
+    ax3.loglog(in_deg_seq, in_deg_hist, "bo-")
+    ax3.set_title("Output in-degree distribution")
+    plt.text(0.1, 0.1, alpha_text, transform=ax3.transAxes)
+    ax3.set_xlabel("In-degree")
+    ax3.set_ylabel("Number of account vertices")
+
+    out_degrees = list(_g.out_degree().values())
+    out_deg_seq = sorted(set(out_degrees), reverse=True)
+    out_deg_hist = [out_degrees.count(x) for x in out_deg_seq]
+    pw_result = powerlaw.Fit(out_degrees)
+    alpha = pw_result.power_law.alpha
+    alpha_text = "alpha = %f" % alpha
+    ax4.loglog(out_deg_seq, out_deg_hist, "ro-")
+    ax4.set_title("Output out-degree distribution")
+    plt.text(0.1, 0.1, alpha_text, transform=ax4.transAxes)
+    ax4.set_xlabel("Out-degree")
+    ax4.set_ylabel("Number of account vertices")
+
+    plt.savefig(_plot_img)
 
 
-def plot_wcc_distribution(_g, plot_img):
+def plot_wcc_distribution(_g, _plot_img):
     """Plot weakly connected components size distributions
     :param _g: Transaction graph
-    :param plot_img: WCC size distribution image (log-log plot)
+    :param _plot_img: WCC size distribution image (log-log plot)
     :return:
     """
     all_wcc = nx.weakly_connected_components(_g)
@@ -145,7 +230,7 @@ def plot_wcc_distribution(_g, plot_img):
     plt.title("WCC Size Distribution")
     plt.xlabel("Size")
     plt.ylabel("Number of WCCs")
-    plt.savefig(plot_img)
+    plt.savefig(_plot_img)
 
 
 def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
@@ -162,7 +247,7 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
     amt_idx = None
     date_idx = None
     type_idx = None
-    bank_idx = None
+    # bank_idx = None
     sar_idx = None
 
     acct_schema = _schema["alert_member"]
@@ -172,8 +257,8 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
             alert_idx = i
         elif data_type == "alert_type":
             type_idx = i
-        elif data_type == "model_id":
-            bank_idx = i
+        # elif data_type == "model_id":
+        #     bank_idx = i
         elif data_type == "sar_flag":
             sar_idx = i
 
@@ -184,7 +269,7 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
         for row in reader:
             alert_id = row[alert_idx]
             alert_type = row[type_idx]
-            bank_id = row[bank_idx]
+            # bank_id = row[bank_idx]
             is_sar = row[sar_idx].lower() == "true"
 
             alert_member_count[alert_id] += 1
@@ -353,10 +438,10 @@ def plot_clustering_coefficient(_g, _plot_img, interval=10):
     plt.savefig(_plot_img)
 
 
-def plot_diameter(dia_csv, plot_img):
+def plot_diameter(dia_csv, _plot_img):
     """Plot the diameter and the average of largest distance transitions
     :param dia_csv: Diameter transition CSV file
-    :param plot_img: Output image file
+    :param _plot_img: Output image file
     :return:
     """
     x = list()
@@ -382,7 +467,7 @@ def plot_diameter(dia_csv, plot_img):
     plt.title("Diameter and Average Distance")
     plt.xlabel("Simulation step")
     plt.ylabel("Distance")
-    plt.savefig(plot_img)
+    plt.savefig(_plot_img)
 
 
 if __name__ == "__main__":
@@ -431,7 +516,7 @@ if __name__ == "__main__":
     cc_plot = v_conf["clustering"]
     dia_plot = v_conf["diameter"]
 
-    plot_degree_distribution(g, os.path.join(output_path, deg_plot))
+    plot_degree_distribution(g, conf, os.path.join(output_path, deg_plot))
     plot_wcc_distribution(g, os.path.join(output_path, wcc_plot))
 
     param_dir = conf["input"]["directory"]

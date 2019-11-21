@@ -2,6 +2,7 @@
 Load output files from AMLSim and create NetworkX graph for analytics
 """
 import os
+import sys
 import csv
 from datetime import datetime, timedelta
 from dateutil.parser import parse
@@ -110,8 +111,8 @@ def load_alert_csv(_g, alert_acct_csv, alert_tx_csv, schema_data):
 
 class __TransactionGraphLoader:
 
-    def __init__(self, conf_json):
-        with open(conf_json, "r") as rf:
+    def __init__(self, _conf_json):
+        with open(_conf_json, "r") as rf:
             self.conf = json.load(rf)
         schema_json = os.path.join(self.conf["input"]["directory"], self.conf["input"]["schema"])
         with open(schema_json, "r") as rf:
@@ -135,14 +136,14 @@ class __TransactionGraphLoader:
 
 class BaseGraphLoader(__TransactionGraphLoader):
 
-    def __init__(self, conf_json):
-        super(BaseGraphLoader, self).__init__(conf_json)
+    def __init__(self, _conf_json):
+        super(BaseGraphLoader, self).__init__(_conf_json)
 
 
 class ResultGraphLoader(__TransactionGraphLoader):
 
-    def __init__(self, conf_json):
-        super(ResultGraphLoader, self).__init__(conf_json)
+    def __init__(self, _conf_json):
+        super(ResultGraphLoader, self).__init__(_conf_json)
 
         # Create a transaction graph from output files
         output_dir = self.output_conf["directory"]
@@ -183,3 +184,19 @@ class ResultGraphLoader(__TransactionGraphLoader):
             ratio_fan_out = num_fan_out / self.num_sar_accts
             print("\tNumber of fan-in / fan-out patterns with %d or more neighbors: %d (%.2f%%)/ %d (%.2f%%)" %
                   (th, num_fan_in, ratio_fan_in * 100, num_fan_out, ratio_fan_out * 100))
+
+
+if __name__ == "__main__":
+    argv = sys.argv
+    if len(argv) < 2:
+        print("Usage: python3 %s [ConfJSON]" % argv[0])
+        exit(1)
+
+    conf_json = argv[1]
+
+    # Base transaction network (as input of the simulator) analytics
+    # bgl = BaseGraphLoader(conf_json)
+
+    # Generated transaction network analysis as the final result
+    rgl = ResultGraphLoader(conf_json)
+    rgl.count_hub_accounts(5, 25)

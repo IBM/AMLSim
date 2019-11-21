@@ -173,7 +173,7 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     alpha_text = "alpha = %f" % alpha
     ax1.loglog(in_deg_seq, in_deg_hist, "bo-")
     ax1.set_title("Expected in-degree distribution")
-    plt.text(0.1, 0.1, alpha_text, transform=ax1.transAxes)
+    plt.text(0.8, 0.9, alpha_text, transform=ax1.transAxes)
     ax1.set_xlabel("In-degree")
     ax1.set_ylabel("Number of account vertices")
 
@@ -182,7 +182,7 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     alpha_text = "alpha = %f" % alpha
     ax2.loglog(out_deg_seq, out_deg_hist, "ro-")
     ax2.set_title("Expected out-degree distribution")
-    plt.text(0.1, 0.1, alpha_text, transform=ax2.transAxes)
+    plt.text(0.8, 0.9, alpha_text, transform=ax2.transAxes)
     ax2.set_xlabel("Out-degree")
     ax2.set_ylabel("Number of account vertices")
 
@@ -195,7 +195,7 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     alpha_text = "alpha = %f" % alpha
     ax3.loglog(in_deg_seq, in_deg_hist, "bo-")
     ax3.set_title("Output in-degree distribution")
-    plt.text(0.1, 0.1, alpha_text, transform=ax3.transAxes)
+    plt.text(0.8, 0.9, alpha_text, transform=ax3.transAxes)
     ax3.set_xlabel("In-degree")
     ax3.set_ylabel("Number of account vertices")
 
@@ -207,7 +207,7 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     alpha_text = "alpha = %f" % alpha
     ax4.loglog(out_deg_seq, out_deg_hist, "ro-")
     ax4.set_title("Output out-degree distribution")
-    plt.text(0.1, 0.1, alpha_text, transform=ax4.transAxes)
+    plt.text(0.8, 0.9, alpha_text, transform=ax4.transAxes)
     ax4.set_xlabel("Out-degree")
     ax4.set_ylabel("Number of account vertices")
 
@@ -326,10 +326,10 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
         for j, alert_id in enumerate(alerts):
             ax2.annotate(alert_id, (x[j], y_period[j]))
 
-    ax1.set_xlabel("Number of member accounts")
+    ax1.set_xlabel("Number of accounts per alert")
     ax1.set_ylabel("Min/Median/Max transaction amount")
     ax1.legend()
-    ax2.set_xlabel("Number of transactions")
+    ax2.set_xlabel("Number of transactions per alert")
     ax2.set_ylabel("Transaction period")
     ax2.legend()
     plt.savefig(_plot_img)

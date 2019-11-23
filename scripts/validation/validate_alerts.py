@@ -70,7 +70,7 @@ def load_alert_tx(_alert_tx_schema, _alert_tx_csv):
             alert_idx = i
         elif data_type == "orig_id":
             orig_idx = i
-        elif data_type == "bene_id":
+        elif data_type == "dest_id":
             bene_idx = i
         elif data_type == "amount":
             amt_idx = i
@@ -116,6 +116,38 @@ def satisfies_params(alert_sub_g, param):
     min_period, max_period = param["period"]
     if not min_period <= period <= max_period:
         return False
+    return True
+
+
+def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool):
+    edges = alert_sub_g.edges(data=True)
+    num_accts = alert_sub_g.number_of_nodes()
+    cycles = list(nx.simple_cycles(alert_sub_g))
+    if len(cycles) != 1:
+        return False
+    if is_ordered:
+        edges.sort(key=lambda e: e[2]["date"])
+        next_orig = None
+        next_amt = sys.float_info.max
+        next_date = "0000-00-00"
+        for orig, bene, attr in edges:
+            if next_orig is not None and orig != next_orig:
+                return False
+            else:
+                next_orig = bene
+
+            amount = attr["amount"]
+            if amount == next_amt:
+                return False
+            else:
+                next_amt = amount
+
+            date = attr["date"]
+            if date < next_date:
+                return False
+            else:
+                next_date = date
+    return True
 
 
 class AlertValidator:
@@ -141,24 +173,33 @@ class AlertValidator:
         # Load an alert transaction file
         alert_tx_file = self.conf["output"]["alert_transactions"]
         alert_tx_path = os.path.join(self.output_dir, alert_tx_file)
-        self.alert_graphs = load_alert_tx(schema_path, alert_tx_path)
+        with open(schema_path, "r") as _rf:
+            schema = json.load(_rf)
+        self.alert_graphs = load_alert_tx(schema["alert_tx"], alert_tx_path)
+
+    def validate_single(self, alert_id):
+        if alert_id not in self.alert_graphs:
+            raise KeyError("No such alert ID: " + alert_id)
+        sub_g = self.alert_graphs[alert_id]
+        for param in self.alert_params:
+            if satisfies_params(sub_g, param):
+                if param["count"] == 0:
+                    alert_type = param["type"]
+                    min_acct, max_acct = param["accounts"]
+                    min_amt, max_amt = param["amount"]
+                    min_period, max_period = param["period"]
+                    print("Too many alert subgraphs for the following parameters:",
+                          "Type: %s, Accounts: [%d, %d], Amount: [%f, %f], Period: [%d, %d]" %
+                          (alert_type, min_acct, max_acct, min_amt, max_amt, min_period, max_period))
+                else:
+                    param["count"] -= 1
+                break
+        else:
+            print("The alert subgraph with ID %s does not satisfy any parameters" % alert_id)
 
     def validate_all(self):
-        for alert_id, sub_g in self.alert_graphs.items():
-            for param in self.alert_params:
-                if satisfies_params(sub_g, param):
-                    if param["count"] == 0:
-                        alert_type = param["type"]
-                        min_acct, max_acct = param["accounts"]
-                        min_amt, max_amt = param["amount"]
-                        min_period, max_period = param["period"]
-                        print("Too many alert subgraphs for the following parameters:",
-                              "Type: %s, Accounts: [%d, %d], Amount: [%f, %f], Period: [%d, %d]" %
-                              (alert_type, min_acct, max_acct, min_amt, max_amt, min_period, max_period))
-                    param["count"] -= 1
-                    break
-            else:
-                print("The alert subgraph with ID %s does not satisfy any parameters")
+        for alert_id, _ in self.alert_graphs.items():
+            self.validate_single(alert_id)
 
 
 if __name__ == "__main__":
@@ -168,4 +209,4 @@ if __name__ == "__main__":
         exit(1)
 
     av = AlertValidator(argv[1])
-
+    av.validate_all()

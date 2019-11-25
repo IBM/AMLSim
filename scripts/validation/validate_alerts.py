@@ -5,6 +5,10 @@ import json
 from collections import defaultdict
 import networkx as nx
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def col2idx(cols):
@@ -60,6 +64,7 @@ def load_alert_tx(_alert_tx_schema, _alert_tx_csv):
     :return: dict of alert ID and alert transaction subgraph
     """
     alert_idx = None
+    type_idx = None
     orig_idx = None
     bene_idx = None
     amt_idx = None
@@ -68,6 +73,8 @@ def load_alert_tx(_alert_tx_schema, _alert_tx_csv):
         data_type = col.get("dataType")
         if data_type == "alert_id":
             alert_idx = i
+        elif data_type == "alert_type":
+            type_idx = i
         elif data_type == "orig_id":
             orig_idx = i
         elif data_type == "dest_id":
@@ -83,12 +90,15 @@ def load_alert_tx(_alert_tx_schema, _alert_tx_csv):
         next(reader)
         for row in reader:
             alert_id = row[alert_idx]
+            alert_type = row[type_idx]
             orig_id = row[orig_idx]
             bene_id = row[bene_idx]
             amount = float(row[amt_idx])
             date_str = row[date_idx].split("T")[0]
             date = datetime.strptime(date_str, "%Y-%m-%d")
             alert_graphs[alert_id].add_edge(orig_id, bene_id, amount=amount, date=date)
+            alert_graphs[alert_id].graph["alert_id"] = alert_id
+            alert_graphs[alert_id].graph["alert_type"] = alert_type
 
     return alert_graphs
 
@@ -99,6 +109,9 @@ def satisfies_params(alert_sub_g, param):
     :param param: Alert parameters as dict from a parameter file
     :return: If the subgraph satisfies all of the given parameter, return True.
     """
+    alert_id = alert_sub_g.graph["alert_id"]
+    # print("Verify alert subgraph: " + str(alert_id) + " " + str(param))
+
     num_accounts = alert_sub_g.number_of_nodes()
     tx_attrs = [attr for _, _, attr in alert_sub_g.edges(data=True)]
     start_date = min([attr["date"] for attr in tx_attrs])
@@ -108,10 +121,13 @@ def satisfies_params(alert_sub_g, param):
     alert_type = param["type"]
 
     if alert_type == "cycle" and not is_cycle(alert_sub_g):
+        print("Not a cycle pattern:", alert_id)
         return False
     elif alert_type == "scatter_gather" and not is_scatter_gather(alert_sub_g):
+        print("Not a scatter-gather pattern:", alert_id)
         return False
     elif alert_type == "gather_scatter" and not is_gather_scatter(alert_sub_g):
+        print("Not a gather-scatter pattern:", alert_id)
         return False
 
     min_acct, max_acct = param["accounts"]
@@ -267,14 +283,20 @@ class AlertValidator:
             schema = json.load(_rf)
         self.alert_graphs = load_alert_tx(schema["alert_tx"], alert_tx_path)
 
+        # for alert_id, sub_g in self.alert_graphs.items():
+        #     print(alert_id, sub_g.edges(data=True))
+
     def validate_single(self, alert_id):
         if alert_id not in self.alert_graphs:
             raise KeyError("No such alert ID: " + alert_id)
         sub_g = self.alert_graphs[alert_id]
+        alert_type = sub_g.graph["alert_type"]
         for param in self.alert_params:
+            if param["type"] != alert_type:
+                continue
             if satisfies_params(sub_g, param):
                 if param["count"] == 0:
-                    alert_type = param["type"]
+                    # alert_type = param["type"]
                     min_acct, max_acct = param["accounts"]
                     min_amt, max_amt = param["amount"]
                     min_period, max_period = param["period"]
@@ -288,7 +310,7 @@ class AlertValidator:
             print("The alert subgraph with ID %s does not satisfy any parameters" % alert_id)
 
     def validate_all(self):
-        for alert_id, _ in self.alert_graphs.items():
+        for alert_id in self.alert_graphs.keys():
             self.validate_single(alert_id)
 
 

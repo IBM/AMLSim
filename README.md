@@ -109,6 +109,12 @@ The file names of the output data are defined at the "output" section of `conf.j
 python3 scripts/convert_logs.py conf.json
 ```
 
+## 4. Export statistical information of the output data to image files (optional)
+
+```bash
+python3 scripts/visualize/plot_distributions.py conf.json
+```
+
 
 
 ## Remove all log and generated image files from `outputs` directory and a temporal directory

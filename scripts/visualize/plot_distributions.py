@@ -550,9 +550,9 @@ if __name__ == "__main__":
     plot_clustering_coefficient(g, os.path.join(output_path, cc_plot))
 
     dia_log = conf["output"]["diameter_log"]
-    if os.path.exists(dia_log):
-        dia_path = os.path.join(tmp_dir, sim_name, dia_log)
+    dia_path = os.path.join(data_dir, dia_log)
+    if os.path.exists(dia_path):
         plot_img = os.path.join(output_path, dia_plot)
         plot_diameter(dia_path, plot_img)
     else:
-        print("Diameter log file %s not found." % dia_log)
+        print("Diameter log file %s not found." % dia_path)

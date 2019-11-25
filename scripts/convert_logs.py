@@ -2,6 +2,7 @@ import csv
 import json
 import sys
 import os
+import shutil
 import datetime
 from dateutil.parser import parse
 from random import random
@@ -610,6 +611,13 @@ class LogConverter:
         self.party_organization_file = output_conf["party_organizations"]
         self.account_mapping_file = output_conf["account_mapping"]
         self.resolved_entities_file = output_conf["resolved_entities"]
+
+        # Copy the diameter CSV file if it exists
+        dia_log = output_conf["diameter_log"]
+        src_dia_path = os.path.join(self.input_dir, dia_log)
+        dst_dia_path = os.path.join(self.work_dir, dia_log)
+        if os.path.exists(src_dia_path):
+            shutil.copy(src_dia_path, dst_dia_path)
 
     def convert_acct_tx(self):
         print("Convert transaction list from %s to %s, %s and %s" % (

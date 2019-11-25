@@ -21,7 +21,7 @@ def col2idx(cols):
 def load_alert_param(_alert_param_csv):
     """Load an alert parameter file
     :param _alert_param_csv: Alert parameter CSV file
-    :return: List of alert parameter set as dict
+    :return: dict of line number of the parameter file and parameter set as dict
     """
     with open(_alert_param_csv, "r") as _rf:
         reader = csv.reader(_rf)
@@ -39,7 +39,8 @@ def load_alert_param(_alert_param_csv):
         bank_idx = name2idx["bank_id"]
         sar_idx = name2idx["is_sar"]
 
-        param_list = list()
+        param_data = dict()
+        line_num = 2
         for row in reader:
             count = int(row[count_idx])
             alert_type = row[type_idx]
@@ -51,10 +52,11 @@ def load_alert_param(_alert_param_csv):
             is_sar = row[sar_idx].lower() == "true"
             params = {"count": count, "type": alert_type, "ordered": is_ordered,
                       "accounts": accounts, "amount": amount, "period": period,
-                      "multiple_banks": is_multiple_banks, "sar": is_sar}
-            param_list.append(params)
+                      "multiple_banks": is_multiple_banks, "sar": is_sar, "csv_text": ",".join(row)}
+            param_data[line_num] = params
+            line_num += 1
 
-        return param_list
+        return param_data
 
 
 def load_alert_tx(_alert_tx_schema, _alert_tx_csv):
@@ -121,31 +123,36 @@ def satisfies_params(alert_sub_g, param):
     alert_type = param["type"]
 
     if alert_type == "cycle" and not is_cycle(alert_sub_g):
-        print("Not a cycle pattern:", alert_id)
         return False
     elif alert_type == "scatter_gather" and not is_scatter_gather(alert_sub_g):
-        print("Not a scatter-gather pattern:", alert_id)
         return False
     elif alert_type == "gather_scatter" and not is_gather_scatter(alert_sub_g):
-        print("Not a gather-scatter pattern:", alert_id)
         return False
 
     min_acct, max_acct = param["accounts"]
     if not min_acct <= num_accounts <= max_acct:
+        print(alert_id, ": The number of accounts %d is not within [%d, %d]" % (num_accounts, min_acct, max_acct))
         return False
+
     min_amt, max_amt = param["amount"]
     if not min_amt <= init_amount <= max_amt:
+        print(alert_id, ": The initial amount %f is not within [%f, %f]" % (init_amount, min_amt, max_amt))
         return False
+
     min_period, max_period = param["period"]
     if not min_period <= period <= max_period:
+        print(alert_id, ": The period %d is not within [%d, %d]" % (period, min_period, max_period))
         return False
+
     return True
 
 
 def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
+    alert_id = alert_sub_g.graph["alert_id"]
     edges = alert_sub_g.edges(data=True)
     cycles = list(nx.simple_cycles(alert_sub_g))  # Use simple_cycles function directly (subgraph is small enough)
     if len(cycles) != 1:
+        print("Not a cycle pattern:", alert_id)
         return False
     if is_ordered:
         edges.sort(key=lambda e: e[2]["date"])
@@ -154,6 +161,7 @@ def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
         next_date = datetime.strptime("1970-01-01", "%Y-%m-%d")
         for orig, bene, attr in edges:
             if next_orig is not None and orig != next_orig:
+                print("Chronologically unordered cycle:", alert_id)
                 return False
             else:
                 next_orig = bene
@@ -166,6 +174,7 @@ def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
 
             date = attr["date"]
             if date < next_date:
+                print("Unordered amount cycle:", alert_id)
                 return False
             else:
                 next_date = date
@@ -173,6 +182,7 @@ def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
 
 
 def is_scatter_gather(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
+    alert_id = alert_sub_g.graph["alert_id"]
     num_accts = alert_sub_g.number_of_nodes()
     num_mid = num_accts - 2
     out_degrees = alert_sub_g.out_degree()
@@ -180,44 +190,56 @@ def is_scatter_gather(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
     orig = None
     bene = None
     mid_accts = list()
-    for n, d in out_degrees.items():
-        if d == num_mid:
+    for n, out_d in out_degrees.items():
+        in_d = in_degrees[n]
+        if out_d == num_mid:
             orig = n
-            if in_degrees[n] != 0:
+            if in_d != 0:
+                print("Not a scatter-gather pattern:", alert_id, "vertex degree", in_d, "->", n, "->", out_d)
                 return False
-        elif d == 0:
+        elif out_d == 0:
             bene = n
-            mid_accts.append(n)
-            if in_degrees[n] != num_mid:
+            if in_d != num_mid:
+                print("Not a scatter-gather pattern:", alert_id, "vertex degree", in_d, "->", n, "->", out_d)
                 return False
-        elif d == 1:
-            if in_degrees[n] != 1:
+        elif out_d == 1:
+            mid_accts.append(n)
+            if in_d != 1:
+                print("Not a scatter-gather pattern:", alert_id, "vertex degree", in_d, "->", n, "->", out_d)
                 return False
         else:
+            print("Not a scatter-gather pattern:", alert_id, "vertex degree", in_d, "->", n, "->", out_d)
             return False
     if len(mid_accts) != num_mid:  # Mismatched the number of intermediate accounts
+        print("Not a scatter-gather pattern:", alert_id)
         return False
 
     if is_ordered:
         for mid in mid_accts:
             scatter_attr = alert_sub_g.get_edge_data(orig, mid)
             gather_attr = alert_sub_g.get_edge_data(mid, bene)
-            if scatter_attr is None or gather_attr is None:
+            if scatter_attr is None:
+                print("Not a scatter-gather pattern:", alert_id, "scatter edge", orig, "->", mid, "not found")
                 return False  # No scatter or gather edges found
+            elif gather_attr is None:
+                print("Not a scatter-gather pattern:", alert_id, "gather edge", mid, "->", bene, "not found")
 
             scatter_date = scatter_attr["date"]
             gather_date = gather_attr["date"]
             if scatter_date > gather_date:
+                print("Chronologically unordered scatter-gather:", alert_id)
                 return False  # Chronologically unordered
             scatter_amount = scatter_attr["amount"]
             gather_amount = gather_attr["amount"]
             if scatter_amount <= gather_amount:
+                print("Unordered amount scatter-gather:", alert_id)
                 return False  # The intermediate account must get margin
 
     return True
 
 
 def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
+    alert_id = alert_sub_g.graph["alert_id"]
     num_accts = alert_sub_g.number_of_nodes()
     out_degrees = alert_sub_g.out_degree()
     in_degrees = alert_sub_g.in_degree()
@@ -228,6 +250,7 @@ def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
     num_bene = len(bene_accts)
     hub_accts = [n for n, d in out_degrees.items() if d == num_bene and in_degrees[n] == num_orig]
     if len(hub_accts) != 1 or (num_orig + num_bene + 1) != num_accts:
+        print("Not a gather-scatter pattern:", alert_id)
         return False  # Mismatched the number of accounts
 
     hub = hub_accts[0]
@@ -236,7 +259,8 @@ def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
     for orig in orig_accts:
         attr = alert_sub_g.get_edge_data(orig, hub)
         if attr is None:
-            return False  # No scatter edges found
+            print("Not a gather-scatter pattern:", alert_id, "gather edge", orig, "->", hub, "not found")
+            return False  # No gather edges found
         date = attr["date"]
         amount = attr["amount"]
         last_gather_date = max(last_gather_date, date)
@@ -250,7 +274,11 @@ def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
                 return False
             date = attr["date"]
             amount = attr["amount"]
-            if date < last_gather_date or max_scatter_amount <= amount:
+            if date < last_gather_date:
+                print("Chronologically unordered gather-scatter:", alert_id)
+                return False
+            elif max_scatter_amount <= amount:
+                print("Unordered amount gather-scatter")
                 return False
 
     return True
@@ -270,8 +298,8 @@ class AlertValidator:
             self.schema = json.load(rf)
 
         # Load an alert (AML typology) parameter file
-        alert_param_file = self.conf["input"]["alert_patterns"]
-        alert_param_path = os.path.join(self.input_dir, alert_param_file)
+        self.alert_param_file = self.conf["input"]["alert_patterns"]
+        alert_param_path = os.path.join(self.input_dir, self.alert_param_file)
         schema_file = self.conf["input"]["schema"]
         schema_path = os.path.join(self.input_dir, schema_file)
         self.alert_params = load_alert_param(alert_param_path)
@@ -291,10 +319,12 @@ class AlertValidator:
             raise KeyError("No such alert ID: " + alert_id)
         sub_g = self.alert_graphs[alert_id]
         alert_type = sub_g.graph["alert_type"]
-        for param in self.alert_params:
+        for line_num, param in self.alert_params.items():
             if param["type"] != alert_type:
                 continue
             if satisfies_params(sub_g, param):
+                print("The alert %s subgraph is matched with %s:%d, data %s" %
+                      (alert_id, self.alert_param_file, line_num, str(param)))
                 if param["count"] == 0:
                     # alert_type = param["type"]
                     min_acct, max_acct = param["accounts"]
@@ -307,7 +337,7 @@ class AlertValidator:
                     param["count"] -= 1
                 break
         else:
-            print("The alert subgraph with ID %s does not satisfy any parameters" % alert_id)
+            print("The alert subgraph (%s, %s) does not satisfy any parameter sets" % (alert_id, alert_type))
 
     def validate_all(self):
         for alert_id in self.alert_graphs.keys():

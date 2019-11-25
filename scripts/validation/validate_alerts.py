@@ -311,9 +311,6 @@ class AlertValidator:
             schema = json.load(_rf)
         self.alert_graphs = load_alert_tx(schema["alert_tx"], alert_tx_path)
 
-        # for alert_id, sub_g in self.alert_graphs.items():
-        #     print(alert_id, sub_g.edges(data=True))
-
     def validate_single(self, alert_id):
         if alert_id not in self.alert_graphs:
             raise KeyError("No such alert ID: " + alert_id)

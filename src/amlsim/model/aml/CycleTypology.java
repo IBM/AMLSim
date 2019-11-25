@@ -4,6 +4,7 @@
 
 package amlsim.model.aml;
 
+import amlsim.AMLSim;
 import amlsim.Account;
 
 import java.util.*;
@@ -35,6 +36,7 @@ public class CycleTypology extends AMLTypology {
         int totalStep = (int)(endStep - startStep + 1);
         int defaultInterval = Math.max(totalStep / length, 1);
         this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
+        this.endStep = Math.min(this.startStep + totalStep, AMLSim.getNumOfSteps());
 
         if(modelID == FIXED_INTERVAL){  // Ordered, same interval
             long range = endStep - startStep + 1;
@@ -59,6 +61,7 @@ public class CycleTypology extends AMLTypology {
                 Arrays.sort(steps);  // Ordered
             }
         }
+//        System.out.println(Arrays.toString(steps));
     }
 
     @Override

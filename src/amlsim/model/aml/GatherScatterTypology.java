@@ -24,6 +24,7 @@ public class GatherScatterTypology extends AMLTypology {
     @Override
     public void setParameters(int modelID) {
         middleStep = (startStep + endStep) / 2;
+//        System.out.println(startStep + " " + middleStep + " " + endStep);
 
         int numSubMembers = alert.getMembers().size() - 1;
         int numOrigMembers = numSubMembers / 2;
@@ -49,10 +50,13 @@ public class GatherScatterTypology extends AMLTypology {
             }
         }
 
-        for(int i=0; i<numOrigMembers; i++){
+        // Ensure the range of transaction periods
+        gatherSteps[0] = startStep;
+        for(int i=1; i<numOrigMembers; i++){
             gatherSteps[i] = getRandomStepRange(startStep, middleStep);
         }
-        for(int i=0; i<numBeneMembers; i++){
+        scatterSteps[0] = endStep;
+        for(int i=1; i<numBeneMembers; i++){
             scatterSteps[i] = getRandomStepRange(middleStep, endStep);
         }
     }
@@ -75,6 +79,7 @@ public class GatherScatterTypology extends AMLTypology {
                     Account orig = origAccts.get(i);
                     Account bene = alert.getMainAccount();
                     float amount = getRandomAmount();
+//                    System.out.println(this.minAmount + " " + amount + " " + this.maxAmount);
                     sendTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
                 }
@@ -90,7 +95,7 @@ public class GatherScatterTypology extends AMLTypology {
         }
         if(step == middleStep){  // Define the amount of scatter transactions
             float margin = totalReceivedAmount * marginRatio;
-            scatterAmount = Math.max((totalReceivedAmount - margin) / numScatters, minAmount);
+            scatterAmount = (totalReceivedAmount - margin) / numScatters;
         }
     }
 

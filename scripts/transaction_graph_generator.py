@@ -714,9 +714,9 @@ class TransactionGenerator:
                 add_node(n, sub_bank_id)
 
             for orig in sub_accts:
-                gather_amount = init_amount
+                amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, main_acct, gather_amount, date)
+                add_edge(orig, main_acct, amount, date)
 
         elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
             main_acct = random.sample(self.main_acct_candidates, 1)[0]
@@ -734,9 +734,9 @@ class TransactionGenerator:
                 add_node(n, sub_bank_id)
 
             for bene in sub_accts:
-                gather_amount = init_amount
+                amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(main_acct, bene, gather_amount, date)
+                add_edge(main_acct, bene, amount, date)
 
         elif typology_name == "bipartite":  # bipartite (originators -> many-to-many -> beneficiaries)
             orig_bank_id = random.choice(self.get_all_bank_ids())
@@ -760,9 +760,9 @@ class TransactionGenerator:
                 add_node(n, bene_bank_id)
 
             for orig, bene in itertools.product(orig_accts, bene_accts):  # All-to-all transaction edges
-                gather_amount = init_amount
+                amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, bene, gather_amount, date)
+                add_edge(orig, bene, amount, date)
 
         elif typology_name == "stack":  # stacked bipartite layers
             if is_external:
@@ -795,17 +795,17 @@ class TransactionGenerator:
                 add_node(n, bene_bank_id)
 
             for orig, bene in itertools.product(orig_accts, mid_accts):  # all-to-all transactions
-                gather_amount = init_amount
+                amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, bene, gather_amount, date)
+                add_edge(orig, bene, amount, date)
 
             for orig, bene in itertools.product(mid_accts, bene_accts):  # all-to-all transactions
-                gather_amount = init_amount
+                amount = init_amount
                 date = random.randrange(start_date, end_date)
-                add_edge(orig, bene, gather_amount, date)
+                add_edge(orig, bene, amount, date)
 
         elif typology_name == "random":  # Random transactions among members
-            gather_amount = init_amount
+            amount = init_amount
             date = random.randrange(start_date, end_date)
 
             if is_external:
@@ -819,7 +819,7 @@ class TransactionGenerator:
                     if prev_acct is None:
                         main_acct = next_acct
                     else:
-                        add_edge(prev_acct, next_acct, gather_amount, date)
+                        add_edge(prev_acct, next_acct, amount, date)
                     self.remove_typology_candidate(next_acct)
                     add_node(next_acct, bank_id)
                     prev_acct = next_acct
@@ -836,11 +836,11 @@ class TransactionGenerator:
                 prev_acct = main_acct
                 for _ in range(num_accounts - 1):
                     next_acct = random.choice([n for n in sub_accts if n != prev_acct])
-                    add_edge(prev_acct, next_acct, gather_amount, date)
+                    add_edge(prev_acct, next_acct, amount, date)
                     prev_acct = next_acct
 
         elif typology_name == "cycle":  # Cycle transactions
-            gather_amount = init_amount
+            amount = init_amount
             dates = sorted([random.randrange(start_date, end_date) for _ in range(num_accounts)])
 
             if is_external:
@@ -879,9 +879,9 @@ class TransactionGenerator:
                 bene_acct = all_accts[bene_i]
                 date = dates[i]
 
-                add_edge(orig_acct, bene_acct, gather_amount, date)
-                margin = gather_amount * self.margin_ratio  # Margin the beneficiary account can gain
-                gather_amount = gather_amount - margin  # max(amount - margin, min_amount)
+                add_edge(orig_acct, bene_acct, amount, date)
+                margin = amount * self.margin_ratio  # Margin the beneficiary account can gain
+                amount = amount - margin  # max(amount - margin, min_amount)
 
         elif typology_name == "scatter_gather":  # Scatter-Gather (fan-out -> fan-in)
             if is_external:
@@ -911,12 +911,12 @@ class TransactionGenerator:
                 mid_acct = mid_accts[i]
                 scatter_amount = init_amount
                 margin = scatter_amount * self.margin_ratio  # Margin of the intermediate account
-                gather_amount = scatter_amount - margin
+                amount = scatter_amount - margin
                 scatter_date = random.randrange(start_date, mid_date)
                 gather_date = random.randrange(mid_date, end_date)
 
                 add_edge(orig_acct, mid_acct, scatter_amount, scatter_date)
-                add_edge(mid_acct, bene_acct, gather_amount, gather_date)
+                add_edge(mid_acct, bene_acct, amount, gather_date)
 
         elif typology_name == "gather_scatter":  # Gather-Scatter (fan-in -> fan-out)
             if is_external:
@@ -945,22 +945,22 @@ class TransactionGenerator:
             accumulated_amount = 0.0
             mid_date = (start_date + end_date) // 2
             # print(start_date, mid_date, end_date)
+            amount = init_amount
 
             for i in range(num_orig_accts):
                 orig_acct = orig_accts[i]
-                gather_amount = init_amount
                 date = random.randrange(start_date, mid_date)
-                add_edge(orig_acct, mid_acct, gather_amount, date)
-                accumulated_amount += gather_amount
+                add_edge(orig_acct, mid_acct, amount, date)
+                accumulated_amount += amount
                 # print(orig_acct, "->", date, "->", mid_acct)
 
-            margin = accumulated_amount * self.margin_ratio  # Margin of the intermediate (main) account
-            scatter_amount = (accumulated_amount - margin) / num_bene_accts
+            # margin = accumulated_amount * self.margin_ratio  # Margin of the intermediate (main) account
+            # scatter_amount = (accumulated_amount - margin) / num_bene_accts
 
             for i in range(num_bene_accts):
                 bene_acct = bene_accts[i]
                 date = random.randrange(mid_date, end_date)
-                add_edge(mid_acct, bene_acct, scatter_amount, date)
+                add_edge(mid_acct, bene_acct, amount, date)
                 # print(mid_acct, "->", date, "->", bene_acct)
             # print(orig_accts, mid_acct, bene_accts)
 

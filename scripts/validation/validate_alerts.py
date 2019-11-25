@@ -107,6 +107,13 @@ def satisfies_params(alert_sub_g, param):
     init_amount = [attr["amount"] for attr in tx_attrs if attr["date"] == start_date][0]
     alert_type = param["type"]
 
+    if alert_type == "cycle" and not is_cycle(alert_sub_g):
+        return False
+    elif alert_type == "scatter_gather" and not is_scatter_gather(alert_sub_g):
+        return False
+    elif alert_type == "gather_scatter" and not is_gather_scatter(alert_sub_g):
+        return False
+
     min_acct, max_acct = param["accounts"]
     if not min_acct <= num_accounts <= max_acct:
         return False
@@ -119,17 +126,16 @@ def satisfies_params(alert_sub_g, param):
     return True
 
 
-def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool):
+def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
     edges = alert_sub_g.edges(data=True)
-    num_accts = alert_sub_g.number_of_nodes()
-    cycles = list(nx.simple_cycles(alert_sub_g))
+    cycles = list(nx.simple_cycles(alert_sub_g))  # Use simple_cycles function directly (subgraph is small enough)
     if len(cycles) != 1:
         return False
     if is_ordered:
         edges.sort(key=lambda e: e[2]["date"])
         next_orig = None
         next_amt = sys.float_info.max
-        next_date = "0000-00-00"
+        next_date = datetime.strptime("1970-01-01", "%Y-%m-%d")
         for orig, bene, attr in edges:
             if next_orig is not None and orig != next_orig:
                 return False
@@ -147,6 +153,90 @@ def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool):
                 return False
             else:
                 next_date = date
+    return True
+
+
+def is_scatter_gather(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
+    num_accts = alert_sub_g.number_of_nodes()
+    num_mid = num_accts - 2
+    out_degrees = alert_sub_g.out_degree()
+    in_degrees = alert_sub_g.in_degree()
+    orig = None
+    bene = None
+    mid_accts = list()
+    for n, d in out_degrees.items():
+        if d == num_mid:
+            orig = n
+            if in_degrees[n] != 0:
+                return False
+        elif d == 0:
+            bene = n
+            mid_accts.append(n)
+            if in_degrees[n] != num_mid:
+                return False
+        elif d == 1:
+            if in_degrees[n] != 1:
+                return False
+        else:
+            return False
+    if len(mid_accts) != num_mid:  # Mismatched the number of intermediate accounts
+        return False
+
+    if is_ordered:
+        for mid in mid_accts:
+            scatter_attr = alert_sub_g.get_edge_data(orig, mid)
+            gather_attr = alert_sub_g.get_edge_data(mid, bene)
+            if scatter_attr is None or gather_attr is None:
+                return False  # No scatter or gather edges found
+
+            scatter_date = scatter_attr["date"]
+            gather_date = gather_attr["date"]
+            if scatter_date > gather_date:
+                return False  # Chronologically unordered
+            scatter_amount = scatter_attr["amount"]
+            gather_amount = gather_attr["amount"]
+            if scatter_amount <= gather_amount:
+                return False  # The intermediate account must get margin
+
+    return True
+
+
+def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
+    num_accts = alert_sub_g.number_of_nodes()
+    out_degrees = alert_sub_g.out_degree()
+    in_degrees = alert_sub_g.in_degree()
+
+    orig_accts = [n for n, d in out_degrees.items() if d == 1 and in_degrees[n] == 0]
+    bene_accts = [n for n, d in in_degrees.items() if d == 1 and out_degrees[n] == 0]
+    num_orig = len(orig_accts)
+    num_bene = len(bene_accts)
+    hub_accts = [n for n, d in out_degrees.items() if d == num_bene and in_degrees[n] == num_orig]
+    if len(hub_accts) != 1 or (num_orig + num_bene + 1) != num_accts:
+        return False  # Mismatched the number of accounts
+
+    hub = hub_accts[0]
+    last_gather_date = datetime.strptime("1970-01-01", "%Y-%m-%d")
+    total_gather_amount = 0.0
+    for orig in orig_accts:
+        attr = alert_sub_g.get_edge_data(orig, hub)
+        if attr is None:
+            return False  # No scatter edges found
+        date = attr["date"]
+        amount = attr["amount"]
+        last_gather_date = max(last_gather_date, date)
+        total_gather_amount += amount
+
+    if is_ordered:
+        max_scatter_amount = total_gather_amount / num_bene
+        for bene in bene_accts:
+            attr = alert_sub_g.get_edge_data(hub, bene)
+            if attr is None:
+                return False
+            date = attr["date"]
+            amount = attr["amount"]
+            if date < last_gather_date or max_scatter_amount <= amount:
+                return False
+
     return True
 
 

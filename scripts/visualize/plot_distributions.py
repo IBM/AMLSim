@@ -168,21 +168,21 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     fig, axs = plt.subplots(2, 2, figsize=(16, 12))
     ax1, ax2, ax3, ax4 = axs[0, 0], axs[0, 1], axs[1, 0], axs[1, 1]
 
-    pw_result = powerlaw.Fit(in_degrees)
+    pw_result = powerlaw.Fit(in_degrees, verbose=False)
     alpha = pw_result.power_law.alpha
-    alpha_text = "alpha = %f" % alpha
+    alpha_text = "alpha = %.2f" % alpha
     ax1.loglog(in_deg_seq, in_deg_hist, "bo-")
     ax1.set_title("Expected in-degree distribution")
-    plt.text(0.8, 0.9, alpha_text, transform=ax1.transAxes)
+    plt.text(0.75, 0.9, alpha_text, transform=ax1.transAxes)
     ax1.set_xlabel("In-degree")
     ax1.set_ylabel("Number of account vertices")
 
-    pw_result = powerlaw.Fit(out_degrees)
+    pw_result = powerlaw.Fit(out_degrees, verbose=False)
     alpha = pw_result.power_law.alpha
-    alpha_text = "alpha = %f" % alpha
+    alpha_text = "alpha = %.2f" % alpha
     ax2.loglog(out_deg_seq, out_deg_hist, "ro-")
     ax2.set_title("Expected out-degree distribution")
-    plt.text(0.8, 0.9, alpha_text, transform=ax2.transAxes)
+    plt.text(0.75, 0.9, alpha_text, transform=ax2.transAxes)
     ax2.set_xlabel("Out-degree")
     ax2.set_ylabel("Number of account vertices")
 
@@ -190,24 +190,24 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     in_degrees = list(_g.in_degree().values())
     in_deg_seq = sorted(set(in_degrees), reverse=True)
     in_deg_hist = [in_degrees.count(x) for x in in_deg_seq]
-    pw_result = powerlaw.Fit(in_degrees)
+    pw_result = powerlaw.Fit(in_degrees, verbose=False)
     alpha = pw_result.power_law.alpha
-    alpha_text = "alpha = %f" % alpha
+    alpha_text = "alpha = %.2f" % alpha
     ax3.loglog(in_deg_seq, in_deg_hist, "bo-")
     ax3.set_title("Output in-degree distribution")
-    plt.text(0.8, 0.9, alpha_text, transform=ax3.transAxes)
+    plt.text(0.75, 0.9, alpha_text, transform=ax3.transAxes)
     ax3.set_xlabel("In-degree")
     ax3.set_ylabel("Number of account vertices")
 
     out_degrees = list(_g.out_degree().values())
     out_deg_seq = sorted(set(out_degrees), reverse=True)
     out_deg_hist = [out_degrees.count(x) for x in out_deg_seq]
-    pw_result = powerlaw.Fit(out_degrees)
+    pw_result = powerlaw.Fit(out_degrees, verbose=False)
     alpha = pw_result.power_law.alpha
-    alpha_text = "alpha = %f" % alpha
+    alpha_text = "alpha = %.2f" % alpha
     ax4.loglog(out_deg_seq, out_deg_hist, "ro-")
     ax4.set_title("Output out-degree distribution")
-    plt.text(0.8, 0.9, alpha_text, transform=ax4.transAxes)
+    plt.text(0.75, 0.9, alpha_text, transform=ax4.transAxes)
     ax4.set_xlabel("Out-degree")
     ax4.set_ylabel("Number of account vertices")
 
@@ -225,6 +225,7 @@ def plot_wcc_distribution(_g, _plot_img):
     size_seq = sorted(wcc_sizes.keys())
     size_hist = [wcc_sizes[x] for x in size_seq]
 
+    plt.figure(figsize=(16, 12))
     plt.clf()
     plt.loglog(size_seq, size_hist, 'ro-')
     plt.title("WCC Size Distribution")
@@ -237,7 +238,8 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
 
     alert_member_count = Counter()
     alert_tx_count = Counter()
-    alert_amounts = defaultdict(list)
+    alert_init_amount = dict()  # Initial amount
+    alert_amount_list = defaultdict(list)  # All amount list
     alert_dates = defaultdict(list)
     alert_sar_flag = defaultdict(bool)
     alert_types = dict()
@@ -275,7 +277,7 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
             alert_member_count[alert_id] += 1
             alert_sar_flag[alert_id] = is_sar
             alert_types[alert_id] = alert_type
-            label = alert_type + ":" + ("SAR" if is_sar else "Normal")
+            label = ("SAR" if is_sar else "Normal") + ":" + alert_type
             label_alerts[label].append(alert_id)
 
     tx_schema = _schema["alert_tx"]
@@ -299,7 +301,9 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
             date = datetime.strptime(date_str, "%Y-%m-%d")
 
             alert_tx_count[alert_id] += 1
-            alert_amounts[alert_id].append(amount)
+            if alert_id not in alert_init_amount:
+                alert_init_amount[alert_id] = amount
+            alert_amount_list[alert_id].append(amount)
             alert_dates[alert_id].append(date)
 
     # Scatter plot for all alerts
@@ -310,14 +314,19 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
     for i, (label, alerts) in enumerate(label_alerts.items()):
         color = cmap(i)
         x = [alert_member_count[a] for a in alerts]
-        y_med = np.array([np.median(alert_amounts[a]) for a in alerts])
-        y_min = np.array([min(alert_amounts[a]) for a in alerts])
-        y_max = np.array([max(alert_amounts[a]) for a in alerts])
-        y_err = [y_med - y_min, y_max - y_med]
-        ax1.scatter(x, y_med, s=50, color=color, label=label, edgecolors="none")
-        ax1.errorbar(x, y_med, yerr=y_err, ecolor=color, ls="none")
+        y_init = np.array([alert_init_amount[a] for a in alerts])
+        # y_med = np.array([np.median(alert_amount_list[a]) for a in alerts])
+        # y_min = np.array([min(alert_amount_list[a]) for a in alerts])
+        # y_max = np.array([max(alert_amount_list[a]) for a in alerts])
+        # y_err = [y_med - y_min, y_max - y_med]
+
+        ax1.scatter(x, y_init, s=50, color=color, label=label, edgecolors="none")
         for j, alert_id in enumerate(alerts):
-            ax1.annotate(alert_id, (x[j], y_med[j]))
+            ax1.annotate(alert_id, (x[j], y_init[j]))
+        # ax1.scatter(x, y_med, s=50, color=color, label=label, edgecolors="none")
+        # ax1.errorbar(x, y_med, yerr=y_err, ecolor=color, ls="none")
+        # for j, alert_id in enumerate(alerts):
+        #     ax1.annotate(alert_id, (x[j], y_med[j]))
 
         x = [alert_tx_count[a] for a in alerts]
         y_period = [(max(alert_dates[a]) - min(alert_dates[a])).days + 1
@@ -327,7 +336,8 @@ def plot_alert_stat(_alert_acct_csv, _alert_tx_csv, _schema, _plot_img):
             ax2.annotate(alert_id, (x[j], y_period[j]))
 
     ax1.set_xlabel("Number of accounts per alert")
-    ax1.set_ylabel("Min/Median/Max transaction amount")
+    ax1.set_ylabel("Initial transaction amount")
+    # ax1.set_ylabel("Min/Median/Max transaction amount")
     ax1.legend()
     ax2.set_xlabel("Number of transactions per alert")
     ax2.set_ylabel("Transaction period")
@@ -366,6 +376,7 @@ def plot_aml_rule(aml_csv, _plot_img):
         x.append(aml_type)
         y.append(num)
 
+    plt.figure(figsize=(16, 12))
     plt.clf()
     plt.bar(range(len(x)), y, tick_label=x)
     plt.title("AML typologies")
@@ -394,6 +405,7 @@ def plot_tx_count(_g, _plot_img):
     normal_tx_list = [normal_tx_count[d] for d in date_list]
     sar_tx_list = [sar_tx_count[d] for d in date_list]
 
+    plt.figure(figsize=(16, 12))
     plt.clf()
     p_n = plt.plot(date_list, normal_tx_list, "b")
     p_f = plt.plot(date_list, sar_tx_list, "r")
@@ -430,6 +442,7 @@ def plot_clustering_coefficient(_g, _plot_img, interval=10):
             sample_dates.append(t)
             values.append(v)
 
+    plt.figure(figsize=(16, 12))
     plt.clf()
     plt.plot(sample_dates, values, 'bo-')
     plt.title("Clustering Coefficient Transition")
@@ -459,6 +472,7 @@ def plot_diameter(dia_csv, _plot_img):
             dia.append(d)
             aver.append(a)
 
+    plt.figure(figsize=(16, 12))
     plt.clf()
     plt.ylim(0, max(dia) + 1)
     p_d = plt.plot(x, dia, "r")
@@ -530,7 +544,7 @@ if __name__ == "__main__":
     alert_acct_path = os.path.join(data_dir, alert_acct_csv)
     alert_tx_path = os.path.join(data_dir, alert_tx_csv)
 
-    plot_alert_stat(alert_acct_path, alert_tx_path, schema, "alert_dist.png")
+    plot_alert_stat(alert_acct_path, alert_tx_path, schema, os.path.join(output_path, "alert_dist.png"))
     plot_tx_count(g, os.path.join(output_path, count_plot))
 
     plot_clustering_coefficient(g, os.path.join(output_path, cc_plot))

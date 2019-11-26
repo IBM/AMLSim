@@ -50,7 +50,7 @@ public class GatherScatterTypology extends AMLTypology {
             }
         }
 
-        // Ensure the range of transaction periods
+        // Ensure the specified period
         gatherSteps[0] = startStep;
         for(int i=1; i<numOrigMembers; i++){
             gatherSteps[i] = getRandomStepRange(startStep, middleStep);

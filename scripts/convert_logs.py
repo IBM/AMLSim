@@ -769,6 +769,9 @@ class LogConverter:
                 alert_row = self.schema.get_alert_tx_row(alert_id, alert_type, is_sar, tx_id, orig_id, dest_id,
                                                          ttype, amount, date_str, **attr)
                 alert_tx_writer.writerow(alert_row)
+
+            if tx_id % 1000000 == 0:
+                print("Converted %d transactions." % tx_id)
             tx_id += 1
 
         in_tx_f.close()

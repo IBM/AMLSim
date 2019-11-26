@@ -677,12 +677,12 @@ class TransactionGenerator:
             is_external = False
 
         start_date = random.randrange(0, self.total_steps - period)
-        end_date = start_date + period
+        end_date = start_date + period - 1
 
         # Create subgraph structure with transaction attributes
         model_id = self.alert_types[typology_name]  # alert model ID
-        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule, start=start_date,
-                                end=end_date)  # Transaction subgraph for a typology
+        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
+                                start=start_date, end=end_date)  # Transaction subgraph for a typology
 
         # Set bank ID attribute to a member account
         def add_node(_n, _bank_id):
@@ -1100,6 +1100,12 @@ if __name__ == "__main__":
         txg.count_fan_in_out_patterns(degree_threshold)
     txg.set_main_acct_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
+
+    # in_deg = Counter(txg.g.in_degree().values())
+    # out_deg = Counter(txg.g.out_degree().values())
+    # print(in_deg)
+    # print(out_deg)
+
     if degree_threshold > 0:
         print("Added alert transaction patterns")
         txg.count_fan_in_out_patterns(degree_threshold)

@@ -187,8 +187,8 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     ax2.set_ylabel("Number of account vertices")
 
     # Get degree from the output transaction list
-    in_degrees = list(_g.in_degree().values())
-    in_deg_seq = sorted(set(in_degrees), reverse=True)
+    in_degrees = [len(_g.pred[n].keys()) for n in _g.nodes()]  # list(_g.in_degree().values())
+    in_deg_seq = sorted(set(in_degrees))
     in_deg_hist = [in_degrees.count(x) for x in in_deg_seq]
     pw_result = powerlaw.Fit(in_degrees, verbose=False)
     alpha = pw_result.power_law.alpha
@@ -199,8 +199,9 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     ax3.set_xlabel("In-degree")
     ax3.set_ylabel("Number of account vertices")
 
-    out_degrees = list(_g.out_degree().values())
-    out_deg_seq = sorted(set(out_degrees), reverse=True)
+    out_degrees = [len(_g.succ[n].keys()) for n in _g.nodes()]  # list(_g.out_degree().values())
+    # print("max out-degree", max(out_degrees))
+    out_deg_seq = sorted(set(out_degrees))
     out_deg_hist = [out_degrees.count(x) for x in out_deg_seq]
     pw_result = powerlaw.Fit(out_degrees, verbose=False)
     alpha = pw_result.power_law.alpha
@@ -441,6 +442,7 @@ def plot_clustering_coefficient(_g, _plot_img, interval=30):
             v = nx.average_clustering(gg) if gg.number_of_nodes() else 0.0
             sample_dates.append(t)
             values.append(v)
+            print("Clustering coefficient at %s: %f" % (str(t), v))
 
     plt.figure(figsize=(16, 12))
     plt.clf()

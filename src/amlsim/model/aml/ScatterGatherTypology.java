@@ -17,8 +17,8 @@ public class ScatterGatherTypology extends AMLTypology {
     private float scatterAmount;
     private float gatherAmount;
 
-    ScatterGatherTypology(float minAmount, float maxAmount, int startStep, int maxStep) {
-        super(minAmount, maxAmount, startStep, maxStep);
+    ScatterGatherTypology(float minAmount, float maxAmount, int startStep, int endStep) {
+        super(minAmount, maxAmount, startStep, endStep);
     }
 
     @Override
@@ -44,7 +44,10 @@ public class ScatterGatherTypology extends AMLTypology {
         gatherSteps = new long[size];
 
         long middleStep = (endStep + startStep) / 2;
-        for (int i = 0; i < size; i++) {
+        // Ensure the specified period
+        scatterSteps[0] = startStep;
+        gatherSteps[0] = endStep;
+        for (int i = 1; i < size; i++) {
             scatterSteps[i] = getRandomStepRange(startStep, middleStep);
             gatherSteps[i] = getRandomStepRange(middleStep, endStep);
         }

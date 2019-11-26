@@ -18,8 +18,8 @@ public class CycleTypology extends AMLTypology {
     private long[] steps;  // Array of simulation steps when each transaction is scheduled to be made
     private float amount = 0.0F;  // Current transaction amount
 
-    CycleTypology(float minAmount, float maxAmount, int minStep, int maxStep){
-        super(minAmount, maxAmount, minStep, maxStep);
+    CycleTypology(float minAmount, float maxAmount, int startStep, int endStep){
+        super(minAmount, maxAmount, startStep, endStep);
     }
 
     /**
@@ -34,28 +34,33 @@ public class CycleTypology extends AMLTypology {
         steps = new long[length];
 
         int allStep = (int)AMLSim.getNumOfSteps();
-        int totalStep = (int)(endStep - startStep + 1);
-        int defaultInterval = Math.max(totalStep / length, 1);
-        this.startStep = generateStartStep(allStep - totalStep);  //  decentralize the first transaction step
-        this.endStep = Math.min(this.startStep + totalStep, allStep);
+        int period = (int)(endStep - startStep);
+        int defaultInterval = Math.max(period / length, 1);
+        this.startStep = generateStartStep(allStep - period);  //  decentralize the first transaction step
+        this.endStep = Math.min(this.startStep + period, allStep);
 
         if(modelID == FIXED_INTERVAL){  // Ordered, same interval
-            long range = endStep - startStep + 1;
-            if(length < range){
-                this.interval = (int)(range / length); // If there is enough number of available steps, make transaction with interval
-                for(int i=0; i<length; i++){
-                    steps[i] = startStep + interval*i;
+            period = (int)(endStep - startStep);
+            if(length < period){
+                this.interval = period / length; // If there is enough number of available steps, make transaction with interval
+                for(int i=0; i<length-1; i++){
+                    steps[i] = startStep + interval * i;
                 }
+                steps[length-1] = endStep;
             }else{
                 this.interval = 1;
-                long batch = length / range;  // Because of too many transactions, make one or more transactions per step
-                for(int i=0; i<length; i++){
-                    steps[i] = startStep + i/batch;
+                long batch = length / period;  // Because of too many transactions, make one or more transactions per step
+                for(int i=0; i<length-1; i++){
+                    steps[i] = startStep + i / batch;
                 }
+                steps[length-1] = endStep;
             }
         }else if(modelID == RANDOM_INTERVAL || modelID == UNORDERED){  // Random interval
             this.interval = 1;
-            for(int i=0; i<length; i++){
+            // Ensure the specified period
+            steps[0] = startStep;
+            steps[1] = endStep;
+            for(int i=2; i<length; i++){
                 steps[i] = getRandomStep();
             }
             if(modelID == RANDOM_INTERVAL){

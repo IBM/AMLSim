@@ -33,10 +33,11 @@ public class CycleTypology extends AMLTypology {
         int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
 
+        int allStep = (int)AMLSim.getNumOfSteps();
         int totalStep = (int)(endStep - startStep + 1);
         int defaultInterval = Math.max(totalStep / length, 1);
-        this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
-        this.endStep = Math.min(this.startStep + totalStep, AMLSim.getNumOfSteps());
+        this.startStep = generateStartStep(allStep - totalStep);  //  decentralize the first transaction step
+        this.endStep = Math.min(this.startStep + totalStep, allStep);
 
         if(modelID == FIXED_INTERVAL){  // Ordered, same interval
             long range = endStep - startStep + 1;

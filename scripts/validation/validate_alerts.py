@@ -49,7 +49,7 @@ def load_alert_param(_alert_param_csv):
             is_sar = row[sar_idx].lower() == "true"
             params = {"count": count, "type": alert_type, "ordered": is_ordered,
                       "accounts": accounts, "amount": amount, "period": period,
-                      "multiple_banks": is_multiple_banks, "sar": is_sar, "csv_text": ",".join(row)}
+                      "multiple_banks": is_multiple_banks, "sar": is_sar}
             param_data[line_num] = params
             line_num += 1
 
@@ -126,18 +126,18 @@ def satisfies_params(alert_sub_g, param):
 
     min_acct, max_acct = param["accounts"]
     if not min_acct <= num_accounts <= max_acct:
-        logging.info(alert_id + ": The number of accounts %d is not within [%d, %d]"
-                     % (num_accounts, min_acct, max_acct))
+        logging.info("Alert %s: The number of accounts %d is not within [%d, %d]"
+                     % (alert_id, num_accounts, min_acct, max_acct))
         return False
 
     min_amt, max_amt = param["amount"]
     if not min_amt <= init_amount <= max_amt:
-        logging.info(alert_id + ": The initial amount %f is not within [%f, %f]" % (init_amount, min_amt, max_amt))
+        logging.info("Alert %s: initial amount %f is not within [%f, %f]" % (alert_id, init_amount, min_amt, max_amt))
         return False
 
     min_period, max_period = param["period"]
     if not min_period <= period <= max_period:
-        logging.info(alert_id + ": The period %d is not within [%d, %d]" % (period, min_period, max_period))
+        logging.info("Alert %s: period %d is not within [%d, %d]" % (alert_id, period, min_period, max_period))
         return False
 
     return True
@@ -148,7 +148,7 @@ def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
     edges = alert_sub_g.edges(data=True)
     cycles = list(nx.simple_cycles(alert_sub_g))  # Use simple_cycles function directly (subgraph is small enough)
     if len(cycles) != 1:
-        logging.info("Not a cycle pattern: " + alert_id)
+        logging.info("Alert %s is not a cycle pattern" % alert_id)
         return False
     if is_ordered:
         edges.sort(key=lambda e: e[2]["date"])
@@ -157,20 +157,21 @@ def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
         next_date = datetime.strptime("1970-01-01", "%Y-%m-%d")
         for orig, bene, attr in edges:
             if next_orig is not None and orig != next_orig:
-                logging.info("Chronologically unordered cycle: " + alert_id)
+                logging.info("Alert %s is not a cycle pattern" % alert_id)
                 return False
             else:
                 next_orig = bene
 
             amount = attr["amount"]
             if amount == next_amt:
+                logging.info("Alert %s cycle transaction amounts are unordered" % alert_id)
                 return False
             else:
                 next_amt = amount
 
             date = attr["date"]
             if date < next_date:
-                logging.info("Unordered amount cycle: " + alert_id)
+                logging.info("Alert %s cycle transactions are chronologically unordered" % alert_id)
                 return False
             else:
                 next_date = date
@@ -191,23 +192,23 @@ def is_scatter_gather(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
         if out_d == num_mid:
             orig = n
             if in_d != 0:
-                logging.info("Not a scatter-gather pattern: %s, vertex degree %d -> %s -> %d"
+                logging.info("Alert %s is not a scatter-gather pattern: invalid vertex degree %d -> [%s] -> %d"
                              % (alert_id, in_d, n, out_d))
                 return False
         elif out_d == 0:
             bene = n
             if in_d != num_mid:
-                logging.info("Not a scatter-gather pattern: %s, vertex degree %d -> %s -> %d"
+                logging.info("Alert %s is not a scatter-gather pattern: invalid vertex degree %d -> [%s] -> %d"
                              % (alert_id, in_d, n, out_d))
                 return False
         elif out_d == 1:
             mid_accts.append(n)
             if in_d != 1:
-                logging.info("Not a scatter-gather pattern: %s, vertex degree %d -> %s -> %d"
+                logging.info("Alert %s is not a scatter-gather pattern: invalid vertex degree %d -> [%s] -> %d"
                              % (alert_id, in_d, n, out_d))
                 return False
         else:
-            logging.info("Not a scatter-gather pattern: %s, vertex degree %d -> %s -> %d"
+            logging.info("Alert %s is not a scatter-gather pattern: invalid vertex degree %d -> [%s] -> %d"
                          % (alert_id, in_d, n, out_d))
             return False
     if len(mid_accts) != num_mid:  # Mismatched the number of intermediate accounts
@@ -219,22 +220,22 @@ def is_scatter_gather(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
             scatter_attr = alert_sub_g.get_edge_data(orig, mid)
             gather_attr = alert_sub_g.get_edge_data(mid, bene)
             if scatter_attr is None:
-                logging.info("Not a scatter-gather pattern: %s, scatter edge %s -> %s not found"
+                logging.info("Alert %s is not a scatter-gather pattern: scatter edge %s -> %s not found"
                              % (alert_id, orig, mid))
                 return False  # No scatter or gather edges found
             elif gather_attr is None:
-                logging.info("Not a scatter-gather pattern: %s, gather edge %s -> %s not found"
+                logging.info("Alert %s is not a scatter-gather pattern: gather edge %s -> %s not found"
                              % (alert_id, mid, bene))
 
             scatter_date = scatter_attr["date"]
             gather_date = gather_attr["date"]
             if scatter_date > gather_date:
-                logging.info("Chronologically unordered scatter-gather: " + alert_id)
+                logging.info("Alert %s scatter-gather transactions are chronologically unordered" % alert_id)
                 return False  # Chronologically unordered
             scatter_amount = scatter_attr["amount"]
             gather_amount = gather_attr["amount"]
             if scatter_amount <= gather_amount:
-                logging.info("Unordered amount scatter-gather: " + alert_id)
+                logging.info("Alert %s scatter-gather transaction amounts are unordered" % alert_id)
                 return False  # The intermediate account must get margin
 
     return True
@@ -252,7 +253,7 @@ def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
     num_bene = len(bene_accts)
     hub_accts = [n for n, d in out_degrees.items() if d == num_bene and in_degrees[n] == num_orig]
     if len(hub_accts) != 1 or (num_orig + num_bene + 1) != num_accts:
-        logging.info("Not a gather-scatter pattern: " + alert_id)
+        logging.info("Alert %s is not a gather-scatter pattern" % alert_id)
         return False  # Mismatched the number of accounts
 
     hub = hub_accts[0]
@@ -261,7 +262,7 @@ def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
     for orig in orig_accts:
         attr = alert_sub_g.get_edge_data(orig, hub)
         if attr is None:
-            logging.info("Not a gather-scatter pattern: %s, gather edge %s -> %s not found"
+            logging.info("Alert %s is not a gather-scatter pattern: gather edge %s -> %s not found"
                          % (alert_id, orig, hub))
             return False  # No gather edges found
         date = attr["date"]
@@ -278,10 +279,10 @@ def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
             date = attr["date"]
             amount = attr["amount"]
             if date < last_gather_date:
-                logging.info("Chronologically unordered gather-scatter: " + alert_id)
+                logging.info("Alert %s gather-scatter transactions are chronologically unordered " % alert_id)
                 return False
             elif max_scatter_amount <= amount:
-                logging.info("Unordered amount gather-scatter")
+                logging.info("Alert %s gather-scatter transaction amounts are unordered" % alert_id)
                 return False
 
     return True
@@ -323,21 +324,22 @@ class AlertValidator:
             if param["type"] != alert_type:
                 continue
             if satisfies_params(sub_g, param):
-                logging.info("The alert %s subgraph is matched with %s:%d, data %s" %
+                logging.info("The alert %s subgraph matches the parameter %s:%d, data %s" %
                              (alert_id, self.alert_param_file, line_num, str(param)))
-                if param["count"] == 0:
-                    # alert_type = param["type"]
-                    min_acct, max_acct = param["accounts"]
-                    min_amt, max_amt = param["amount"]
-                    min_period, max_period = param["period"]
-                    logging.info("Too many alert subgraphs for the following parameters:",
-                                 "Type: %s, Accounts: [%d, %d], Amount: [%f, %f], Period: [%d, %d]" %
-                                 (alert_type, min_acct, max_acct, min_amt, max_amt, min_period, max_period))
-                else:
-                    param["count"] -= 1
+                # if param["count"] == 0:
+                #     # alert_type = param["type"]
+                #     min_acct, max_acct = param["accounts"]
+                #     min_amt, max_amt = param["amount"]
+                #     min_period, max_period = param["period"]
+                #     logging.info("Too many alert subgraphs for the following parameters:",
+                #                  "Type: %s, Accounts: [%d, %d], Amount: [%f, %f], Period: [%d, %d]" %
+                #                  (alert_type, min_acct, max_acct, min_amt, max_amt, min_period, max_period))
+                # else:
+                #     param["count"] -= 1
                 return True
-        else:
-            logging.warning("The alert subgraph (%s, %s) does not match any parameter sets" % (alert_id, alert_type))
+        else:  # No match any parameter sets
+            logging.warning("The alert subgraph (ID:%s, Type:%s) does not match any parameter sets"
+                            % (alert_id, alert_type))
             return False
 
     def validate_all(self):
@@ -356,7 +358,10 @@ if __name__ == "__main__":
         print("Usage: python3 %s [ConfJson] [LogFile]" % argv[0])
         exit(1)
 
-    logging.basicConfig(filename=argv[2])
+    log_file = argv[2]
+    # if os.path.exists(log_file):
+    #     os.remove(log_file)
+    logging.basicConfig(filename=log_file, filemode="w", level=logging.INFO)
 
     av = AlertValidator(argv[1])
     av.validate_all()

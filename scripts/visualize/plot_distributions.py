@@ -417,7 +417,7 @@ def plot_tx_count(_g, _plot_img):
     plt.savefig(_plot_img)
 
 
-def plot_clustering_coefficient(_g, _plot_img, interval=10):
+def plot_clustering_coefficient(_g, _plot_img, interval=30):
     """Plot the clustering coefficient transition
     :param _g: Transaction graph
     :param _plot_img: Output image file
@@ -515,6 +515,7 @@ if __name__ == "__main__":
         print("Transaction list CSV file %s not found." % tx_path)
         exit(1)
 
+    print("Constructing transaction graph")
     g = construct_graph(acct_path, tx_path, schema)
     output_path = os.path.join(output_dir, sim_name)
     if os.path.isdir(output_path):
@@ -530,13 +531,17 @@ if __name__ == "__main__":
     cc_plot = v_conf["clustering"]
     dia_plot = v_conf["diameter"]
 
+    print("Plot degree distributions")
     plot_degree_distribution(g, conf, os.path.join(output_path, deg_plot))
+
+    print("Plot weakly connected component size distribution")
     plot_wcc_distribution(g, os.path.join(output_path, wcc_plot))
 
     param_dir = conf["input"]["directory"]
     alert_param_file = conf["input"]["alert_patterns"]
     param_path = os.path.join(param_dir, alert_param_file)
     plot_path = os.path.join(output_path, alert_plot)
+    print("Plot AML typology count")
     plot_aml_rule(param_path, plot_path)
 
     alert_acct_csv = conf["output"]["alert_members"]
@@ -544,15 +549,20 @@ if __name__ == "__main__":
     alert_acct_path = os.path.join(data_dir, alert_acct_csv)
     alert_tx_path = os.path.join(data_dir, alert_tx_csv)
 
+    print("Plot alert attribute distributions")
     plot_alert_stat(alert_acct_path, alert_tx_path, schema, os.path.join(output_path, "alert_dist.png"))
+
+    print("Plot transaction count per date")
     plot_tx_count(g, os.path.join(output_path, count_plot))
 
+    print("Plot clustering coefficient of the transaction graph")
     plot_clustering_coefficient(g, os.path.join(output_path, cc_plot))
 
     dia_log = conf["output"]["diameter_log"]
     dia_path = os.path.join(data_dir, dia_log)
     if os.path.exists(dia_path):
         plot_img = os.path.join(output_path, dia_plot)
+        print("Plot diameter of the transaction graph")
         plot_diameter(dia_path, plot_img)
     else:
         print("Diameter log file %s not found." % dia_path)

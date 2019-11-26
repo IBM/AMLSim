@@ -115,6 +115,11 @@ python3 scripts/convert_logs.py conf.json
 python3 scripts/visualize/plot_distributions.py conf.json
 ```
 
+## 5. Validate alert transaction subgraphs by comparison with the parameter file (optional)
+```
+python3 scripts/validation/validate_alerts.py conf.json validation.log
+```
+
 
 
 ## Remove all log and generated image files from `outputs` directory and a temporal directory

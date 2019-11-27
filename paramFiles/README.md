@@ -1,4 +1,4 @@
-# Parameter files
+# Parameter CSV files
 
 ## Files and directories
 

@@ -117,7 +117,7 @@ python3 scripts/visualize/plot_distributions.py conf.json
 
 ## 5. Validate alert transaction subgraphs by comparison with the parameter file (optional)
 ```
-python3 scripts/validation/validate_alerts.py conf.json validation.log
+python3 scripts/validation/validate_alerts.py conf.json
 ```
 
 

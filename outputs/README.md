@@ -1,9 +1,18 @@
 # Output Directory
 
-All final output files will be generated to this directory. The directory and file names are defined at the "output" section of `conf.json`.
+All final output files will be generated under a subdirectory (the name is the same as the value of "simulation_name") of this directory.
+The directory and file names are defined at the "output" section of `conf.json`.
+
+For example, the account list CSV file will be output at `outputs/sample/accounts.csv`.
 
 ```json5
 {
+"general": {
+    "random_seed": 0,
+    "simulation_name": "sample",
+    "total_steps": 720,
+    "base_date": "2017-01-01"
+  },
 //...
 "output": {
     "directory": "outputs",  // Output directory

@@ -49,7 +49,7 @@ public class ScatterGatherTypology extends AMLTypology {
         gatherSteps[0] = endStep;
         for (int i = 1; i < size; i++) {
             scatterSteps[i] = getRandomStepRange(startStep, middleStep);
-            gatherSteps[i] = getRandomStepRange(middleStep, endStep);
+            gatherSteps[i] = getRandomStepRange(middleStep + 1, endStep);
         }
     }
 

@@ -629,7 +629,7 @@ class TransactionGenerator:
             # Generate transaction set
             count = 0
             for row in reader:
-                if row[0].startswith("#"):
+                if len(row) == 0 or row[0].startswith("#"):
                     continue
                 num_patterns = int(row[idx_num])  # Number of alert patterns
                 typology_name = row[idx_type]

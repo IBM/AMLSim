@@ -57,7 +57,7 @@ public class GatherScatterTypology extends AMLTypology {
         }
         scatterSteps[0] = endStep;
         for(int i=1; i<numBeneMembers; i++){
-            scatterSteps[i] = getRandomStepRange(middleStep, endStep);
+            scatterSteps[i] = getRandomStepRange(middleStep + 1, endStep);
         }
     }
 
@@ -79,7 +79,6 @@ public class GatherScatterTypology extends AMLTypology {
                     Account orig = origAccts.get(i);
                     Account bene = alert.getMainAccount();
                     float amount = getRandomAmount();
-//                    System.out.println(this.minAmount + " " + amount + " " + this.maxAmount);
                     sendTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
                 }

@@ -173,7 +173,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
         }else if(end < start){
             throw new IllegalArgumentException("The start and end steps are unordered");
         }
-        long range = end - start + 1;
+        long range = end - start;
         return alert.getSimulator().random.nextLong(range) + start;
     }
 

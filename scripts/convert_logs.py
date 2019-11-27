@@ -584,7 +584,7 @@ class LogConverter:
 
         self.sim_name = general_conf["simulation_name"]
         self.input_dir = os.path.join(input_conf["directory"], self.sim_name)
-        self.work_dir = output_conf["directory"]
+        self.work_dir = os.path.join(output_conf["directory"], self.sim_name)
         if not os.path.isdir(self.work_dir):
             os.makedirs(self.work_dir)
 

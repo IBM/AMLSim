@@ -294,12 +294,16 @@ class AlertValidator:
         with open(conf_json, "r") as rf:
             self.conf = json.load(rf)
 
+        self.sim_name = self.conf["general"]["simulation_name"]
         self.input_dir = self.conf["input"]["directory"]
-        self.output_dir = self.conf["output"]["directory"]
+        self.output_dir = os.path.join(self.conf["output"]["directory"], self.sim_name)
         schema_json = self.conf["input"]["schema"]
         schema_path = os.path.join(self.input_dir, schema_json)
         with open(schema_path, "r") as rf:
             self.schema = json.load(rf)
+
+        log_file = os.path.join(self.output_dir, "alert_validations.log")
+        logging.basicConfig(filename=log_file, filemode="w", level=logging.INFO)
 
         # Load an alert (AML typology) parameter file
         self.alert_param_file = self.conf["input"]["alert_patterns"]
@@ -326,16 +330,6 @@ class AlertValidator:
             if satisfies_params(sub_g, param):
                 logging.info("The alert %s subgraph matches the parameter %s:%d, data %s" %
                              (alert_id, self.alert_param_file, line_num, str(param)))
-                # if param["count"] == 0:
-                #     # alert_type = param["type"]
-                #     min_acct, max_acct = param["accounts"]
-                #     min_amt, max_amt = param["amount"]
-                #     min_period, max_period = param["period"]
-                #     logging.info("Too many alert subgraphs for the following parameters:",
-                #                  "Type: %s, Accounts: [%d, %d], Amount: [%f, %f], Period: [%d, %d]" %
-                #                  (alert_type, min_acct, max_acct, min_amt, max_amt, min_period, max_period))
-                # else:
-                #     param["count"] -= 1
                 return True
         else:  # No match any parameter sets
             logging.warning("The alert subgraph (ID:%s, Type:%s) does not match any parameter sets"
@@ -354,14 +348,9 @@ class AlertValidator:
 
 if __name__ == "__main__":
     argv = sys.argv
-    if len(argv) < 3:
-        print("Usage: python3 %s [ConfJson] [LogFile]" % argv[0])
+    if len(argv) < 2:
+        print("Usage: python3 %s [ConfJson]" % argv[0])
         exit(1)
-
-    log_file = argv[2]
-    # if os.path.exists(log_file):
-    #     os.remove(log_file)
-    logging.basicConfig(filename=log_file, filemode="w", level=logging.INFO)
 
     av = AlertValidator(argv[1])
     av.validate_all()

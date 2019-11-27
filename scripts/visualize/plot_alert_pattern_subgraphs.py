@@ -18,7 +18,8 @@ def load_alerts(_conf_json):
 
     with open(_conf_json, "r") as rf:
         conf = json.load(rf)
-    data_dir = conf["output"]["directory"]
+    
+    data_dir = os.path.join(conf["output"]["directory"], conf["general"]["simulation_name"])
     acct_csv = os.path.join(data_dir, conf["output"]["alert_members"])
     tx_csv = os.path.join(data_dir, conf["output"]["alert_transactions"])
 

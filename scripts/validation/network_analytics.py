@@ -119,6 +119,7 @@ class __TransactionGraphLoader:
             self.schema = json.load(rf)
         self.output_conf = self.conf["output"]
         self.g = nx.MultiDiGraph()
+        self.sim_name = self.conf["general"]["simulation_name"]
 
     def get_graph(self):
         return self.g
@@ -146,7 +147,7 @@ class ResultGraphLoader(__TransactionGraphLoader):
         super(ResultGraphLoader, self).__init__(_conf_json)
 
         # Create a transaction graph from output files
-        output_dir = self.output_conf["directory"]
+        output_dir = os.path.join(self.output_conf["directory"], self.sim_name)
         acct_file = self.output_conf["accounts"]
         tx_file = self.output_conf["transactions"]
         alert_acct_file = self.output_conf["alert_members"]

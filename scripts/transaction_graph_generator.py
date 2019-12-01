@@ -212,9 +212,19 @@ class TransactionGenerator:
 
         # Set random seed
         seed = general_conf.get("random_seed")
+        env_seed = os.getenv("RANDOM_SEED")
+        if env_seed is not None:
+            seed = env_seed  # Overwrite random seed if specified as an environment variable
         self.seed = seed if seed is None else int(seed)
         np.random.seed(self.seed)
         random.seed(self.seed)
+        print("Random seed:", self.seed)
+
+        # Get simulation name
+        sim_name = os.getenv("SIMULATION_NAME")
+        if sim_name is None:
+            sim_name = general_conf["simulation_name"]
+        print("Simulation name:", sim_name)
 
         self.total_steps = parse_int(general_conf["total_steps"])
 
@@ -247,7 +257,7 @@ class TransactionGenerator:
 
         # Get output file names
         output_conf = self.conf["temporal"]  # The output directory of this graph generator is the temporal directory
-        self.output_dir = os.path.join(output_conf["directory"], general_conf["simulation_name"])
+        self.output_dir = os.path.join(output_conf["directory"], sim_name)
         self.out_tx_file = output_conf["transactions"]
         self.out_account_file = output_conf["accounts"]
         self.out_alert_member_file = output_conf["alert_members"]
@@ -255,10 +265,10 @@ class TransactionGenerator:
         # Other properties for the transaction graph generator
         other_conf = self.conf["graph_generator"]
         self.degree_threshold = parse_int(other_conf["degree_threshold"])
-        highrisk_countries_str = other_conf.get("high_risk_countries", "")
-        highrisk_business_str = other_conf.get("high_risk_business", "")
-        self.highrisk_countries = set(highrisk_countries_str.split(","))
-        self.highrisk_business = set(highrisk_business_str.split(","))
+        high_risk_countries_str = other_conf.get("high_risk_countries", "")
+        high_risk_business_str = other_conf.get("high_risk_business", "")
+        self.high_risk_countries = set(high_risk_countries_str.split(","))
+        self.high_risk_business = set(high_risk_business_str.split(","))
 
         self.tx_id = 0  # Transaction ID
         self.alert_id = 0  # Alert ID from the alert parameter file
@@ -534,20 +544,20 @@ class TransactionGenerator:
         del self.acct_to_bank[acct]
         self.bank_to_accts[bank_id].discard(acct)
 
-    def add_transaction(self, orig, bene, amount=None, date=None, ttype=None):
+    def add_transaction(self, orig, bene, amount=None, date=None, tx_type=None):
         """Add a transaction edge
         :param orig: Originator account ID
         :param bene: Beneficiary account ID
         :param amount: Transaction amount
         :param date: Transaction date
-        :param ttype: Transaction type description
+        :param tx_type: Transaction type description
         :return:
         """
         self.check_account_exist(orig)  # Ensure the originator and beneficiary accounts exist
         self.check_account_exist(bene)
         if orig == bene:
             raise ValueError("Self loop from/to %s is not allowed for transaction networks" % str(orig))
-        self.g.add_edge(orig, bene, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=ttype)
+        self.g.add_edge(orig, bene, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=tx_type)
         self.tx_id += 1
         if self.tx_id % 1000000 == 0:
             print("Added %d transactions" % self.tx_id)
@@ -1016,8 +1026,8 @@ class TransactionGenerator:
                 src = e[0]
                 dst = e[1]
                 tid = e[2]
-                ttype = random.choice(self.tx_types)
-                writer.writerow([tid, src, dst, ttype])
+                tx_type = random.choice(self.tx_types)
+                writer.writerow([tid, src, dst, tx_type])
         print("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))
 
     def write_alert_account_list(self):
@@ -1100,11 +1110,6 @@ if __name__ == "__main__":
         txg.count_fan_in_out_patterns(degree_threshold)
     txg.set_main_acct_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
-
-    # in_deg = Counter(txg.g.in_degree().values())
-    # out_deg = Counter(txg.g.out_degree().values())
-    # print(in_deg)
-    # print(out_deg)
 
     if degree_threshold > 0:
         print("Added alert transaction patterns")

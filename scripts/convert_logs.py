@@ -198,203 +198,203 @@ class Schema:
         # Account list
         for idx, col in enumerate(acct_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.acct_names.append(name)
             self.acct_defaults.append(default)
-            self.acct_types.append(vtype)
+            self.acct_types.append(v_type)
             self.acct_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "account_id":
+            if d_type == "account_id":
                 self.acct_id_idx = idx
-            elif dtype == "account_name":
+            elif d_type == "account_name":
                 self.acct_name_idx = idx
-            elif dtype == "initial_balance":
+            elif d_type == "initial_balance":
                 self.acct_balance_idx = idx
-            elif dtype == "start_time":
+            elif d_type == "start_time":
                 self.acct_start_idx = idx
-            elif dtype == "end_time":
+            elif d_type == "end_time":
                 self.acct_end_idx = idx
-            elif dtype == "sar_flag":
+            elif d_type == "sar_flag":
                 self.acct_sar_idx = idx
-            elif dtype == "model_id":
+            elif d_type == "model_id":
                 self.acct_model_idx = idx
-            elif dtype == "bank_id":
+            elif d_type == "bank_id":
                 self.acct_bank_idx = idx
 
         # Transaction list
         for idx, col in enumerate(tx_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.tx_names.append(name)
             self.tx_defaults.append(default)
-            self.tx_types.append(vtype)
+            self.tx_types.append(v_type)
             self.tx_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "transaction_id":
+            if d_type == "transaction_id":
                 self.tx_id_idx = idx
-            elif dtype == "timestamp":
+            elif d_type == "timestamp":
                 self.tx_time_idx = idx
-            elif dtype == "amount":
+            elif d_type == "amount":
                 self.tx_amount_idx = idx
-            elif dtype == "transaction_type":
+            elif d_type == "transaction_type":
                 self.tx_type_idx = idx
-            elif dtype == "orig_id":
+            elif d_type == "orig_id":
                 self.tx_orig_idx = idx
-            elif dtype == "dest_id":
+            elif d_type == "dest_id":
                 self.tx_dest_idx = idx
-            elif dtype == "sar_flag":
+            elif d_type == "sar_flag":
                 self.tx_sar_idx = idx
-            elif dtype == "alert_id":
+            elif d_type == "alert_id":
                 self.tx_alert_idx = idx
 
         # Alert member list
         for idx, col in enumerate(alert_acct_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.alert_acct_names.append(name)
             self.alert_acct_defaults.append(default)
-            self.alert_acct_types.append(vtype)
+            self.alert_acct_types.append(v_type)
             self.alert_acct_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "alert_id":
+            if d_type == "alert_id":
                 self.alert_acct_alert_idx = idx
-            elif dtype == "alert_type":
+            elif d_type == "alert_type":
                 self.alert_acct_reason_idx = idx
-            elif dtype == "account_id":
+            elif d_type == "account_id":
                 self.alert_acct_id_idx = idx
-            elif dtype == "account_name":
+            elif d_type == "account_name":
                 self.alert_acct_name_idx = idx
-            elif dtype == "sar_flag":
+            elif d_type == "sar_flag":
                 self.alert_acct_sar_idx = idx
-            elif dtype == "model_id":
+            elif d_type == "model_id":
                 self.alert_acct_model_idx = idx
-            elif dtype == "schedule_id":
+            elif d_type == "schedule_id":
                 self.alert_acct_schedule_idx = idx
-            elif dtype == "bank_id":
+            elif d_type == "bank_id":
                 self.alert_acct_bank_idx = idx
 
         # Alert transaction list
         for idx, col in enumerate(alert_tx_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.alert_tx_names.append(name)
             self.alert_tx_defaults.append(default)
-            self.alert_tx_types.append(vtype)
+            self.alert_tx_types.append(v_type)
             self.alert_tx_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "alert_id":
+            if d_type == "alert_id":
                 self.alert_tx_id_idx = idx
-            elif dtype == "alert_type":
+            elif d_type == "alert_type":
                 self.alert_tx_type_idx = idx
-            elif dtype == "sar_flag":
+            elif d_type == "sar_flag":
                 self.alert_tx_sar_idx = idx
-            elif dtype == "transaction_id":
+            elif d_type == "transaction_id":
                 self.alert_tx_idx = idx
-            elif dtype == "orig_id":
+            elif d_type == "orig_id":
                 self.alert_tx_orig_idx = idx
-            elif dtype == "dest_id":
+            elif d_type == "dest_id":
                 self.alert_tx_dest_idx = idx
-            elif dtype == "transaction_type":
+            elif d_type == "transaction_type":
                 self.alert_tx_tx_type_idx = idx
-            elif dtype == "amount":
+            elif d_type == "amount":
                 self.alert_tx_amount_idx = idx
-            elif dtype == "timestamp":
+            elif d_type == "timestamp":
                 self.alert_tx_time_idx = idx
 
         # Individual party list
         for idx, col in enumerate(party_ind_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.party_ind_names.append(name)
             self.party_ind_defaults.append(default)
-            self.party_ind_types.append(vtype)
+            self.party_ind_types.append(v_type)
             self.party_ind_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "party_id":
+            if d_type == "party_id":
                 self.party_ind_id_idx = idx
 
         # Individual party list
         for idx, col in enumerate(party_org_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.party_org_names.append(name)
             self.party_org_defaults.append(default)
-            self.party_org_types.append(vtype)
+            self.party_org_types.append(v_type)
             self.party_org_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "party_id":
+            if d_type == "party_id":
                 self.party_org_id_idx = idx
 
         # Account-Party list
         for idx, col in enumerate(acct_party_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.acct_party_names.append(name)
             self.acct_party_defaults.append(default)
-            self.acct_party_types.append(vtype)
+            self.acct_party_types.append(v_type)
             self.acct_party_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "mapping_id":
+            if d_type == "mapping_id":
                 self.acct_party_mapping_idx = idx
-            elif dtype == "account_id":
+            elif d_type == "account_id":
                 self.acct_party_acct_idx = idx
-            elif dtype == "party_id":
+            elif d_type == "party_id":
                 self.acct_party_party_idx = idx
 
         # Party-Party list
         for idx, col in enumerate(party_party_data):
             name = col["name"]
-            vtype = col.get("valueType", "string")
-            dtype = col.get("dataType")
+            v_type = col.get("valueType", "string")
+            d_type = col.get("dataType")
             default = col.get("defaultValue", "")
 
             self.party_party_names.append(name)
             self.party_party_defaults.append(default)
-            self.party_party_types.append(vtype)
+            self.party_party_types.append(v_type)
             self.party_party_name2idx[name] = idx
 
-            if dtype is None:
+            if d_type is None:
                 continue
-            if dtype == "ref_id":
+            if d_type == "ref_id":
                 self.party_party_ref_idx = idx
-            elif dtype == "first_id":
+            elif d_type == "first_id":
                 self.party_party_first_idx = idx
-            elif dtype == "second_id":
+            elif d_type == "second_id":
                 self.party_party_second_idx = idx
 
     def days2date(self, _days):
@@ -437,8 +437,8 @@ class Schema:
                 idx = self.acct_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.acct_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.acct_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -458,8 +458,8 @@ class Schema:
                 idx = self.tx_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.tx_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.tx_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -480,8 +480,8 @@ class Schema:
                 idx = self.alert_acct_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.alert_acct_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.alert_acct_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -503,8 +503,8 @@ class Schema:
                 idx = self.alert_tx_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.alert_tx_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.alert_tx_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -517,8 +517,8 @@ class Schema:
                 idx = self.party_ind_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.party_ind_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.party_ind_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -531,8 +531,8 @@ class Schema:
                 idx = self.party_org_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.party_org_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.party_org_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -547,8 +547,8 @@ class Schema:
                 idx = self.acct_party_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.acct_party_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.acct_party_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -563,8 +563,8 @@ class Schema:
                 idx = self.party_party_name2idx[name]
                 row[idx] = value
 
-        for idx, vtype in enumerate(self.party_party_types):
-            if vtype == "date":
+        for idx, v_type in enumerate(self.party_party_types):
+            if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
@@ -582,7 +582,11 @@ class LogConverter:
         input_conf = conf["temporal"]  # Input directory of this converter is temporal directory
         output_conf = conf["output"]
 
-        self.sim_name = general_conf["simulation_name"]
+        self.sim_name = os.getenv("SIMULATION_NAME")
+        if self.sim_name is None:
+            self.sim_name = general_conf["simulation_name"]
+        print("Simulation name:", self.sim_name)
+
         self.input_dir = os.path.join(input_conf["directory"], self.sim_name)
         self.work_dir = os.path.join(output_conf["directory"], self.sim_name)
         if not os.path.isdir(self.work_dir):

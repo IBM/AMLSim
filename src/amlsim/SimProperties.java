@@ -19,6 +19,8 @@ public class SimProperties {
     private JSONObject cashOutProp;
     private String workDir;
     private float marginRatio;
+    private int seed;
+    private String simName;
 
     SimProperties(String jsonName) throws IOException{
         String jsonStr = loadTextFile(jsonName);
@@ -30,6 +32,16 @@ public class SimProperties {
         cashInProp = jsonObject.getJSONObject("default").getJSONObject("cash_in");
         cashOutProp = jsonObject.getJSONObject("default").getJSONObject("cash_out");
         marginRatio = jsonObject.getJSONObject("default").getFloat("margin_ratio");
+
+        String envSeed = System.getenv("RANDOM_SEED");
+        seed = envSeed != null ? Integer.parseInt(envSeed) : generalProp.getInt("random_seed");
+        System.out.println("Random seed: " + seed);
+
+        simName = System.getenv("SIMULATION_NAME");
+        if(simName == null){
+            simName = generalProp.getString("simulation_name");
+        }
+        System.out.println("Simulation name: " + simName);
 
         String simName = getSimName();  // generalProp.getString("simulation_name");
         workDir = inputProp.getString("directory") + separator + simName + separator;
@@ -43,11 +55,11 @@ public class SimProperties {
     }
 
     String getSimName(){
-        return generalProp.getString("simulation_name");
+        return simName;
     }
 
     int getSeed(){
-        return generalProp.getInt("random_seed");
+        return seed;
     }
 
     public int getSteps(){

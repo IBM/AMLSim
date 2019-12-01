@@ -119,6 +119,10 @@ def plot_degree_distribution(_g, _conf, _plot_img):
     input_acct_path = os.path.join(_input_dir, _input_acct)
     input_deg_path = os.path.join(_input_dir, _input_deg)
 
+    if not os.path.isfile(input_acct_path):
+        print("Account parameter file %s is not found." % input_acct_path)
+        return
+
     total_num_accts = 0
     with open(input_acct_path, "r") as _rf:
         reader = csv.reader(_rf)
@@ -130,6 +134,10 @@ def plot_degree_distribution(_g, _conf, _plot_img):
                 break
         for row in reader:
             total_num_accts += int(row[count_idx])
+
+    if not os.path.isfile(input_deg_path):
+        print("Degree parameter file %s is not found." % input_deg_path)
+        return
 
     deg_num_accts = 0
     in_degrees = list()
@@ -355,6 +363,10 @@ def plot_aml_rule(aml_csv, _plot_img):
     num_idx = None
     type_idx = None
 
+    if not os.path.isfile(aml_csv):
+        print("AML typology file %s is not found." % aml_csv)
+        return
+
     with open(aml_csv, "r") as _rf:
         reader = csv.reader(_rf)
         header = next(reader)
@@ -519,11 +531,6 @@ if __name__ == "__main__":
 
     print("Constructing transaction graph")
     g = construct_graph(acct_path, tx_path, schema)
-    # work_dir = os.path.join(output_dir, sim_name)
-    # if os.path.isdir(work_dir):
-    #     print("Warning: output directory %s already exists." % work_dir)
-    # else:
-    #     os.makedirs(work_dir)
 
     v_conf = conf["visualizer"]
     deg_plot = v_conf["degree"]

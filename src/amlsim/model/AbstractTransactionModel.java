@@ -18,8 +18,6 @@ public abstract class AbstractTransactionModel {
     public static final int PERIODICAL = 5;
 
     private static Random rand = new Random();
-    // TODO: Enable users to specify this value
-    private static final int FLUCTUATION = 2;  // Fluctuation of the transaction interval
     private float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
 
     protected Account account;  // Account object

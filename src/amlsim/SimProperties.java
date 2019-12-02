@@ -74,8 +74,16 @@ public class SimProperties {
         return simProp.getInt("transaction_limit");
     }
 
-    int getTransactionInterval(){
+    int getNormalTransactionInterval(){
         return simProp.getInt("transaction_interval");
+    }
+
+    int getSarTransactionInterval(){
+        return simProp.getInt("sar_interval");
+    }
+
+    float getSatBalanceRatio(){
+        return simProp.getFloat("sar_balance_ratio");
     }
 
     public float getMarginRatio(){

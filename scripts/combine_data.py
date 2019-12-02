@@ -4,6 +4,7 @@ Combine AMLSim outputs into a single dataset
 
 import os
 import sys
+from collections import Counter
 import csv
 import json
 import datetime
@@ -313,7 +314,7 @@ class Schema:
         return row
 
 
-def load_conf_json(conf_json):
+def load_output_conf_json(conf_json):
     with open(conf_json, "r") as rf:
         conf = json.load(rf)
 
@@ -337,6 +338,24 @@ def load_conf_json(conf_json):
     return acct_path, tx_path, cash_path, alert_acct_path, alert_tx_path, schema
 
 
+def load_input_conf_json(conf_json):
+    with open(conf_json, "r") as rf:
+        conf = json.load(rf)
+
+    in_dir = conf["input"]["directory"]
+    acct_file = conf["input"]["accounts"]
+    alert_file = conf["input"]["alert_patterns"]
+    deg_file = conf["input"]["degree"]
+    tx_file = conf["input"]["transaction_type"]
+
+    acct_path = os.path.join(in_dir, acct_file)
+    alert_path = os.path.join(in_dir, alert_file)
+    deg_path = os.path.join(in_dir, deg_file)
+    tx_path = os.path.join(in_dir, tx_file)
+
+    return acct_path, alert_path, deg_path, tx_path
+
+
 class Combiner:
 
     def __init__(self, out_conf_json):
@@ -347,6 +366,27 @@ class Combiner:
         with open(out_conf_json, "r") as rf:
             out_conf = json.load(rf)
 
+        in_dir = out_conf["input"]["directory"]
+        os.makedirs(in_dir, exist_ok=True)
+
+        self.in_acct_path, self.in_alert_path, self.in_deg_path, self.in_tx_path = load_input_conf_json(out_conf_json)
+        with open(self.in_acct_path, "w") as wf:
+            writer = csv.writer(wf, lineterminator='\n')
+            writer.writerow(["count", "min_balance", "max_balance", "start_day", "end_day", 
+                             "country", "business_type", "model", "bank_id"])
+
+        with open(self.in_alert_path, "w") as wf:
+            writer = csv.writer(wf, lineterminator='\n')
+            writer.writerow(["count", "type", "schedule_id", "min_accounts", "max_accounts",
+                             "min_amount", "max_amount", "min_period", "max_period", "bank_id", "is_sar"])
+
+        with open(self.in_tx_path, "w") as wf:
+            writer = csv.writer(wf, lineterminator='\n')
+            writer.writerow(["Type", "Frequency"])
+
+        self.in_deg = Counter()
+        self.out_deg = Counter()
+
         sim_name = os.getenv("SIMULATION_NAME")
         if sim_name is None:
             sim_name = out_conf["general"]["simulation_name"]
@@ -354,40 +394,92 @@ class Combiner:
         out_dir = os.path.join(out_conf["output"]["directory"], sim_name)
         os.makedirs(out_dir, exist_ok=True)
 
-        self.acct_path, self.tx_path, self.cash_path, self.alert_acct_path, self.alert_tx_path, self.out_schema = \
-            load_conf_json(out_conf_json)
+        self.out_acct_path, self.out_tx_path, self.out_cash_path, \
+        self.out_alert_acct_path, self.out_alert_tx_path, self.out_schema = load_output_conf_json(out_conf_json)
 
         # Add headers
-        with open(self.acct_path, "w") as wf:
+        with open(self.out_acct_path, "w") as wf:
             writer = csv.writer(wf, lineterminator='\n')
             writer.writerow(self.out_schema.acct_names)
 
-        with open(self.tx_path, "w") as wf:
+        with open(self.out_tx_path, "w") as wf:
             writer = csv.writer(wf, lineterminator='\n')
             writer.writerow(self.out_schema.tx_names)
 
-        with open(self.cash_path, "w") as wf:
+        with open(self.out_cash_path, "w") as wf:
             writer = csv.writer(wf, lineterminator='\n')
             writer.writerow(self.out_schema.tx_names)
 
-        with open(self.alert_acct_path, "w") as wf:
+        with open(self.out_alert_acct_path, "w") as wf:
             writer = csv.writer(wf, lineterminator='\n')
             writer.writerow(self.out_schema.alert_acct_names)
 
-        with open(self.alert_tx_path, "w") as wf:
+        with open(self.out_alert_tx_path, "w") as wf:
             writer = csv.writer(wf, lineterminator='\n')
             writer.writerow(self.out_schema.alert_tx_names)
 
-    def load_data(self, in_conf_json):
+    def append_input_data(self, in_conf_json):
+        in_acct_path, in_alert_path, in_deg_path, in_tx_path = load_input_conf_json(in_conf_json)
+
+        wf = open(self.in_acct_path, "a")
+        writer = csv.writer(wf, lineterminator='\n')
+        rf = open(in_acct_path, "r")
+        reader = csv.reader(rf)
+        next(reader)
+        for row in reader:
+            writer.writerow(row)
+        rf.close()
+        wf.close()
+
+        wf = open(self.in_alert_path, "a")
+        writer = csv.writer(wf, lineterminator='\n')
+        rf = open(in_alert_path, "r")
+        reader = csv.reader(rf)
+        next(reader)
+        for row in reader:
+            writer.writerow(row)
+        rf.close()
+        wf.close()
+
+        with open(in_deg_path, "r") as rf:
+            reader = csv.reader(rf)
+            next(reader)
+            for row in reader:
+                deg = int(row[0])
+                in_num = int(row[1])
+                out_num = int(row[2])
+                self.in_deg[deg] += in_num
+                self.out_deg[deg] += out_num
+
+        wf = open(self.in_tx_path, "a")
+        writer = csv.writer(wf, lineterminator='\n')
+        rf = open(in_tx_path, "r")
+        reader = csv.reader(rf)
+        next(reader)
+        for row in reader:
+            writer.writerow(row)
+        rf.close()
+        wf.close()
+
+    def write_degrees(self):
+        degrees = sorted(set(self.in_deg.keys()) | set(self.out_deg.keys()))
+
+        with open(self.in_deg_path, "w") as wf:
+            writer = csv.writer(wf)
+            writer.writerow(["Count", "In-degree", "Out-degree"])
+            for d in degrees:
+                writer.writerow([d, self.in_deg[d], self.out_deg[d]])
+
+    def append_output_data(self, in_conf_json):
         in_acct_path, in_tx_path, in_cash_path, in_alert_acct_path, in_alert_tx_path, in_schema = \
-            load_conf_json(in_conf_json)
+            load_output_conf_json(in_conf_json)
 
         max_acct_id = 0
         max_tx_id = 0
         max_alert_id = 0
 
         # Convert account list
-        wf = open(self.acct_path, "a")
+        wf = open(self.out_acct_path, "a")
         writer = csv.writer(wf, lineterminator='\n')
         rf = open(in_acct_path, "r")
         reader = csv.reader(rf)
@@ -430,7 +522,7 @@ class Combiner:
         sar_idx = in_schema.tx_sar_idx
         alert_idx = in_schema.tx_alert_idx
 
-        wf = open(self.tx_path, "a")
+        wf = open(self.out_tx_path, "a")
         writer = csv.writer(wf, lineterminator='\n')
         rf = open(in_tx_path, "r")
         reader = csv.reader(rf)
@@ -458,7 +550,7 @@ class Combiner:
         wf.close()
 
         # Convert cash transaction list
-        wf = open(self.cash_path, "a")
+        wf = open(self.out_cash_path, "a")
         writer = csv.writer(wf, lineterminator='\n')
         rf = open(in_cash_path, "r")
         reader = csv.reader(rf)
@@ -494,7 +586,7 @@ class Combiner:
         schedule_idx = in_schema.alert_acct_schedule_idx
         bank_idx = in_schema.alert_acct_bank_idx
 
-        wf = open(self.alert_acct_path, "a")
+        wf = open(self.out_alert_acct_path, "a")
         writer = csv.writer(wf, lineterminator='\n')
         rf = open(in_alert_acct_path, "r")
         reader = csv.reader(rf)
@@ -530,7 +622,7 @@ class Combiner:
         amt_idx = in_schema.alert_tx_amount_idx
         date_idx = in_schema.alert_tx_date_idx
 
-        wf = open(self.alert_tx_path, "a")
+        wf = open(self.out_alert_tx_path, "a")
         writer = csv.writer(wf, lineterminator='\n')
         rf = open(in_alert_tx_path, "r")
         reader = csv.reader(rf)
@@ -574,4 +666,6 @@ if __name__ == "__main__":
         _rep = int(argv[i+1])
         for j in range(_rep):
             print("Loading %s: %d/%d" % (_in_conf_json, j, _rep))
-            com.load_data(_in_conf_json)
+            com.append_input_data(_in_conf_json)
+            com.append_output_data(_in_conf_json)
+    com.write_degrees()

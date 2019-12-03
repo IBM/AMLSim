@@ -1,15 +1,16 @@
 package amlsim.model.normal;
 
-import amlsim.*;
+import amlsim.Account;
 import amlsim.model.AbstractTransactionModel;
-import java.util.*;
+
+import java.util.List;
 
 /**
  * Send money from single source to multiple destinations (fan-out)
+ * Note: This model is used by SAR accounts
  */
-public class FanOutTransactionModel extends AbstractTransactionModel {
+public class SuspiciousFanOutTransactionModel extends AbstractTransactionModel {
 
-    private int index = 0;
 
     public void setParameters(int interval, float balance, long start, long end){
         super.setParameters(interval, balance, start, end);
@@ -20,27 +21,26 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
 
     @Override
     public String getType() {
-        return "FanOut";
-    }
-
-    private boolean isValidStep(long step){
-        return (step - startStep) % interval == 0;
+        return "SARFanOut";
     }
 
     @Override
     public void sendTransaction(long step) {
-        List<Account> beneList = this.account.getBeneList();  // Destination accounts
+        List<Account> beneList = this.account.getBeneList();
         int numBene = beneList.size();
-        if(!isValidStep(step) || numBene == 0){  // No more destination accounts
+
+        int index = (int)(step - startStep) % interval;
+        if(index < 0){
+            index += interval;
+        }
+//        System.out.println(numBene);
+        if(index >= numBene || numBene == 0){  // No more destination accounts
             return;
         }
-        if(index >= numBene){
-            index = 0;
-        }
 
-        float amount = getTransactionAmount();
+        float amount = getSuspiciousTransactionAmount();
+//        System.out.println("Suspicious fan-out: " + step + " " + amount);
         Account dest = beneList.get(index);
         this.sendTransaction(step, amount, dest);
-        index++;
     }
 }

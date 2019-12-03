@@ -224,9 +224,13 @@ public class AMLSim extends ParameterizedPaySim {
                 extraValues.put(column, elements[idx]);
             }
 
-			Account account = isSAR ?
-                    new SARAccount(accountID, modelID, sarTxInterval, initBalance * sarBalanceRatio, start, end, bankID, extraValues)
-					: new Account(accountID, modelID, normalTxInterval, initBalance, start, end, bankID, extraValues);
+			Account account;
+			if(isSAR){
+				account = new SARAccount(accountID, modelID, normalTxInterval, initBalance, start, end, bankID, extraValues);
+				((SARAccount)account).setSARModelParameters(sarTxInterval);
+			}else{
+				account = new Account(accountID, modelID, normalTxInterval, initBalance, start, end, bankID, extraValues);
+			}
 
 			int index = this.getClients().size();
 			account.setBranch(this.branches.get(index % this.numBranches));

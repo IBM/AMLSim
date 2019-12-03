@@ -2,7 +2,6 @@ package amlsim.model;
 
 import amlsim.Account;
 import amlsim.AMLSim;
-import amlsim.SARAccount;
 
 import java.util.Random;
 
@@ -20,7 +19,7 @@ public abstract class AbstractTransactionModel {
     public static final int PERIODICAL = 5;
 
     private static Random rand = new Random();
-    private float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
+//    private float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
 
     protected Account account;  // Account object
     protected int interval = 1; // Default transaction interval
@@ -37,14 +36,30 @@ public abstract class AbstractTransactionModel {
         return (int)AMLSim.getNumOfSteps() / interval;
     }
 
+    public static float getAmountRatio(){  // [0.9, 1.1]
+        return rand.nextFloat() * 0.2F + 0.9F;
+    }
+
     /**
-     * Get the assumed amount of each transaction
-     * @return Transaction amount
+     * Generate the assumed amount of a normal transaction
+     * @return Normal transaction amount
      */
     public float getTransactionAmount(){
-        int totalCount = getNumberOfTransactions();
-        float available = this.isSAR ? this.balance : this.balance * transactionAmountRatio;
-        return available / totalCount;
+        // Each transaction amount should be independent from the current balance
+//        int totalCount = getNumberOfTransactions();
+//        float available = this.isSAR ? this.balance : this.balance * transactionAmountRatio;
+//        return available / totalCount;
+        float ratio = getAmountRatio();
+        return AMLSim.getSimProp().getNormalBaseTxAmount() * ratio;
+    }
+
+    /**
+     * Generate the assumed amount of a suspicious transaction for SAR accounts
+     * @return Suspicious transaction amount
+     */
+    public float getSuspiciousTransactionAmount(){
+        float ratio = getAmountRatio();
+        return AMLSim.getSimProp().getSuspiciousTxAmount() * ratio;
     }
 
     /**
@@ -53,11 +68,11 @@ public abstract class AbstractTransactionModel {
      */
     public void setAccount(Account account){
         this.account = account;
-        this.isSAR = account instanceof SARAccount;
+        this.isSAR = account.isSAR();
     }
 
     /**
-     * Get the simulation step range when this model is valid
+     * Get the simulation step range as the period when this model is valid
      * @return The total number of simulation steps
      */
     public int getStepRange(){
@@ -74,7 +89,7 @@ public abstract class AbstractTransactionModel {
     public abstract String getType();
 
     /**
-     * Create transactions
+     * Create a transaction
      * @param step Current simulation step
      */
     public abstract void sendTransaction(long step);

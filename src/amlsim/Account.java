@@ -15,8 +15,8 @@ public class Account extends Client implements Steppable {
 
     private Map<String, String> extraAttributes;
 	protected AbstractTransactionModel model;
-	private CashInModel cashInModel;
-	private CashOutModel cashOutModel;
+	protected CashInModel cashInModel;
+	protected CashOutModel cashOutModel;
 	private boolean isSAR = false;
 	private Random rand = new Random();
 	private Branch branch = null;
@@ -100,9 +100,9 @@ public class Account extends Client implements Steppable {
 		return this.bankID;
 	}
 
-//	public String getAttrValue(String name){
-//        return this.extraAttributes.get(name);
-//    }
+	public String getAttrValue(String name){
+        return this.extraAttributes.get(name);
+    }
 
 	public long getStartStep(){
 		return this.startStep;

@@ -22,16 +22,31 @@ public class SimProperties {
     private int seed;
     private String simName;
 
+    private int normalTxInterval;
+    private int sarTxInterval;
+    private float minTxAmount;  // Minimum base (normal) transaction amount
+    private float maxTxAmount;  // Maximum base (suspicious) transaction amount
+
     SimProperties(String jsonName) throws IOException{
         String jsonStr = loadTextFile(jsonName);
         JSONObject jsonObject = new JSONObject(jsonStr);
+        JSONObject defaultProp = jsonObject.getJSONObject("default");
+
         generalProp = jsonObject.getJSONObject("general");
         simProp = jsonObject.getJSONObject("simulator");
         inputProp = jsonObject.getJSONObject("temporal");  // Input directory of this simulator is temporal directory
         outputProp = jsonObject.getJSONObject("output");
-        cashInProp = jsonObject.getJSONObject("default").getJSONObject("cash_in");
-        cashOutProp = jsonObject.getJSONObject("default").getJSONObject("cash_out");
-        marginRatio = jsonObject.getJSONObject("default").getFloat("margin_ratio");
+
+        normalTxInterval = simProp.getInt("transaction_interval");
+        sarTxInterval = simProp.getInt("sar_interval");
+        minTxAmount = defaultProp.getFloat("min_amount");
+        maxTxAmount = defaultProp.getFloat("max_amount");
+        System.out.printf("Transaction interval: Normal = %d, Suspicious = %d\n", normalTxInterval, sarTxInterval);
+        System.out.printf("Base transaction amount: Normal = %f, Suspicious= %f\n", minTxAmount, maxTxAmount);
+        
+        cashInProp = defaultProp.getJSONObject("cash_in");
+        cashOutProp = defaultProp.getJSONObject("cash_out");
+        marginRatio = defaultProp.getFloat("margin_ratio");
 
         String envSeed = System.getenv("RANDOM_SEED");
         seed = envSeed != null ? Integer.parseInt(envSeed) : generalProp.getInt("random_seed");
@@ -75,11 +90,19 @@ public class SimProperties {
     }
 
     int getNormalTransactionInterval(){
-        return simProp.getInt("transaction_interval");
+        return normalTxInterval;
+    }
+
+    public float getNormalBaseTxAmount(){
+        return minTxAmount;
+    }
+
+    public float getSuspiciousTxAmount(){
+        return maxTxAmount;
     }
 
     int getSarTransactionInterval(){
-        return simProp.getInt("sar_interval");
+        return sarTxInterval;
     }
 
     float getSatBalanceRatio(){

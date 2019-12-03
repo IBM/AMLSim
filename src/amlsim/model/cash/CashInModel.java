@@ -1,6 +1,5 @@
 package amlsim.model.cash;
 
-import amlsim.AMLSim;
 import amlsim.Branch;
 
 import static java.lang.Math.round;

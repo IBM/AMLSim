@@ -2,6 +2,8 @@ package amlsim.model;
 
 import amlsim.Account;
 import amlsim.AMLSim;
+import amlsim.SARAccount;
+
 import java.util.Random;
 
 /**
@@ -25,6 +27,8 @@ public abstract class AbstractTransactionModel {
     protected float balance;  // Current balance
     protected long startStep = -1;  // The first step of transactions
     protected long endStep = -1;  // The end step of transactions
+    protected boolean isSAR = false;
+
     /**
      * Get the assumed number of transactions in this simulation
      * @return Number of total transactions
@@ -39,7 +43,7 @@ public abstract class AbstractTransactionModel {
      */
     public float getTransactionAmount(){
         int totalCount = getNumberOfTransactions();
-        float available = this.balance * transactionAmountRatio;
+        float available = this.isSAR ? this.balance : this.balance * transactionAmountRatio;
         return available / totalCount;
     }
 
@@ -49,6 +53,7 @@ public abstract class AbstractTransactionModel {
      */
     public void setAccount(Account account){
         this.account = account;
+        this.isSAR = account instanceof SARAccount;
     }
 
     /**
@@ -56,7 +61,7 @@ public abstract class AbstractTransactionModel {
      * @return The total number of simulation steps
      */
     public int getStepRange(){
-        // If "startStep" and/or "endStep" is undefined (-1), it tries to return the largest value
+        // If "startStep" and/or "endStep" is undefined (-1), it returns the largest range
         long st = startStep >= 0 ? startStep : 0;
         long ed = endStep > 0 ? endStep : AMLSim.getNumOfSteps();
         return (int)(ed - st + 1);

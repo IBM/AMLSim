@@ -16,18 +16,9 @@ public class SARAccount extends Account {
 		super(id, modelID, interval, init_balance, start, end, bankID, attrs);
 	}
 
-
 	public void handleAction(SimState state){
-		AMLSim amlsim = (AMLSim) state;
-		long step = state.schedule.getSteps();
-
-		for(Alert ag : alerts){
-            if(this == ag.getMainAccount()){
-                ag.registerTransactions(step, this);
-            }
-		}
-
-		this.model.sendTransaction(step);
+	    AMLSim amlsim = (AMLSim) state;
+		super.handleAction(amlsim);
 		boolean success = handleAlert(amlsim);
 		if(success){
 			count++;

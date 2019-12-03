@@ -100,9 +100,9 @@ public class Account extends Client implements Steppable {
 		return this.bankID;
 	}
 
-	public String getAttrValue(String name){
-        return this.extraAttributes.get(name);
-    }
+//	public String getAttrValue(String name){
+//        return this.extraAttributes.get(name);
+//    }
 
 	public long getStartStep(){
 		return this.startStep;

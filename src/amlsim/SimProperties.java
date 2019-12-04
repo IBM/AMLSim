@@ -105,9 +105,9 @@ public class SimProperties {
         return sarTxInterval;
     }
 
-    float getSatBalanceRatio(){
-        return simProp.getFloat("sar_balance_ratio");
-    }
+//    float getSatBalanceRatio(){
+//        return simProp.getFloat("sar_balance_ratio");
+//    }
 
     public float getMarginRatio(){
         return marginRatio;

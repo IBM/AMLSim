@@ -36,6 +36,10 @@ public abstract class AbstractTransactionModel {
         return (int)AMLSim.getNumOfSteps() / interval;
     }
 
+    /**
+     * Generate the adjustment ratio of the transaction amount
+     * @return Amount ratio [0.9, 1.1]
+     */
     public static float getAmountRatio(){  // [0.9, 1.1]
         return rand.nextFloat() * 0.2F + 0.9F;
     }

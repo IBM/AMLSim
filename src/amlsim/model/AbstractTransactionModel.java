@@ -18,7 +18,7 @@ public abstract class AbstractTransactionModel {
     public static final int FORWARD = 4;
     public static final int PERIODICAL = 5;
 
-    private static Random rand = new Random();
+    protected static Random rand = new Random(AMLSim.getSimProp().getSeed());
 //    private float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
 
     protected Account account;  // Account object

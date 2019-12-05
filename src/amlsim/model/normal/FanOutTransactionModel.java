@@ -5,7 +5,7 @@ import amlsim.model.AbstractTransactionModel;
 import java.util.*;
 
 /**
- * Send money from single source to multiple destinations (fan-out)
+ * Distribute money to multiple neighboring accounts (fan-out)
  */
 public class FanOutTransactionModel extends AbstractTransactionModel {
 
@@ -40,6 +40,19 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
 
         float amount = getTransactionAmount();
         Account dest = beneList.get(index);
+
+        if(account.isSAR()){
+            if(dest.isSAR()){  // SAR accounts are likely to send more amount of money to another SAR account
+                amount *= 2;
+            }else{  // SAR accounts send less amount of money to normal accounts
+//                amount /= 2;
+                if(rand.nextFloat() < 0.5){
+                    index++;
+                    return;
+                }
+            }
+        }
+
         this.sendTransaction(step, amount, dest);
         index++;
     }

@@ -18,7 +18,7 @@ public class Account extends Client implements Steppable {
 	protected CashInModel cashInModel;
 	protected CashOutModel cashOutModel;
 	private boolean isSAR = false;
-	private Random rand = new Random();
+	private Random rand;
 	private Branch branch = null;
     private Map<String, Account> origAccts = new HashMap<>();  // Originator account ID --> Account object
     private Map<String, Account> beneAccts = new HashMap<>();  // Beneficiary account ID --> Account object
@@ -58,6 +58,7 @@ public class Account extends Client implements Steppable {
 		this.startStep = start;
 		this.endStep = end;
 		this.extraAttributes = attrs;
+		this.rand = new Random(AMLSim.getSimProp().getSeed());
 
 		switch(modelID){
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;

@@ -26,7 +26,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private int numBranches = 0;
 	private ArrayList<Branch> branches = new ArrayList<>();
 	private int normalTxInterval = 30;  // Default transaction interval for normal accounts
-    private int sarTxInterval = 10;  // Default transaction interval for SAR accounts
+//    private int sarTxInterval = 10;  // Default transaction interval for SAR accounts
 //    private float sarBalanceRatio = 10.0F; // Multiplier of initial balance for SAR accounts
 
 	private static String simulatorName = null;
@@ -129,7 +129,7 @@ public class AMLSim extends ParameterizedPaySim {
 
         // Default transaction interval for accounts
         this.normalTxInterval = simProp.getNormalTransactionInterval();
-        this.sarTxInterval = simProp.getSarTransactionInterval();
+//        this.sarTxInterval = simProp.getSarTransactionInterval();
 //        this.sarBalanceRatio = simProp.getSatBalanceRatio();
 
 		// Number of transactions for logging buffer

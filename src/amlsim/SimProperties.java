@@ -23,7 +23,7 @@ public class SimProperties {
     private String simName;
 
     private int normalTxInterval;
-    private int sarTxInterval;
+//    private int sarTxInterval;
     private float minTxAmount;  // Minimum base (normal) transaction amount
     private float maxTxAmount;  // Maximum base (suspicious) transaction amount
 
@@ -38,10 +38,12 @@ public class SimProperties {
         outputProp = jsonObject.getJSONObject("output");
 
         normalTxInterval = simProp.getInt("transaction_interval");
-        sarTxInterval = simProp.getInt("sar_interval");
+//        sarTxInterval = simProp.getInt("sar_interval");
         minTxAmount = defaultProp.getFloat("min_amount");
         maxTxAmount = defaultProp.getFloat("max_amount");
-        System.out.printf("Transaction interval: Normal = %d, Suspicious = %d\n", normalTxInterval, sarTxInterval);
+
+        System.out.printf("General transaction interval: %d\n", normalTxInterval);
+//        System.out.printf("Transaction interval: Normal = %d, Suspicious = %d\n", normalTxInterval, sarTxInterval);
         System.out.printf("Base transaction amount: Normal = %f, Suspicious= %f\n", minTxAmount, maxTxAmount);
         
         cashInProp = defaultProp.getJSONObject("cash_in");
@@ -101,9 +103,9 @@ public class SimProperties {
         return maxTxAmount;
     }
 
-    int getSarTransactionInterval(){
-        return sarTxInterval;
-    }
+//    int getSarTransactionInterval(){
+//        return sarTxInterval;
+//    }
 
 //    float getSatBalanceRatio(){
 //        return simProp.getFloat("sar_balance_ratio");

@@ -45,3 +45,4 @@ outputs/*/
 outputs/*.txt
 outputs/*.png
 outputs/*.gif
+outputs/*.tgz

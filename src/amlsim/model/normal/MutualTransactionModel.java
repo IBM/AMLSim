@@ -37,7 +37,7 @@ public class MutualTransactionModel extends AbstractTransactionModel {
         }
         float amount = getTransactionAmount();  // this.balance;
         if(!this.account.getBeneList().contains(counterpart)) {
-            this.account.addDest(counterpart);    // Add a new destination
+            this.account.addBeneAcct(counterpart);    // Add a new destination
         }
 
         sendTransaction(step, amount, counterpart);

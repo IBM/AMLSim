@@ -18,7 +18,7 @@ public abstract class AbstractTransactionModel {
     public static final int FORWARD = 4;
     public static final int PERIODICAL = 5;
 
-    protected static Random rand = new Random(AMLSim.getSimProp().getSeed());
+    protected static Random rand = new Random(AMLSim.getSeed());
 //    private float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
 
     protected Account account;  // Account object
@@ -40,7 +40,7 @@ public abstract class AbstractTransactionModel {
      * Generate the adjustment ratio of the transaction amount
      * @return Amount ratio [0.9, 1.1]
      */
-    public static float getAmountRatio(){  // [0.9, 1.1]
+    public static float generateAmountRatio(){  // [0.9, 1.1]
         return rand.nextFloat() * 0.2F + 0.9F;
     }
 
@@ -53,7 +53,7 @@ public abstract class AbstractTransactionModel {
 //        int totalCount = getNumberOfTransactions();
 //        float available = this.isSAR ? this.balance : this.balance * transactionAmountRatio;
 //        return available / totalCount;
-        float ratio = getAmountRatio();
+        float ratio = generateAmountRatio();
         return AMLSim.getSimProp().getNormalBaseTxAmount() * ratio;
     }
 
@@ -62,7 +62,7 @@ public abstract class AbstractTransactionModel {
      * @return Suspicious transaction amount
      */
     public float getSuspiciousTransactionAmount(){
-        float ratio = getAmountRatio();
+        float ratio = generateAmountRatio();
         return AMLSim.getSimProp().getSuspiciousTxAmount() * ratio;
     }
 

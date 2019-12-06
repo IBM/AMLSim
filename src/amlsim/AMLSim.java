@@ -20,6 +20,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private static final int TX_SIZE = 10000000;  // Transaction buffer size
 	private static TransactionRepository txs = new TransactionRepository(TX_SIZE);
 	private static Logger logger = Logger.getLogger("AMLSim");
+	private static int seed;
 
 	private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
 	private Map<Long, Alert> alertGroups = new HashMap<>();
@@ -49,12 +50,17 @@ public class AMLSim extends ParameterizedPaySim {
 
 	private AMLSim(long seed) {
 		super(seed);
+		AMLSim.seed = (int)seed;
 		super.setTagName("1");
 		Handler handler = new ConsoleHandler();
 		logger.addHandler(handler);
 		java.util.logging.Formatter formatter = new SimpleFormatter();
 		handler.setFormatter(formatter);
         simulatorName = simProp.getSimName();
+	}
+
+	public static int getSeed(){
+		return seed;
 	}
 
 	public static Logger getLogger(){
@@ -258,7 +264,7 @@ public class AMLSim extends ParameterizedPaySim {
 
 			Account src = getAccountFromID(srcID);
 			Account dst = getAccountFromID(dstID);
-			src.addDest(dst);
+			src.addBeneAcct(dst);
 			src.addTxType(dst, ttype);
 		}
 		reader.close();

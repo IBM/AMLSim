@@ -13,12 +13,12 @@ public class Account extends Client implements Steppable {
 
     protected String id;
 
-    private Map<String, String> extraAttributes;
+//    private Map<String, String> extraAttributes;
 	protected AbstractTransactionModel model;
 	protected CashInModel cashInModel;
 	protected CashOutModel cashOutModel;
-	private boolean isSAR = false;
-	private Random rand;
+	protected boolean isSAR = false;
+	private static Random rand = new Random(AMLSim.getSeed());
 	private Branch branch = null;
     private Map<String, Account> origAccts = new HashMap<>();  // Originator account ID --> Account object
     private Map<String, Account> beneAccts = new HashMap<>();  // Beneficiary account ID --> Account object
@@ -57,8 +57,7 @@ public class Account extends Client implements Steppable {
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
-		this.extraAttributes = attrs;
-		this.rand = new Random(AMLSim.getSimProp().getSeed());
+//		this.extraAttributes = attrs;
 
 		switch(modelID){
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
@@ -101,9 +100,9 @@ public class Account extends Client implements Steppable {
 		return this.bankID;
 	}
 
-	public String getAttrValue(String name){
-        return this.extraAttributes.get(name);
-    }
+//	public String getAttrValue(String name){
+//        return this.extraAttributes.get(name);
+//    }
 
 	public long getStartStep(){
 		return this.startStep;
@@ -128,18 +127,22 @@ public class Account extends Client implements Steppable {
 		return this.branch;
 	}
 
-	public void addDest(Account dest){
-		beneAccts.put(dest.id, dest);
-		dest.origAccts.put(this.id, this);
+	public void addBeneAcct(Account bene){
+		//  Rarely normal accounts to have SAR neighbor accounts
+//		if(!this.isSAR && bene.isSAR && rand.nextFloat() > 0.1){
+//			return;
+//		}
+		beneAccts.put(bene.id, bene);
+		bene.origAccts.put(this.id, this);
 	}
 
-	void addTxType(Account dest, String ttype){
-		this.tx_types.put(dest.id, ttype);
+	void addTxType(Account bene, String ttype){
+		this.tx_types.put(bene.id, ttype);
 		all_tx_types.add(ttype);
 	}
 
-	public String getTxType(Account dest){
-        String destID = dest.id;
+	public String getTxType(Account bene){
+        String destID = bene.id;
 
 		if(this.tx_types.containsKey(destID)){
 			return tx_types.get(destID);

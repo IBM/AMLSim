@@ -41,15 +41,25 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
         float amount = getTransactionAmount();
         Account dest = beneList.get(index);
 
-        if(account.isSAR()){
+        if(account.isSAR()){  // SAR account (knows whether each beneficiary account is SAR or normal)
             if(dest.isSAR()){  // SAR accounts are likely to send more amount of money to another SAR account
                 amount *= 2;
             }else{  // SAR accounts send less amount of money to normal accounts
 //                amount /= 2;
-                if(rand.nextFloat() < 0.5){
-                    index++;
-                    return;
-                }
+//                if(rand.nextFloat() < 0.5){
+//                    index++;
+//                    return;
+//                }
+            }
+        }else{  // Normal account (cannot distinguish SAR accounts from normal accounts)
+            int actionID = rand.nextInt(20);
+            if(actionID == 0){
+                amount *= 30;  // High-amount payment transaction (near to the upper limit)
+            }else if (actionID < 10) {
+                amount /= 2;
+            }else{
+                index++;
+                return;  // Skip transaction
             }
         }
 

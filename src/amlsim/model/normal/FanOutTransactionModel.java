@@ -55,11 +55,12 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
             int actionID = rand.nextInt(20);
             if(actionID == 0){
                 amount *= 30;  // High-amount payment transaction (near to the upper limit)
-            }else if (actionID < 10) {
-                amount /= 2;
+//            }else if (actionID < 10) {
+//                amount /= 2;
             }else{
-                index++;
-                return;  // Skip transaction
+//                index++;
+//                return;  // Skip transaction
+                amount /= 2;
             }
         }
 

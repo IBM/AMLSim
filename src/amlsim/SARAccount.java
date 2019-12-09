@@ -3,8 +3,6 @@ package amlsim;
 import amlsim.model.aml.*;
 import sim.engine.SimState;
 
-import java.util.Map;
-
 /**
  * Suspicious account class
  */
@@ -12,11 +10,9 @@ public class SARAccount extends Account {
 
 	private int count = 0;
 
-	SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, String bankID, Map<String, String> attrs){
-		super(id, modelID, interval, init_balance, start, end, bankID, attrs);
+	SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, String bankID){
+		super(id, modelID, interval, init_balance, start, end, bankID);
 		this.isSAR = true;
-//		this.sarModel = new SuspiciousFanOutTransactionModel();
-//		this.sarModel.setAccount(this);
 	}
 
 //	public void setSARModelParameters(int interval){

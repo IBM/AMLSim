@@ -51,13 +51,11 @@ public class Account extends Client implements Steppable {
 	 * @param initBalance Initial account balance
 	 * @param start Start step
 	 * @param end End step
-	 * @param attrs Other attributes
 	 */
-    public Account(String id, int modelID, int interval, float initBalance, long start, long end, Map<String, String> attrs){
+    public Account(String id, int modelID, int interval, float initBalance, long start, long end){
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
-//		this.extraAttributes = attrs;
 
 		switch(modelID){
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
@@ -89,10 +87,9 @@ public class Account extends Client implements Steppable {
 	 * @param start Start step
 	 * @param end End step
 	 * @param bankID Bank ID
-	 * @param attrs Other attributes
 	 */
-	public Account(String id, int modelID, int interval, float initBalance, long start, long end, String bankID, Map<String, String> attrs){
-    	this(id, modelID, interval, initBalance, start, end, attrs);
+	public Account(String id, int modelID, int interval, float initBalance, long start, long end, String bankID){
+    	this(id, modelID, interval, initBalance, start, end);
     	this.bankID = bankID;
 	}
 
@@ -128,8 +125,19 @@ public class Account extends Client implements Steppable {
 	}
 
 	public void addBeneAcct(Account bene){
+		// TODO: Make the following parameters customizable from command lines
+
 		//  Rarely normal accounts to have SAR neighbor accounts
-//		if(!this.isSAR && bene.isSAR && rand.nextFloat() > 0.1){
+		if(this.isSAR && !bene.isSAR){
+//			if(rand.nextFloat() < 0.9) {
+//				return;
+//			}
+			// Limit the total number of beneficiary accounts to ensure high proportion of SAR neighbors
+//			if(beneAccts.size() >= 5){
+//				return;
+//			}
+		}
+//		if(!this.isSAR && bene.isSAR && rand.nextFloat() < 0.5){
 //			return;
 //		}
 		beneAccts.put(bene.id, bene);
@@ -167,6 +175,7 @@ public class Account extends Client implements Steppable {
 	 * @return Beneficiary account list
 	 */
 	public List<Account> getBeneList(){
+		// TODO: Reuse beneficiary account list for performance optimizations
 		return new ArrayList<>(this.beneAccts.values());
 	}
 
@@ -208,8 +217,7 @@ public class Account extends Client implements Steppable {
 	}
 
 	/**
-	 * Perform cash transactions (deposit and withdrawal)
-	 * @param amlsim AMLSim object
+	 * Make cash transactions (deposit and withdrawal)
 	 */
 	private void handleCashTransaction(AMLSim amlsim){
 		long step = amlsim.schedule.getSteps();

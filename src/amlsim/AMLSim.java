@@ -224,18 +224,17 @@ public class AMLSim extends ParameterizedPaySim {
 			int end = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
 			String bankID = elements[columnIndex.get("BANK_ID")];
 
-			Map<String, String> extraValues = new HashMap<>();
-			for(String column : extraColumns){
-			    int idx = columnIndex.get(column);
-                extraValues.put(column, elements[idx]);
-            }
+//			Map<String, String> extraValues = new HashMap<>();
+//			for(String column : extraColumns){
+//			    int idx = columnIndex.get(column);
+//                extraValues.put(column, elements[idx]);
+//            }
 
 			Account account;
 			if(isSAR){
-				account = new SARAccount(accountID, modelID, normalTxInterval, initBalance, start, end, bankID, extraValues);
-//				((SARAccount)account).setSARModelParameters(sarTxInterval);
+				account = new SARAccount(accountID, modelID, normalTxInterval, initBalance, start, end, bankID);
 			}else{
-				account = new Account(accountID, modelID, normalTxInterval, initBalance, start, end, bankID, extraValues);
+				account = new Account(accountID, modelID, normalTxInterval, initBalance, start, end, bankID);
 			}
 
 			int index = this.getClients().size();

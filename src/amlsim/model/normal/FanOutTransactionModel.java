@@ -51,19 +51,19 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
 //                    return;
 //                }
             }
-        }else{  // Normal account (cannot distinguish SAR accounts from normal accounts)
-            int actionID = rand.nextInt(20);
-            if(actionID == 0){
-                amount *= 30;  // High-amount payment transaction (near to the upper limit)
-//            }else if (actionID < 10) {
-//                amount /= 2;
-            }else{
-//                index++;
-//                return;  // Skip transaction
+        }else {  // Normal account (cannot distinguish SAR accounts from normal accounts)
+            int actionID = rand.nextInt(100);
+            // TODO: Make the following parameters customizable from command lines
+            if (actionID < 5) {
+                amount *= 30;  // High-amount payment transaction (near to the upper limit) with 5% of the time
+            } else if (actionID < 50) {  // Half-amount transaction with 45% of the time
                 amount /= 2;
+            } else {
+                index++;
+                return;  // Skip transaction with 50% of the time
+//                amount /= 2;
             }
         }
-
         this.sendTransaction(step, amount, dest);
         index++;
     }

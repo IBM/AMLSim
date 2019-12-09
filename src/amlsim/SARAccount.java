@@ -1,8 +1,6 @@
 package amlsim;
 
-import amlsim.model.AbstractTransactionModel;
 import amlsim.model.aml.*;
-import amlsim.model.normal.SuspiciousFanOutTransactionModel;
 import sim.engine.SimState;
 
 import java.util.Map;

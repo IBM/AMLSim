@@ -125,10 +125,8 @@ public class Account extends Client implements Steppable {
 	}
 
 	public void addBeneAcct(Account bene){
-		// TODO: Make the following parameters customizable from command lines
-
 		//  Rarely normal accounts to have SAR neighbor accounts
-		if(this.isSAR && !bene.isSAR){
+//		if(this.isSAR && !bene.isSAR){
 //			if(rand.nextFloat() < 0.9) {
 //				return;
 //			}
@@ -136,12 +134,14 @@ public class Account extends Client implements Steppable {
 //			if(beneAccts.size() >= 5){
 //				return;
 //			}
-		}
+//		}
 //		if(!this.isSAR && bene.isSAR && rand.nextFloat() < 0.5){
 //			return;
 //		}
-		beneAccts.put(bene.id, bene);
-		bene.origAccts.put(this.id, this);
+		if(ModelParameters.shouldAddEdge(this, bene)){
+			beneAccts.put(bene.id, bene);
+			bene.origAccts.put(this.id, this);
+		}
 	}
 
 	void addTxType(Account bene, String ttype){

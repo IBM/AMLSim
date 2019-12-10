@@ -20,8 +20,10 @@ public class Account extends Client implements Steppable {
 	protected boolean isSAR = false;
 	private static Random rand = new Random(AMLSim.getSeed());
 	private Branch branch = null;
-    private Map<String, Account> origAccts = new HashMap<>();  // Originator account ID --> Account object
-    private Map<String, Account> beneAccts = new HashMap<>();  // Beneficiary account ID --> Account object
+    private Map<String, Account> origAccts = new HashMap<>();  // Originator ID -> Originator account object
+    private Map<String, Account> beneAccts = new HashMap<>();  // Beneficiary ID -> Beneficiary account object
+	private int numSAROrig = 0;  // Number of SAR originator accounts
+	private int numSARBene = 0;  // Number of SAR beneficiary accounts
 	private String bankID = "";  // Bank ID
 
     private Account prevOrig = null;  // Previous originator account
@@ -125,22 +127,13 @@ public class Account extends Client implements Steppable {
 	}
 
 	public void addBeneAcct(Account bene){
-		//  Rarely normal accounts to have SAR neighbor accounts
-//		if(this.isSAR && !bene.isSAR){
-//			if(rand.nextFloat() < 0.9) {
-//				return;
-//			}
-			// Limit the total number of beneficiary accounts to ensure high proportion of SAR neighbors
-//			if(beneAccts.size() >= 5){
-//				return;
-//			}
-//		}
-//		if(!this.isSAR && bene.isSAR && rand.nextFloat() < 0.5){
-//			return;
-//		}
 		if(ModelParameters.shouldAddEdge(this, bene)){
 			beneAccts.put(bene.id, bene);
 			bene.origAccts.put(this.id, this);
+
+			if(bene.isSAR){
+				numSARBene++;
+			}
 		}
 	}
 
@@ -177,6 +170,17 @@ public class Account extends Client implements Steppable {
 	public List<Account> getBeneList(){
 		// TODO: Reuse beneficiary account list for performance optimizations
 		return new ArrayList<>(this.beneAccts.values());
+	}
+
+	public int getNumSARBene(){
+		return this.numSARBene;
+	}
+
+	public float getPropSARBene(){
+		if(numSARBene == 0){
+			return 0.0F;
+		}
+		return (float)numSARBene / beneAccts.size();
 	}
 
 	/**

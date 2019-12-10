@@ -204,15 +204,15 @@ public class AMLSim extends ParameterizedPaySim {
 		return columnIndex;
 	}
 
-	private final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "IS_SAR", "TX_BEHAVIOR_ID", "INIT_BALANCE", "START_DATE", "END_DATE"));
+//	private final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "IS_SAR", "TX_BEHAVIOR_ID", "INIT_BALANCE", "START_DATE", "END_DATE"));
 
 	private void loadAccountFile(String accountFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(accountFile));
 		String line = reader.readLine();
 		logger.info("Account CSV header: " + line);
 		Map<String, Integer> columnIndex = getColumnIndices(line);
-		Set<String> extraColumns = new HashSet<>(columnIndex.keySet());
-		extraColumns.removeAll(baseColumns);
+//		Set<String> extraColumns = new HashSet<>(columnIndex.keySet());
+//		extraColumns.removeAll(baseColumns);
 
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");

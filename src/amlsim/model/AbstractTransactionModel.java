@@ -37,34 +37,24 @@ public abstract class AbstractTransactionModel {
     }
 
     /**
-     * Generate the adjustment ratio of the transaction amount
-     * @return Amount ratio [0.9, 1.1]
-     */
-    public static float generateAmountRatio(){  // [0.9, 1.1]
-        return rand.nextFloat() * 0.2F + 0.9F;
-    }
-
-    /**
      * Generate the assumed amount of a normal transaction
      * @return Normal transaction amount
      */
     public float getTransactionAmount(){
         // Each transaction amount should be independent from the current balance
-//        int totalCount = getNumberOfTransactions();
-//        float available = this.isSAR ? this.balance : this.balance * transactionAmountRatio;
-//        return available / totalCount;
-        float ratio = generateAmountRatio();
-        return AMLSim.getSimProp().getNormalBaseTxAmount() * ratio;
+//        float ratio = ModelParameters.generateAmountRatio();
+//        return AMLSim.getSimProp().getNormalBaseTxAmount() * ratio;
+        return AMLSim.getSimProp().getNormalBaseTxAmount();
     }
 
-    /**
-     * Generate the assumed amount of a suspicious transaction for SAR accounts
-     * @return Suspicious transaction amount
-     */
-    public float getSuspiciousTransactionAmount(){
-        float ratio = generateAmountRatio();
-        return AMLSim.getSimProp().getSuspiciousTxAmount() * ratio;
-    }
+//    /**
+//     * Generate the assumed amount of a suspicious transaction for SAR accounts
+//     * @return Suspicious transaction amount
+//     */
+//    public float getSuspiciousTransactionAmount(){
+//        float ratio = generateAmountRatio();
+//        return AMLSim.getSimProp().getSuspiciousTxAmount() * ratio;
+//    }
 
     /**
      * Set an account object which has this model

@@ -43,7 +43,7 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
         float amount = getTransactionAmount();
         Account bene = beneList.get(index);
 
-        amount = ModelParameters.computeAmount(account, bene, amount);
+        amount = ModelParameters.adjustAmount(account, bene, amount);
         if(amount > 0) {
             this.sendTransaction(step, amount, bene);
         }

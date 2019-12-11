@@ -150,31 +150,6 @@ def get_degrees(deg_csv, num_v):
     _in_deg = _in_deg * repeats
     _out_deg = _out_deg * repeats
 
-    # # If the number of total accounts from degree sequences is larger than specified, shrink degree sequence
-    # if total_v > num_v:
-    #     diff = total_v - num_v  # The number of extra accounts to be removed
-    #     in_tmp = list()
-    #     out_tmp = list()
-    #     for i in range(total_v):
-    #         num_in = _in_deg[i]
-    #         num_out = _out_deg[i]
-    #         if num_in == num_out and diff > 0:  # Remove extra elements with the same degree
-    #             diff -= 1
-    #         else:
-    #             in_tmp.append(num_in)
-    #             out_tmp.append(num_out)
-    #     _in_deg = in_tmp
-    #     _out_deg = out_tmp
-    #
-    # # If the number of total accounts from degree sequences is smaller than specified, extend degree sequence
-    # else:
-    #     repeats = num_v // total_v  # Number of repetitions of degree sequences
-    #     _in_deg = _in_deg * repeats
-    #     _out_deg = _out_deg * repeats
-    #     remain = num_v - total_v * repeats  # Number of extra accounts
-    #     _in_deg.extend([1] * remain)  # Add 1-degree account vertices
-    #     _out_deg.extend([1] * remain)
-
     assert sum(_in_deg) == sum(_out_deg), "Sequences must have equal sums."
     return _in_deg, _out_deg
 

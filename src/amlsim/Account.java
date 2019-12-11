@@ -172,6 +172,10 @@ public class Account extends Client implements Steppable {
 		return new ArrayList<>(this.beneAccts.values());
 	}
 
+	public void printBeneList(){
+		System.out.println(this.beneAccts.values());
+	}
+
 	public int getNumSARBene(){
 		return this.numSARBene;
 	}

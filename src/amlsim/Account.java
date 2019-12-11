@@ -20,8 +20,10 @@ public class Account extends Client implements Steppable {
 	protected boolean isSAR = false;
 	private static Random rand = new Random(AMLSim.getSeed());
 	private Branch branch = null;
-    private Map<String, Account> origAccts = new HashMap<>();  // Originator ID -> Originator account object
-    private Map<String, Account> beneAccts = new HashMap<>();  // Beneficiary ID -> Beneficiary account object
+	private Set<String> origAcctIDs = new HashSet<>();  // Originator account ID set
+	private Set<String> beneAcctIDs = new HashSet<>();  // Beneficiary account ID set
+    private List<Account> origAccts = new ArrayList<>();  // Originator accounts from which this account receives money
+    private List<Account> beneAccts = new ArrayList<>();  // Beneficiary accounts to which this account sends money
 	private int numSAROrig = 0;  // Number of SAR originator accounts
 	private int numSARBene = 0;  // Number of SAR beneficiary accounts
 	private String bankID = "";  // Bank ID
@@ -49,7 +51,7 @@ public class Account extends Client implements Steppable {
 	 * Constructor of the account object
 	 * @param id Account ID
 	 * @param modelID Transaction model ID (int value)
-     * @param interval Default transaction interval
+     * @param interval Default transaction intervalt
 	 * @param initBalance Initial account balance
 	 * @param start Start step
 	 * @param end End step
@@ -127,9 +129,17 @@ public class Account extends Client implements Steppable {
 	}
 
 	public void addBeneAcct(Account bene){
+		String beneID = bene.id;
+		if(beneAcctIDs.contains(beneID)){  // Already added
+			return;
+		}
+
 		if(ModelParameters.shouldAddEdge(this, bene)){
-			beneAccts.put(bene.id, bene);
-			bene.origAccts.put(this.id, this);
+			beneAccts.add(bene);
+			beneAcctIDs.add(beneID);
+
+			bene.origAccts.add(this);
+			bene.origAcctIDs.add(id);
 
 			if(bene.isSAR){
 				numSARBene++;
@@ -160,7 +170,8 @@ public class Account extends Client implements Steppable {
 	 * @return Originator account list
 	 */
 	public List<Account> getOrigList(){
-		return new ArrayList<>(this.origAccts.values());
+//		return new ArrayList<>(this.origAccts.values());
+		return this.origAccts;
 	}
 
 	/**
@@ -168,12 +179,13 @@ public class Account extends Client implements Steppable {
 	 * @return Beneficiary account list
 	 */
 	public List<Account> getBeneList(){
-		// TODO: Reuse beneficiary account list for performance optimizations
-		return new ArrayList<>(this.beneAccts.values());
+//		return new ArrayList<>(this.beneAccts.values());
+		return this.beneAccts;
 	}
 
 	public void printBeneList(){
-		System.out.println(this.beneAccts.values());
+//		System.out.println(this.beneAccts.values());
+		System.out.println(this.beneAccts);
 	}
 
 	public int getNumSARBene(){

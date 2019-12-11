@@ -13,14 +13,14 @@ import amlsim.Account;
 public class ModelParameters {
 
     private static Random rand = new Random(AMLSim.getSeed());
-    private static Properties prop = loadProperties();
+    private static Properties prop = null;
 
     private static float SAR2SAR_EDGE_PROB = 1.0F;
-    private static float SAR2NORMAL_EDGE_PROB = 0.5F;
+    private static float SAR2NORMAL_EDGE_PROB = 1.0F;
 
-    private static float SAR2SAR_AMOUNT_RATIO = 2.0F;
+    private static float SAR2SAR_AMOUNT_RATIO = 1.0F;
     private static float SAR2NORMAL_AMOUNT_RATIO = 1.0F;
-    private static float NORMAL2SAR_AMOUNT_RATIO = 0.5F;
+    private static float NORMAL2SAR_AMOUNT_RATIO = 1.0F;
     private static float NORMAL2NORMAL_AMOUNT_RATIO = 1.0F;
 
     /**
@@ -28,20 +28,16 @@ public class ModelParameters {
      * @return If true, all normal transactions are not affected by any adjustment parameters
      */
     public static boolean isUnused(){
-//        return prop == null;
-        return false;
+        return prop == null;
     }
 
     private static float getRatio(String key){
         return Float.parseFloat(prop.getProperty(key, "1.0"));
     }
 
-    private static Properties loadProperties(){
-        String key = "MODEL_PARAM";
-        String propFile = System.getenv(key);
+    public static void loadProperties(String propFile){
         if(propFile == null){
-//            System.err.println("Model parameter file is not specified: " + key);
-            return null;
+            return;
         }
         System.out.println("Model parameter file: " + propFile);
         try{
@@ -50,7 +46,8 @@ public class ModelParameters {
         }catch (IOException e){
             System.err.println("Cannot load model parameter file: " + propFile);
             e.printStackTrace();
-            return null;
+            prop = null;
+            return;
         }
 
         SAR2SAR_EDGE_PROB = getRatio("sar2sar.edge.prob");
@@ -61,7 +58,14 @@ public class ModelParameters {
         NORMAL2SAR_AMOUNT_RATIO = getRatio("normal2sar.amount.ratio");
         NORMAL2NORMAL_AMOUNT_RATIO = getRatio("normal2normal.amount.ratio");
 
-        return prop;
+        System.out.println("Transaction edge addition probabilities:");
+        System.out.println("\tSAR -> SAR: " + SAR2SAR_EDGE_PROB);
+        System.out.println("\tSAR -> Normal: " + SAR2NORMAL_EDGE_PROB);
+        System.out.println("Transaction amount ratio:");
+        System.out.println("\tSAR -> SAR: " + SAR2SAR_AMOUNT_RATIO);
+        System.out.println("\tSAR -> Normal: " + SAR2NORMAL_AMOUNT_RATIO);
+        System.out.println("\tNormal -> SAR: " + NORMAL2SAR_AMOUNT_RATIO);
+        System.out.println("\tNormal -> Normal: " + NORMAL2NORMAL_AMOUNT_RATIO);
     }
 
     /**
@@ -86,7 +90,7 @@ public class ModelParameters {
         if(isUnused()){
             return amount;
         }
-        // TODO: Make the following parameters customizable from command lines as Java system properties
+
         float ratio;
         if(orig.isSAR()){  // SAR originator
             if(bene.isSAR()){  // SAR -> SAR
@@ -100,14 +104,16 @@ public class ModelParameters {
             }else{  // Normal -> Normal
                 ratio = NORMAL2NORMAL_AMOUNT_RATIO;
             }
-//            int actionID = rand.nextInt(100);
-//            if(actionID < 5){  // High-amount payment transaction (near to the upper limit) with 5% of the time
-//                ratio = 30;
-//            }else if(actionID < 50){  // Half-amount transaction with 45% of the time
-//                ratio = 0.5F;
-//            }else{
-//                ratio = 0;  // Skip transaction with 50% of the time
-//            }
+
+            // TODO: Load the following additional parameters from the same Java property file
+            int actionID = rand.nextInt(100);
+            if(actionID < 5){  // High-amount payment transaction (near to the upper limit) with 5% of the time
+                ratio *= 30;
+            }else if(actionID < 50){  // Half-amount transaction with 45% of the time
+                ratio *= 0.5F;
+            }else{
+                ratio *= 0;  // Skip transaction with 50% of the time
+            }
         }
         return amount * ratio;
     }
@@ -139,13 +145,7 @@ public class ModelParameters {
         }else{  // Normal originator
             if(bene.isSAR()){  // Normal -> SAR
                 // Create a transaction edge if the ratio of SAR beneficiary accounts is still large
-                boolean flag = numNeighbors > beneNumThreshold; // && propSARBene >= benePropThreshold;
-//                if(flag) {
-//                    System.out.print(orig.getID() + " -> " + bene.getID() + " ");
-//                    orig.printBeneList();
-//                    System.out.flush();
-//                }
-                return flag;
+                return numNeighbors > beneNumThreshold;
             }else{  // Normal -> Normal
                 return true;
             }

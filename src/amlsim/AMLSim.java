@@ -1,5 +1,6 @@
 package amlsim;
 
+import amlsim.model.ModelParameters;
 import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
 import amlsim.model.aml.AMLTypology;
@@ -486,14 +487,19 @@ public class AMLSim extends ParameterizedPaySim {
         }
 
 		// Loading configuration JSON file instead of parsing command line arguments
-        String propFile = args[0];
+        String confFile = args[0];
         try {
-            simProp = new SimProperties(propFile);
+            simProp = new SimProperties(confFile);
         }catch (IOException e){
-            System.err.println("Cannot load configuration JSON file: " + propFile);
+            System.err.println("Cannot load configuration JSON file: " + confFile);
             e.printStackTrace();
             System.exit(1);
         }
+
+        if(args.length >= 2){  // Load transaction model parameter file (optional)
+        	String propFile = args[1];
+			ModelParameters.loadProperties(propFile);
+		}
 
         int seed = simProp.getSeed();
         AMLSim sim = new AMLSim(seed);

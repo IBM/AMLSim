@@ -179,8 +179,8 @@ public class ModelParameters {
                 if(NORMAL2SAR_EDGE_THRESHOLD <= 0.0F){
                     return true;
                 }
-                return numNeighbors > (int) Math.floor(1 / NORMAL2SAR_EDGE_THRESHOLD);
-//                        && propSARBene >= NORMAL2SAR_EDGE_THRESHOLD;
+                return numNeighbors > (int) Math.floor(1 / NORMAL2SAR_EDGE_THRESHOLD)
+                        && propSARBene >= NORMAL2SAR_EDGE_THRESHOLD;
             }else{  // Normal -> Normal
                 return propSARBene >= NORMAL2NORMAL_EDGE_THRESHOLD;
             }

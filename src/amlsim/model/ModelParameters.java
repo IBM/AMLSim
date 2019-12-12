@@ -25,8 +25,11 @@ public class ModelParameters {
     private static float NORMAL2SAR_AMOUNT_RATIO = 1.0F;
     private static float NORMAL2NORMAL_AMOUNT_RATIO = 1.0F;
 
-    private static float NORMAL_AMOUNT_MAX = 1.0F;  // Maximum ratio of transaction amount from normal accounts
-    private static float NORMAL_TX_PROB = 1.0F;
+    private static float NORMAL_HIGH_RATIO = 1.0F;  // Maximum ratio of transaction amount from normal accounts
+    private static float NORMAL_LOW_RATIO = 1.0F;  // Minimum ratio of transaction amount from normal accounts
+    private static float NORMAL_HIGH_PROB = 0.0F;
+    private static float NORMAL_LOW_PROB = 0.0F;
+    private static float NORMAL_SKIP_PROB = 1.0F;
 
     /**
      * Whether no adjustment parameters in this class will be applied for transactions
@@ -37,7 +40,11 @@ public class ModelParameters {
     }
 
     private static float getRatio(String key){
-        return Float.parseFloat(prop.getProperty(key, "1.0"));
+        String value = System.getProperty(key);
+        if(value == null){
+            value = prop.getProperty(key, "1.0");
+        }
+        return Float.parseFloat(value);
     }
 
     public static void loadProperties(String propFile){
@@ -65,8 +72,21 @@ public class ModelParameters {
         NORMAL2SAR_AMOUNT_RATIO = getRatio("normal2sar.amount.ratio");
         NORMAL2NORMAL_AMOUNT_RATIO = getRatio("normal2normal.amount.ratio");
 
-        NORMAL_AMOUNT_MAX = getRatio("normal.transaction.max");
-        NORMAL_TX_PROB = getRatio("normal.transaction.prob");
+        NORMAL_HIGH_RATIO = getRatio("normal.high.ratio");
+        NORMAL_LOW_RATIO = getRatio("normal.low.ratio");
+        NORMAL_HIGH_PROB = getRatio("normal.high.prob");
+        NORMAL_LOW_PROB = getRatio("normal.low.prob");
+        NORMAL_SKIP_PROB = getRatio("normal.skip.prob");
+        if(NORMAL_HIGH_RATIO < 1.0){
+            throw new IllegalArgumentException("The high transaction amount ratio must be 1.0 or more");
+        }
+        if(NORMAL_LOW_RATIO <= 0.0 || 1.0 < NORMAL_LOW_RATIO){
+            throw new IllegalArgumentException("The low transaction amount ratio must be positive and 1.0 or less");
+        }
+        if(1.0 < NORMAL_HIGH_PROB + NORMAL_LOW_PROB + NORMAL_SKIP_PROB){
+            throw new IllegalArgumentException("The sum of high, low and skip transaction probabilities" +
+                                                       " must be 1.0 or less");
+        }
 
         System.out.println("Transaction edge addition threshold (proportion of SAR accounts):");
         System.out.println("\tSAR -> SAR: " + SAR2SAR_EDGE_THRESHOLD);
@@ -116,15 +136,14 @@ public class ModelParameters {
             }else{  // Normal -> Normal
                 ratio = NORMAL2NORMAL_AMOUNT_RATIO;
             }
-
-            // TODO: Load the following additional parameters from the same Java property file
-            float actionID = rand.nextFloat();
-            if(actionID < 0.05){  // High-amount payment transaction (near to the upper limit) with 5% of the time
-                ratio *= NORMAL_AMOUNT_MAX;
-            }else if(actionID < NORMAL_TX_PROB){  // Half-amount transaction with 45% of the time
-                ratio *= 0.5F;
-            }else{
-                ratio *= 0;  // Skip transaction with 50% of the time
+            
+            float prob = rand.nextFloat();
+            if(prob < NORMAL_HIGH_PROB){  // High-amount payment transaction (near to the upper limit)
+                ratio *= NORMAL_HIGH_RATIO;
+            }else if(prob < NORMAL_HIGH_PROB + NORMAL_LOW_PROB){  // Low-amount transaction
+                ratio *= NORMAL_LOW_RATIO;
+            }else if(prob < NORMAL_HIGH_PROB + NORMAL_LOW_PROB + NORMAL_SKIP_PROB){
+                ratio *= 0;  // Skip this transaction
             }
         }
         return amount * ratio;

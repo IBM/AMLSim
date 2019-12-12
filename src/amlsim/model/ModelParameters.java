@@ -15,13 +15,18 @@ public class ModelParameters {
     private static Random rand = new Random(AMLSim.getSeed());
     private static Properties prop = null;
 
-    private static float SAR2SAR_EDGE_PROB = 1.0F;
-    private static float SAR2NORMAL_EDGE_PROB = 1.0F;
+    private static float SAR2SAR_EDGE_THRESHOLD = 0.0F;
+    private static float SAR2NORMAL_EDGE_THRESHOLD = 0.0F;
+    private static float NORMAL2SAR_EDGE_THRESHOLD = 0.0F;
+    private static float NORMAL2NORMAL_EDGE_THRESHOLD = 0.0F;
 
     private static float SAR2SAR_AMOUNT_RATIO = 1.0F;
     private static float SAR2NORMAL_AMOUNT_RATIO = 1.0F;
     private static float NORMAL2SAR_AMOUNT_RATIO = 1.0F;
     private static float NORMAL2NORMAL_AMOUNT_RATIO = 1.0F;
+
+    private static float NORMAL_AMOUNT_MAX = 1.0F;  // Maximum ratio of transaction amount from normal accounts
+    private static float NORMAL_TX_PROB = 1.0F;
 
     /**
      * Whether no adjustment parameters in this class will be applied for transactions
@@ -50,17 +55,24 @@ public class ModelParameters {
             return;
         }
 
-        SAR2SAR_EDGE_PROB = getRatio("sar2sar.edge.prob");
-        SAR2NORMAL_EDGE_PROB = getRatio("sar2normal.edge.prob");
+        SAR2SAR_EDGE_THRESHOLD = getRatio("sar2sar.edge.threshold");
+        SAR2NORMAL_EDGE_THRESHOLD = getRatio("sar2normal.edge.threshold");
+        NORMAL2SAR_EDGE_THRESHOLD = getRatio("normal2sar.edge.threshold");
+        NORMAL2NORMAL_EDGE_THRESHOLD = getRatio("normal2normal.edge.threshold");
 
         SAR2SAR_AMOUNT_RATIO = getRatio("sar2sar.amount.ratio");
         SAR2NORMAL_AMOUNT_RATIO = getRatio("sar2normal.amount.ratio");
         NORMAL2SAR_AMOUNT_RATIO = getRatio("normal2sar.amount.ratio");
         NORMAL2NORMAL_AMOUNT_RATIO = getRatio("normal2normal.amount.ratio");
 
-        System.out.println("Transaction edge addition probabilities:");
-        System.out.println("\tSAR -> SAR: " + SAR2SAR_EDGE_PROB);
-        System.out.println("\tSAR -> Normal: " + SAR2NORMAL_EDGE_PROB);
+        NORMAL_AMOUNT_MAX = getRatio("normal.transaction.max");
+        NORMAL_TX_PROB = getRatio("normal.transaction.prob");
+
+        System.out.println("Transaction edge addition threshold (proportion of SAR accounts):");
+        System.out.println("\tSAR -> SAR: " + SAR2SAR_EDGE_THRESHOLD);
+        System.out.println("\tSAR -> Normal: " + SAR2NORMAL_EDGE_THRESHOLD);
+        System.out.println("\tSAR -> SAR: " + NORMAL2SAR_EDGE_THRESHOLD);
+        System.out.println("\tNormal -> Normal: " + NORMAL2NORMAL_EDGE_THRESHOLD);
         System.out.println("Transaction amount ratio:");
         System.out.println("\tSAR -> SAR: " + SAR2SAR_AMOUNT_RATIO);
         System.out.println("\tSAR -> Normal: " + SAR2NORMAL_AMOUNT_RATIO);
@@ -106,10 +118,10 @@ public class ModelParameters {
             }
 
             // TODO: Load the following additional parameters from the same Java property file
-            int actionID = rand.nextInt(100);
-            if(actionID < 5){  // High-amount payment transaction (near to the upper limit) with 5% of the time
-                ratio *= 30;
-            }else if(actionID < 50){  // Half-amount transaction with 45% of the time
+            float actionID = rand.nextFloat();
+            if(actionID < 0.05){  // High-amount payment transaction (near to the upper limit) with 5% of the time
+                ratio *= NORMAL_AMOUNT_MAX;
+            }else if(actionID < NORMAL_TX_PROB){  // Half-amount transaction with 45% of the time
                 ratio *= 0.5F;
             }else{
                 ratio *= 0;  // Skip transaction with 50% of the time
@@ -128,26 +140,30 @@ public class ModelParameters {
         if(isUnused()){  // Add this edge without qualification
             return true;
         }
-        // TODO: Make the following parameters customizable from command lines as Java system properties
-        float benePropThreshold = 0.1F;  // Proportion of SAR beneficiary accounts of the originator account
-        int beneNumThreshold = (int) Math.floor(1 / benePropThreshold);
+        // Proportion of SAR beneficiary accounts of the originator account
+        float benePropThreshold = SAR2NORMAL_EDGE_THRESHOLD;
+        int beneNumThreshold = (int) Math.floor(1 / NORMAL2SAR_EDGE_THRESHOLD);
 
         int numNeighbors = orig.getBeneList().size();
         float propSARBene = orig.getPropSARBene();
 
         if(orig.isSAR()){  // SAR originator
             if(bene.isSAR()){  // SAR -> SAR
-                return true;
+                return propSARBene >= SAR2SAR_EDGE_THRESHOLD;
             }else{  // SAR -> Normal
                 // Allow edge creations if the ratio of SAR beneficiary accounts is enough large
-                return propSARBene > benePropThreshold;
+                return propSARBene >= SAR2NORMAL_EDGE_THRESHOLD;
             }
         }else{  // Normal originator
             if(bene.isSAR()){  // Normal -> SAR
                 // Create a transaction edge if the ratio of SAR beneficiary accounts is still large
-                return numNeighbors > beneNumThreshold;
+                if(NORMAL2SAR_EDGE_THRESHOLD <= 0.0F){
+                    return true;
+                }
+                return numNeighbors > (int) Math.floor(1 / NORMAL2SAR_EDGE_THRESHOLD);
+//                        && propSARBene >= NORMAL2SAR_EDGE_THRESHOLD;
             }else{  // Normal -> Normal
-                return true;
+                return propSARBene >= NORMAL2NORMAL_EDGE_THRESHOLD;
             }
         }
     }

@@ -173,9 +173,9 @@ class TransactionGenerator:
         """
         self.g = nx.MultiDiGraph()  # Transaction graph object
         self.num_accounts = 0  # Number of total accounts
-        self.degrees = dict()  # Degree distribution
+        # self.degrees = dict()  # Degree distribution
         self.hubs = list()  # Hub vertices
-        self.main_acct_candidates = set()  # Set of the main account candidates
+        self.main_acct_candidates = set()  # Set of the main account candidates of AML typology subgraphs
         self.attr_names = list()  # Additional account attribute names
         self.bank_to_accts = defaultdict(set)  # Bank ID -> account set
         self.acct_to_bank = dict()  # Account ID -> bank ID
@@ -267,13 +267,31 @@ class TransactionGenerator:
         self.tx_types = get_types(os.path.join(self.input_dir, self.type_file))
 
     def set_main_acct_candidates(self):
-        """Choose the main account candidates of alert transaction sets
-        Currently, it chooses hub accounts with larger degree than the specified threshold
-        TODO: More options how to choose the main accounts
+        """Choose hub accounts with larger degree than the specified threshold
+        as the main account candidates of alert transaction sets
         """
-        self.degrees = self.g.degree(self.g.nodes())
-        self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
-        self.main_acct_candidates = set(self.hubs)  # set(self.g.nodes())
+        # degrees = self.g.in_degree()
+        self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.g.in_degree(n) + self.g.out_degree(n)]
+        # self.degrees = self.g.degree(self.g.nodes())
+        # self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
+        self.main_acct_candidates = set(self.hubs)
+
+    def add_normal_sar_edges(self, ratio=1.0):
+        """Add extra edges from normal accounts to SAR accounts to adjust transaction graph features
+        """
+        orig_candidates = [n for n in self.main_acct_candidates if not self.g.node[n].get(IS_SAR_KEY, False)]
+        bene_candidates = [n for n, sar in nx.get_node_attributes(self.g, IS_SAR_KEY).items() if sar]
+        num = int(len(bene_candidates) * ratio)
+        if num <= 0:
+            return
+
+        orig_list = random.choices(orig_candidates, k=num)
+        bene_list = random.choices(bene_candidates, k=num)
+        for i in range(num):
+            _orig = orig_list[i]
+            _bene = bene_list[i]
+            self.add_transaction(_orig, _bene)
+        print("Added %d edges from normal accounts to sar accounts" % num)
 
     # Account existence check
     def check_account_exist(self, aid):
@@ -1072,6 +1090,10 @@ if __name__ == "__main__":
         exit(1)
 
     _conf_file = argv[1]
+    if len(argv) >= 3:
+        _ratio = float(argv[2])
+    else:
+        _ratio = 1.0
 
     # Validation option for graph contractions
     deg_param = os.getenv("DEGREE")
@@ -1085,6 +1107,7 @@ if __name__ == "__main__":
         txg.count_fan_in_out_patterns(degree_threshold)
     txg.set_main_acct_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
+    txg.add_normal_sar_edges(_ratio)
 
     if degree_threshold > 0:
         print("Added alert transaction patterns")

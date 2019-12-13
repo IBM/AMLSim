@@ -19,17 +19,22 @@ public class ModelParameters {
     private static float SAR2NORMAL_EDGE_THRESHOLD = 0.0F;
     private static float NORMAL2SAR_EDGE_THRESHOLD = 0.0F;
     private static float NORMAL2NORMAL_EDGE_THRESHOLD = 0.0F;
+    
+    private static float SAR2SAR_TX_PROB = 1.0F;
+    private static float SAR2NORMAL_TX_PROB = 1.0F;
+    private static float NORMAL2SAR_TX_PROB = 1.0F;
+    private static float NORMAL2NORMAL_TX_PROB = 1.0F;
 
     private static float SAR2SAR_AMOUNT_RATIO = 1.0F;
     private static float SAR2NORMAL_AMOUNT_RATIO = 1.0F;
     private static float NORMAL2SAR_AMOUNT_RATIO = 1.0F;
     private static float NORMAL2NORMAL_AMOUNT_RATIO = 1.0F;
 
-    private static float NORMAL_HIGH_RATIO = 1.0F;  // Maximum ratio of transaction amount from normal accounts
-    private static float NORMAL_LOW_RATIO = 1.0F;  // Minimum ratio of transaction amount from normal accounts
-    private static float NORMAL_HIGH_PROB = 0.0F;
-    private static float NORMAL_LOW_PROB = 0.0F;
-    private static float NORMAL_SKIP_PROB = 1.0F;
+    private static float NORMAL_HIGH_RATIO = 1.0F;  // High transaction amount ratio from normal accounts
+    private static float NORMAL_LOW_RATIO = 1.0F;  // Low transaction amount ratio from normal accounts
+    private static float NORMAL_HIGH_PROB = 0.0F;  // Probability of transactions with high amount
+    private static float NORMAL_LOW_PROB = 0.0F;  // Probability of transactions with low amount
+    private static float NORMAL_SKIP_PROB = 1.0F;  // Probability of skipping transactions
 
     /**
      * Whether no adjustment parameters in this class will be applied for transactions
@@ -66,6 +71,11 @@ public class ModelParameters {
         SAR2NORMAL_EDGE_THRESHOLD = getRatio("sar2normal.edge.threshold");
         NORMAL2SAR_EDGE_THRESHOLD = getRatio("normal2sar.edge.threshold");
         NORMAL2NORMAL_EDGE_THRESHOLD = getRatio("normal2normal.edge.threshold");
+        
+        SAR2SAR_TX_PROB = getRatio("sar2sar.tx.prob");
+        SAR2NORMAL_TX_PROB = getRatio("sar2normal.tx.prob");
+        NORMAL2SAR_TX_PROB = getRatio("normal2sar.tx.prob");
+        NORMAL2NORMAL_TX_PROB = getRatio("normal2normal.tx.prob");
 
         SAR2SAR_AMOUNT_RATIO = getRatio("sar2sar.amount.ratio");
         SAR2NORMAL_AMOUNT_RATIO = getRatio("sar2normal.amount.ratio");
@@ -124,26 +134,40 @@ public class ModelParameters {
         }
 
         float ratio;
+        float prob = rand.nextFloat();
+        
         if(orig.isSAR()){  // SAR originator
             if(bene.isSAR()){  // SAR -> SAR
+                if(SAR2SAR_TX_PROB <= prob){
+                    return 0.0F;
+                }
                 ratio = SAR2SAR_AMOUNT_RATIO;
             }else{  // SAR -> Normal
+                if(SAR2NORMAL_TX_PROB <= prob){
+                    return 0.0F;
+                }
                 ratio = SAR2NORMAL_AMOUNT_RATIO;
             }
         }else{  // Normal originator
             if(bene.isSAR()){  // Normal -> SAR
+                if(NORMAL2SAR_TX_PROB <= prob){
+                    return 0.0F;
+                }
                 ratio = NORMAL2SAR_AMOUNT_RATIO;
             }else{  // Normal -> Normal
+                if(NORMAL2NORMAL_TX_PROB <= prob){
+                    return 0.0F;
+                }
                 ratio = NORMAL2NORMAL_AMOUNT_RATIO;
             }
             
-            float prob = rand.nextFloat();
+            prob = rand.nextFloat();
             if(prob < NORMAL_HIGH_PROB){  // High-amount payment transaction (near to the upper limit)
                 ratio *= NORMAL_HIGH_RATIO;
             }else if(prob < NORMAL_HIGH_PROB + NORMAL_LOW_PROB){  // Low-amount transaction
                 ratio *= NORMAL_LOW_RATIO;
             }else if(prob < NORMAL_HIGH_PROB + NORMAL_LOW_PROB + NORMAL_SKIP_PROB){
-                ratio *= 0;  // Skip this transaction
+                return 0.0F;  // Skip this transaction
             }
         }
         return amount * ratio;
@@ -160,8 +184,8 @@ public class ModelParameters {
             return true;
         }
         // Proportion of SAR beneficiary accounts of the originator account
-        float benePropThreshold = SAR2NORMAL_EDGE_THRESHOLD;
-        int beneNumThreshold = (int) Math.floor(1 / NORMAL2SAR_EDGE_THRESHOLD);
+//        float benePropThreshold = SAR2NORMAL_EDGE_THRESHOLD;
+//        int beneNumThreshold = (int) Math.floor(1 / NORMAL2SAR_EDGE_THRESHOLD);
 
         int numNeighbors = orig.getBeneList().size();
         float propSARBene = orig.getPropSARBene();

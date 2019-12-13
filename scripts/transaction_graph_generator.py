@@ -15,7 +15,7 @@ from collections import Counter, defaultdict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Attribute keys
 MAIN_ACCT_KEY = "main_acct"
@@ -111,7 +111,7 @@ def directed_configuration_model(_in_deg, _out_deg, seed=0):
     _g.add_edges_from(zip(out_tmp_list, in_tmp_list))
     for idx, (_src, _dst) in enumerate(_g.edges()):
         if _src == _dst:
-            print("Self loop from/to %d at %d" % (_src, idx))
+            logger.warning("Self loop from/to %d at %d" % (_src, idx))
     return _g
 
 
@@ -135,16 +135,19 @@ def get_degrees(deg_csv, num_v):
 
     in_len, out_len = len(_in_deg), len(_out_deg)
     if in_len != out_len:
-        raise ValueError("The length of in-degree (%d) and out-degree (%d) sequences must be same." % (in_len, out_len))
+        raise ValueError("The length of in-degree (%d) and out-degree (%d) sequences must be same."
+                         % (in_len, out_len))
 
     total_in_deg, total_out_deg = sum(_in_deg), sum(_out_deg)
     if total_in_deg != total_out_deg:
-        raise ValueError("The sum of in-degree (%d) and out-degree (%d) must be same." % (total_in_deg, total_out_deg))
+        raise ValueError("The sum of in-degree (%d) and out-degree (%d) must be same."
+                         % (total_in_deg, total_out_deg))
 
     total_v = in_len
     if num_v % total_v != 0:
         raise ValueError("The number of total accounts (%d) "
-                         "must be a multiple of the degree sequence length (%d)." % (num_v, total_v))
+                         "must be a multiple of the degree sequence length (%d)."
+                         % (num_v, total_v))
 
     repeats = num_v // total_v
     _in_deg = _in_deg * repeats
@@ -173,9 +176,7 @@ class TransactionGenerator:
         """
         self.g = nx.MultiDiGraph()  # Transaction graph object
         self.num_accounts = 0  # Number of total accounts
-        # self.degrees = dict()  # Degree distribution
-        self.hubs = list()  # Hub vertices
-        self.main_acct_candidates = set()  # Set of the main account candidates of AML typology subgraphs
+        self.hubs = set()  # Hub account vertices (main account candidates of AML typology subgraphs)
         self.attr_names = list()  # Additional account attribute names
         self.bank_to_accts = defaultdict(set)  # Bank ID -> account set
         self.acct_to_bank = dict()  # Account ID -> bank ID
@@ -193,13 +194,13 @@ class TransactionGenerator:
         self.seed = seed if seed is None else int(seed)
         np.random.seed(self.seed)
         random.seed(self.seed)
-        print("Random seed:", self.seed)
+        logger.info("Random seed: " + str(self.seed))
 
         # Get simulation name
         sim_name = os.getenv("SIMULATION_NAME")
         if sim_name is None:
             sim_name = general_conf["simulation_name"]
-        print("Simulation name:", sim_name)
+        logger.info("Simulation name: " + sim_name)
 
         self.total_steps = parse_int(general_conf["total_steps"])
 
@@ -217,7 +218,7 @@ class TransactionGenerator:
 
         self.margin_ratio = parse_float(default_conf.get("margin_ratio", DEFAULT_MARGIN_RATIO))
         if not 0.0 <= self.margin_ratio <= 1.0:
-            raise ValueError("Margin ratio in AML typologies is %f, must be within [0.0, 1.0]" % self.margin_ratio)
+            raise ValueError("Margin ratio in AML typologies (%f) must be within [0.0, 1.0]" % self.margin_ratio)
 
         self.default_bank_id = default_conf.get("bank_id")  # Default bank ID if not specified at parameter files
 
@@ -231,7 +232,7 @@ class TransactionGenerator:
         self.is_aggregated = input_conf["is_aggregated_accounts"]
 
         # Get output file names
-        output_conf = self.conf["temporal"]  # The output directory of this graph generator is the temporal directory
+        output_conf = self.conf["temporal"]  # The output directory of the graph generator is temporal one
         self.output_dir = os.path.join(output_conf["directory"], sim_name)
         self.out_tx_file = output_conf["transactions"]
         self.out_account_file = output_conf["accounts"]
@@ -270,17 +271,18 @@ class TransactionGenerator:
         """Choose hub accounts with larger degree than the specified threshold
         as the main account candidates of alert transaction sets
         """
-        # degrees = self.g.in_degree()
-        self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.g.in_degree(n) + self.g.out_degree(n)]
-        # self.degrees = self.g.degree(self.g.nodes())
-        # self.hubs = [n for n in self.g.nodes() if self.degree_threshold <= self.degrees[n]]
-        self.main_acct_candidates = set(self.hubs)
+        hub_list = [n for n in self.g.nodes()  # Hub vertices (with large in/out degrees)
+                    if self.degree_threshold <= self.g.in_degree(n) + self.g.out_degree(n)]
+        self.hubs = set(hub_list)
 
     def add_normal_sar_edges(self, ratio=1.0):
         """Add extra edges from normal accounts to SAR accounts to adjust transaction graph features
+        :param ratio: Ratio of the number of edges to be added from normal accounts to SAR accounts
+        compared to the number of total SAR accounts
         """
-        orig_candidates = [n for n in self.main_acct_candidates if not self.g.node[n].get(IS_SAR_KEY, False)]
-        bene_candidates = [n for n, sar in nx.get_node_attributes(self.g, IS_SAR_KEY).items() if sar]
+        sar_flags = nx.get_node_attributes(self.g, IS_SAR_KEY)
+        orig_candidates = [n for n in self.hubs if not sar_flags.get(n, False)]  # Normal
+        bene_candidates = [n for n, sar in sar_flags.items() if sar]  # SAR
         num = int(len(bene_candidates) * ratio)
         if num <= 0:
             return
@@ -291,7 +293,7 @@ class TransactionGenerator:
             _orig = orig_list[i]
             _bene = bene_list[i]
             self.add_transaction(_orig, _bene)
-        print("Added %d edges from normal accounts to sar accounts" % num)
+        logger.info("Added %d edges from normal accounts to sar accounts" % num)
 
     # Account existence check
     def check_account_exist(self, aid):
@@ -300,7 +302,7 @@ class TransactionGenerator:
 
     def check_account_absent(self, aid):
         if self.g.has_node(aid):
-            print("Warning: account %s already exists" % str(aid))
+            logger.warning("Account %s already exists" % str(aid))
             return False
         else:
             return True
@@ -311,7 +313,8 @@ class TransactionGenerator:
     def get_typology_members(self, num, bank_id=""):
         """Choose accounts randomly from one or multiple banks.
         :param num: Number of total account vertices
-        :param bank_id: It chooses members from a single bank with the ID. If empty, it chooses members from all banks.
+        :param bank_id: It chooses members from a single bank with the ID.
+        If empty (default), it chooses members from all banks.
         :return: Main account and account ID list
         """
         if num <= 1:
@@ -319,7 +322,7 @@ class TransactionGenerator:
 
         if bank_id in self.bank_to_accts:  # Choose members from the same bank as the main account
             bank_accts = self.bank_to_accts[bank_id]
-            main_candidates = self.main_acct_candidates & bank_accts
+            main_candidates = self.hubs & bank_accts
             main_acct = random.sample(main_candidates, 1)[0]
             self.remove_typology_candidate(main_acct)
             sub_accts = random.sample(bank_accts, num - 1)
@@ -330,7 +333,7 @@ class TransactionGenerator:
             return main_acct, members
 
         elif bank_id == "":  # Choose members from all accounts
-            main_acct = random.sample(self.main_acct_candidates, 1)[0]
+            main_acct = random.sample(self.hubs, 1)[0]
             self.remove_typology_candidate(main_acct)
 
             sub_accts = random.sample(self.acct_to_bank.keys(), num - 1)
@@ -412,13 +415,20 @@ class TransactionGenerator:
                 lon = row[idx_lon]
                 lat = row[idx_lat]
                 model = default_model
-                start = start_day + random.randrange(start_range) if (
-                        start_day is not None and start_range is not None) else -1
-                end = end_day - random.randrange(end_range) if (end_day is not None and end_range is not None) else -1
+
+                if start_day is not None and start_range is not None:
+                    start = start_day + random.randrange(start_range)
+                else:
+                    start = -1
+
+                if end_day is not None and end_range is not None:
+                    end = end_day - random.randrange(end_range)
+                else:
+                    end = -1
 
                 attr = {"first_name": first_name, "last_name": last_name, "street_addr": street_addr,
-                        "city": city, "state": state, "zip": zip_code, "gender": gender, "phone_number": phone_number,
-                        "birth_date": birth_date, "ssn": ssn, "lon": lon, "lat": lat}
+                        "city": city, "state": state, "zip": zip_code, "gender": gender,
+                        "phone_number": phone_number, "birth_date": birth_date, "ssn": ssn, "lon": lon, "lat": lat}
 
                 init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
                 self.add_account(aid, init_balance, start, end, default_country, default_acct_type, model, **attr)
@@ -463,7 +473,7 @@ class TransactionGenerator:
                 elif k == "bank_id":
                     idx_bank = i
                 else:
-                    print("Warning: unknown key: %s" % k)
+                    logger.warning("Unknown column name in %s: %s" % (acct_file, k))
 
             acct_id = 0
             for row in reader:
@@ -485,7 +495,7 @@ class TransactionGenerator:
                     acct_id += 1
 
         self.num_accounts = acct_id
-        print("Generated %d accounts." % self.num_accounts)
+        logger.info("Generated %d accounts." % self.num_accounts)
 
     def generate_normal_transactions(self):
         """Generate a base directed graph from degree sequences
@@ -496,7 +506,7 @@ class TransactionGenerator:
         in_deg, out_deg = get_degrees(deg_file, self.num_accounts)
         g = directed_configuration_model(in_deg, out_deg, self.seed)
 
-        print("Add %d base transactions" % g.number_of_edges())
+        logger.info("Add %d base transactions" % g.number_of_edges())
         nodes = self.g.nodes()
         for src_i, dst_i in g.edges():
             assert (src_i != dst_i)
@@ -532,7 +542,7 @@ class TransactionGenerator:
         """Remove an account vertex from AML typology member candidates
         :param acct: Account ID
         """
-        self.main_acct_candidates.discard(acct)
+        self.hubs.discard(acct)
         bank_id = self.acct_to_bank[acct]
         del self.acct_to_bank[acct]
         self.bank_to_accts[bank_id].discard(acct)
@@ -553,7 +563,7 @@ class TransactionGenerator:
         self.g.add_edge(orig, bene, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=tx_type)
         self.tx_id += 1
         if self.tx_id % 1000000 == 0:
-            print("Added %d transactions" % self.tx_id)
+            logger.info("Added %d transactions" % self.tx_id)
 
     # Load Custom Topology Files
     def add_subgraph(self, members, topology):
@@ -627,7 +637,7 @@ class TransactionGenerator:
                 elif k == "is_sar":  # SAR flag
                     idx_sar = i
                 else:
-                    print("Warning: unknown key: %s" % k)
+                    logger.warning("Unknown column name in %s: %s" % (alert_file, k))
 
             # Generate transaction set
             count = 0
@@ -647,8 +657,8 @@ class TransactionGenerator:
                 is_sar = parse_flag(row[idx_sar])
 
                 if typology_name not in self.alert_types:
-                    print("Warning: pattern type name (%s) must be one of %s"
-                          % (typology_name, str(self.alert_types.keys())))
+                    logger.warning("Pattern type name (%s) must be one of %s"
+                                   % (typology_name, str(self.alert_types.keys())))
                     continue
 
                 for i in range(num_patterns):
@@ -658,7 +668,7 @@ class TransactionGenerator:
                     self.add_aml_typology(is_sar, typology_name, num_accts, init_amount, period, bank_id, schedule)
                     count += 1
                     if count % 1000 == 0:
-                        print("Created %d alerts" % count)
+                        logger.info("Created %d alerts" % count)
 
     def add_aml_typology(self, is_sar, typology_name, num_accounts, init_amount, period, bank_id="", schedule=1):
         """Add an AML typology transaction set
@@ -702,7 +712,7 @@ class TransactionGenerator:
             self.add_transaction(_orig, _bene, amount=_amount, date=_date)
 
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
-            main_acct = random.sample(self.main_acct_candidates, 1)[0]
+            main_acct = random.sample(self.hubs, 1)[0]
             main_bank_id = self.acct_to_bank[main_acct]
             self.remove_typology_candidate(main_acct)
             add_node(main_acct, main_bank_id)
@@ -722,7 +732,7 @@ class TransactionGenerator:
                 add_edge(orig, main_acct, amount, date)
 
         elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
-            main_acct = random.sample(self.main_acct_candidates, 1)[0]
+            main_acct = random.sample(self.hubs, 1)[0]
             main_bank_id = self.acct_to_bank[main_acct]
             self.remove_typology_candidate(main_acct)
             add_node(main_acct, main_bank_id)
@@ -828,7 +838,7 @@ class TransactionGenerator:
                     prev_acct = next_acct
 
             else:
-                main_acct = random.sample(self.main_acct_candidates, 1)[0]
+                main_acct = random.sample(self.hubs, 1)[0]
                 bank_id = self.acct_to_bank[main_acct]
                 self.remove_typology_candidate(main_acct)
                 add_node(main_acct, bank_id)
@@ -865,7 +875,7 @@ class TransactionGenerator:
                 main_acct = all_accts[0]
 
             else:
-                main_acct = random.sample(self.main_acct_candidates, 1)[0]
+                main_acct = random.sample(self.hubs, 1)[0]
                 bank_id = self.acct_to_bank[main_acct]
                 self.remove_typology_candidate(main_acct)
                 add_node(main_acct, bank_id)
@@ -970,7 +980,7 @@ class TransactionGenerator:
         # TODO: Please add user-defined typology implementations here
 
         else:
-            print("Warning: unknown pattern type: %s" % typology_name)
+            logger.warning("Unknown AML typology name: %s" % typology_name)
             return
 
         # Add the generated transaction edges to whole transaction graph
@@ -1008,7 +1018,7 @@ class TransactionGenerator:
                 for attr_name in self.attr_names:
                     values.append(prop[attr_name])
                 writer.writerow(values)
-        print("Exported %d accounts to %s" % (self.g.number_of_nodes(), acct_file))
+        logger.info("Exported %d accounts to %s" % (self.g.number_of_nodes(), acct_file))
 
     def write_transaction_list(self):
         tx_file = os.path.join(self.output_dir, self.out_tx_file)
@@ -1021,7 +1031,7 @@ class TransactionGenerator:
                 tid = e[2]
                 tx_type = random.choice(self.tx_types)
                 writer.writerow([tid, src, dst, tx_type])
-        print("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))
+        logger.info("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))
 
     def write_alert_account_list(self):
         def get_out_edge_attrs(g, vid, name):
@@ -1029,11 +1039,11 @@ class TransactionGenerator:
 
         acct_count = 0
         alert_member_file = os.path.join(self.output_dir, self.out_alert_member_file)
-        print("Output alert member list to:", alert_member_file)
+        logger.info("Output alert member list to: " + alert_member_file)
         with open(alert_member_file, "w") as wf:
             writer = csv.writer(wf)
-            base_attrs = ["alertID", "reason", "accountID", "isMain", "isSAR", "modelID", "minAmount", "maxAmount",
-                          "startStep", "endStep", "scheduleID", "bankID"]
+            base_attrs = ["alertID", "reason", "accountID", "isMain", "isSAR", "modelID",
+                          "minAmount", "maxAmount", "startStep", "endStep", "scheduleID", "bankID"]
             writer.writerow(base_attrs + self.attr_names)
             for gid, sub_g in self.alert_groups.items():
                 main_id = sub_g.graph[MAIN_ACCT_KEY]
@@ -1058,8 +1068,8 @@ class TransactionGenerator:
                     writer.writerow(values)
                     acct_count += 1
 
-        print("Exported %d members for %d AML typologies to %s" %
-              (acct_count, len(self.alert_groups), alert_member_file))
+        logger.info("Exported %d members for %d AML typologies to %s" %
+                    (acct_count, len(self.alert_groups), alert_member_file))
 
     def count_fan_in_out_patterns(self, threshold=2):
         """Count the number of fan-in and fan-out patterns in the generated transaction graph
@@ -1069,7 +1079,8 @@ class TransactionGenerator:
         for th in range(2, threshold + 1):
             num_fan_in = sum([c for d, c in in_deg.items() if d >= th])
             num_fan_out = sum([c for d, c in out_deg.items() if d >= th])
-            print("\tNumber of fan-in / fan-out patterns with", th, "neighbors:", num_fan_in, "/", num_fan_out)
+            logger.info("\tNumber of fan-in / fan-out patterns with %d neighbors: %d / %d"
+                        % (th, num_fan_in, num_fan_out))
 
         main_in_deg = Counter()
         main_out_deg = Counter()
@@ -1080,7 +1091,8 @@ class TransactionGenerator:
         for th in range(2, threshold + 1):
             num_fan_in = sum([c for d, c in main_in_deg.items() if d >= threshold])
             num_fan_out = sum([c for d, c in main_out_deg.items() if d >= threshold])
-            print("\tNumber of alerted fan-in / fan-out patterns with", th, "neighbors", num_fan_in, "/", num_fan_out)
+            logger.info("\tNumber of alerted fan-in / fan-out patterns with %d neighbors: %d / %d"
+                        % (th, num_fan_in, num_fan_out))
 
 
 if __name__ == "__main__":
@@ -1093,7 +1105,7 @@ if __name__ == "__main__":
     if len(argv) >= 3:
         _ratio = float(argv[2])
     else:
-        _ratio = 1.0
+        _ratio = 0.0
 
     # Validation option for graph contractions
     deg_param = os.getenv("DEGREE")
@@ -1103,14 +1115,14 @@ if __name__ == "__main__":
     txg.load_account_list()  # Load account list CSV file
     txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
     if degree_threshold > 0:
-        print("Generated normal transaction network")
+        logger.info("Generated normal transaction network")
         txg.count_fan_in_out_patterns(degree_threshold)
     txg.set_main_acct_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
     txg.add_normal_sar_edges(_ratio)
 
     if degree_threshold > 0:
-        print("Added alert transaction patterns")
+        logger.info("Added alert transaction patterns")
         txg.count_fan_in_out_patterns(degree_threshold)
     txg.write_account_list()  # Export accounts to a CSV file
     txg.write_transaction_list()  # Export transactions to a CSV file

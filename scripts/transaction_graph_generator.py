@@ -287,7 +287,10 @@ class TransactionGenerator:
         if num <= 0:
             return
 
+        num_origs = len(orig_candidates)
+        print("Number of orig/bene candidates: %d/%d" % (num_origs, len(bene_candidates)))
         orig_list = random.choices(orig_candidates, k=num)
+        # orig_list = [orig_candidates[i % num_origs] for i in range(num)]
         bene_list = random.choices(bene_candidates, k=num)
         for i in range(num):
             _orig = orig_list[i]

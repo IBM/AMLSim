@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 if [ $# -lt 2 ]; then
-  echo "Usage sh $0 [ConfJSON] [SimName] [EdgeRatio]"
+  echo "Usage sh $0 [ConfJSON] [SimName] [EdgeRatio] [TxProb]"
   exit 1
 fi
 
 SIM_HOME=$(pwd)
-MODEL_PROP=tmp/model.properties
+MODEL_PROP=$SIM_HOME/paramFiles/model.properties
 GPML_HOME=$SIM_HOME/../gpml
 
 if [ ! -e "${GPML_HOME}" ]; then
@@ -16,7 +16,8 @@ fi
 
 export CONF_JSON=$1
 export SIMULATION_NAME=$2
-EDGE_RATIO=${3:-0}
+EDGE_RATIO=${3:-0.0}
+TX_PROB=${4:-1.0}
 
 # scripts/run_batch.sh
 cmd="python3 scripts/transaction_graph_generator.py ${CONF_JSON} ${EDGE_RATIO}"
@@ -24,7 +25,7 @@ echo "$cmd"
 time $cmd
 
 # scripts/run_AMLSim.sh
-cmd="java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Xms2g -Xmx4g -cp jars/*:bin amlsim.AMLSim ${CONF_JSON} ${MODEL_PROP}"
+cmd="java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Dnormal2sar.tx.prob=${TX_PROB} -Xms2g -Xmx4g -cp jars/*:bin amlsim.AMLSim ${CONF_JSON} ${MODEL_PROP}"
 echo "$cmd"
 time $cmd
 

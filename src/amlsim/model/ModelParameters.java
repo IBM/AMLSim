@@ -98,11 +98,18 @@ public class ModelParameters {
                                                        " must be 1.0 or less");
         }
 
+        System.out.println("Transaction Probability:");
+        System.out.println("\tSAR -> SAR: " + SAR2SAR_TX_PROB);
+        System.out.println("\tSAR -> Normal: " + SAR2NORMAL_TX_PROB);
+        System.out.println("\tNormal -> SAR: " + NORMAL2SAR_TX_PROB);
+        System.out.println("\tNormal -> Normal: " + NORMAL2NORMAL_TX_PROB);
+
         System.out.println("Transaction edge addition threshold (proportion of SAR accounts):");
         System.out.println("\tSAR -> SAR: " + SAR2SAR_EDGE_THRESHOLD);
         System.out.println("\tSAR -> Normal: " + SAR2NORMAL_EDGE_THRESHOLD);
-        System.out.println("\tSAR -> SAR: " + NORMAL2SAR_EDGE_THRESHOLD);
+        System.out.println("\tNormal -> SAR: " + NORMAL2SAR_EDGE_THRESHOLD);
         System.out.println("\tNormal -> Normal: " + NORMAL2NORMAL_EDGE_THRESHOLD);
+
         System.out.println("Transaction amount ratio:");
         System.out.println("\tSAR -> SAR: " + SAR2SAR_AMOUNT_RATIO);
         System.out.println("\tSAR -> Normal: " + SAR2NORMAL_AMOUNT_RATIO);

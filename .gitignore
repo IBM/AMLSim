@@ -31,7 +31,7 @@ hs_err_pid*
 tmp/
 __pycache__/
 /*.png
-
+.DS_Store
 
 # Param files for testing
 paramFiles/city*/

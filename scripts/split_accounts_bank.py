@@ -51,7 +51,5 @@ if __name__ == "__main__":
                 acct_id = row[0]
                 if acct_id in accts:
                     writer.writerow(row)
-
         wf.close()
         print("Extracted %d accounts in the bank %s from %s to %s" % (len(accts), bank_id, input_csv, output_csv))
-

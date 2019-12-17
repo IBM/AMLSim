@@ -18,8 +18,9 @@ if __name__ == "__main__":
     conf_json = argv[1]
     with open(conf_json, "r") as rf:
         conf_data = json.load(rf)
+    sim_name = argv[2] if len(argv) >= 3 else conf_data["general"]["simulation_name"]
 
-    output_dir = os.path.join(conf_data["output"]["directory"], conf_data["general"]["simulation_name"])
+    output_dir = os.path.join(conf_data["output"]["directory"], sim_name)
     acct_csv = conf_data["output"]["accounts"]
     tx_csv = conf_data["output"]["transactions"]
     acct_path = os.path.join(output_dir, acct_csv)

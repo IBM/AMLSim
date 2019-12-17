@@ -39,10 +39,7 @@ paramFiles/bank_*
 paramFiles/person_*/
 sample/*_*/
 
-# Output CSV, Log(txt) and image files
-outputs/*.csv
-outputs/*/
-outputs/*.txt
-outputs/*.png
-outputs/*.gif
-outputs/*.tgz
+# Output data except README.md
+outputs/
+!outputs/README.md
+

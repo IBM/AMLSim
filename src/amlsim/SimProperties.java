@@ -52,13 +52,13 @@ public class SimProperties {
         seed = envSeed != null ? Integer.parseInt(envSeed) : generalProp.getInt("random_seed");
         System.out.println("Random seed: " + seed);
 
-        simName = System.getenv("SIMULATION_NAME");
+        simName = System.getProperty("simulation_name");
         if(simName == null){
             simName = generalProp.getString("simulation_name");
         }
         System.out.println("Simulation name: " + simName);
 
-        String simName = getSimName();  // generalProp.getString("simulation_name");
+        String simName = getSimName();
         workDir = inputProp.getString("directory") + separator + simName + separator;
         System.out.println("Working directory: " + workDir);
     }

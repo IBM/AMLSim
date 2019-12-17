@@ -516,7 +516,7 @@ if __name__ == "__main__":
     with open(schema_path, "r") as rf:
         schema = json.load(rf)
 
-    sim_name = conf["general"]["simulation_name"]
+    sim_name = argv[2] if len(argv) >= 3 else conf["general"]["simulation_name"]
     work_dir = os.path.join(conf["output"]["directory"], sim_name)
     acct_csv = conf["output"]["accounts"]
     tx_csv = conf["output"]["transactions"]

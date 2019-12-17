@@ -358,7 +358,7 @@ def load_input_conf_json(conf_json):
 
 class Combiner:
 
-    def __init__(self, out_conf_json):
+    def __init__(self, out_conf_json, out_sim_name=None):
         self.last_acct_id = 0
         self.last_tx_id = 0
         self.last_alert_id = 0
@@ -387,11 +387,10 @@ class Combiner:
         self.in_deg = Counter()
         self.out_deg = Counter()
 
-        sim_name = os.getenv("SIMULATION_NAME")
-        if sim_name is None:
-            sim_name = out_conf["general"]["simulation_name"]
+        if out_sim_name is None:
+            out_sim_name = out_conf["general"]["simulation_name"]
 
-        out_dir = os.path.join(out_conf["output"]["directory"], sim_name)
+        out_dir = os.path.join(out_conf["output"]["directory"], out_sim_name)
         os.makedirs(out_dir, exist_ok=True)
 
         self.out_acct_path, self.out_tx_path, self.out_cash_path, \
@@ -656,12 +655,14 @@ class Combiner:
 if __name__ == "__main__":
     argv = sys.argv
     argc = len(argv)
-    if argc < 4 or argc % 2 != 0:
-        print("Usage: python3 %s [OutputConfJSON] ([InputConfJSON] [Repetitions]...)" % argv[0])
+    if argc < 4 or argc % 2 == 0:
+        print("Usage: python3 %s [OutputConfJSON] [OutputSimName] ([InputConfJSON] [Repetitions]...)" % argv[0])
         exit(1)
 
-    com = Combiner(argv[1])
-    for i in range(2, argc, 2):
+    _conf_json = argv[1]
+    _sim_name = argv[2]
+    com = Combiner(_conf_json, _sim_name)
+    for i in range(3, argc, 2):
         _in_conf_json = argv[i]
         _rep = int(argv[i+1])
         for j in range(_rep):

@@ -170,9 +170,10 @@ class InputSchema:
 
 class TransactionGenerator:
 
-    def __init__(self, conf_file):
+    def __init__(self, conf_file, sim_name=None):
         """Initialize transaction network from parameter files.
         :param conf_file: JSON file as configurations
+        :param sim_name: Simulation name (overrides the content in the `conf_json`)
         """
         self.g = nx.MultiDiGraph()  # Transaction graph object
         self.num_accounts = 0  # Number of total accounts
@@ -197,7 +198,6 @@ class TransactionGenerator:
         logger.info("Random seed: " + str(self.seed))
 
         # Get simulation name
-        sim_name = os.getenv("SIMULATION_NAME")
         if sim_name is None:
             sim_name = general_conf["simulation_name"]
         logger.info("Simulation name: " + sim_name)
@@ -1100,21 +1100,29 @@ class TransactionGenerator:
 
 if __name__ == "__main__":
     argv = sys.argv
-    if len(argv) < 2:
+    argc = len(argv)
+    if argc < 2:
         print("Usage: python3 %s [ConfJSON]" % argv[0])
         exit(1)
 
     _conf_file = argv[1]
-    if len(argv) >= 3:
-        _ratio = float(argv[2])
-    else:
-        _ratio = 0.0
+    _sim_name = argv[2] if argc >= 3 else None
+    _ratio = float(argv[3]) if argc >= 4 else 0.0
+
+    # if len(argv) >= 3:
+    #     _sim_name = argv[2]
+    # else:
+    #     _sim_name = None
+    # if len(argv) >= 4:
+    #     _ratio = float(argv[3])
+    # else:
+    #     _ratio = 0.0
 
     # Validation option for graph contractions
     deg_param = os.getenv("DEGREE")
     degree_threshold = 0 if deg_param is None else int(deg_param)
 
-    txg = TransactionGenerator(_conf_file)
+    txg = TransactionGenerator(_conf_file, _sim_name)
     txg.load_account_list()  # Load account list CSV file
     txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
     if degree_threshold > 0:

@@ -571,7 +571,7 @@ class Schema:
 
 class LogConverter:
 
-    def __init__(self, conf_file):
+    def __init__(self, conf_file, sim_name=None):
         self.reports = dict()  # SAR ID and transaction subgraph
         self.org_types = dict()  # ID, organization type
 
@@ -582,9 +582,10 @@ class LogConverter:
         input_conf = conf["temporal"]  # Input directory of this converter is temporal directory
         output_conf = conf["output"]
 
-        self.sim_name = os.getenv("SIMULATION_NAME")
-        if self.sim_name is None:
-            self.sim_name = general_conf["simulation_name"]
+        # self.sim_name = os.getenv("SIMULATION_NAME")
+        # if self.sim_name is None:
+        #     self.sim_name = general_conf["simulation_name"]
+        self.sim_name = sim_name if sim_name is not None else general_conf["simulation_name"]
         print("Simulation name:", self.sim_name)
 
         self.input_dir = os.path.join(input_conf["directory"], self.sim_name)
@@ -904,8 +905,9 @@ if __name__ == "__main__":
         print("Usage: python3 %s [ConfJSON]" % argv[0])
         exit(1)
 
-    conf_json = argv[1]
-    converter = LogConverter(conf_json)
+    _conf_json = argv[1]
+    _sim_name = argv[2] if len(argv) >= 3 else None
+    converter = LogConverter(_conf_json, _sim_name)
     converter.convert_alert_members()
     converter.convert_acct_tx()
     converter.output_sar_cases()

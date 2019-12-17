@@ -290,11 +290,11 @@ def is_gather_scatter(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
 
 class AlertValidator:
 
-    def __init__(self, conf_json):
+    def __init__(self, conf_json, sim_name=None):
         with open(conf_json, "r") as rf:
             self.conf = json.load(rf)
 
-        self.sim_name = self.conf["general"]["simulation_name"]
+        self.sim_name = sim_name if sim_name is not None else self.conf["general"]["simulation_name"]
         self.input_dir = self.conf["input"]["directory"]
         self.output_dir = os.path.join(self.conf["output"]["directory"], self.sim_name)
         schema_json = self.conf["input"]["schema"]
@@ -349,8 +349,10 @@ class AlertValidator:
 if __name__ == "__main__":
     argv = sys.argv
     if len(argv) < 2:
-        print("Usage: python3 %s [ConfJson]" % argv[0])
+        print("Usage: python3 %s [ConfJson] [SimName]" % argv[0])
         exit(1)
 
-    av = AlertValidator(argv[1])
+    _conf_json = argv[1]
+    _sim_name = argv[2] if len(argv) >= 3 else None
+    av = AlertValidator(_conf_json, _sim_name)
     av.validate_all()

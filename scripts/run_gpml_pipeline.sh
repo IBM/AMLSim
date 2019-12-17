@@ -19,24 +19,31 @@ export SIMULATION_NAME=$2
 EDGE_RATIO=${3:-0.0}
 TX_PROB=${4:-1.0}
 
+run_cmd(){
+  cmd=$1
+  echo "Started: $cmd"
+  time $cmd || ( echo "Failed: $cmd" ; exit 1 )
+  echo "Finished: $cmd"
+}
+
 # scripts/run_batch.sh
-cmd="python3 scripts/transaction_graph_generator.py ${CONF_JSON} ${EDGE_RATIO}"
-echo "$cmd"
-time $cmd
+run_cmd "python3 scripts/transaction_graph_generator.py ${CONF_JSON} ${SIMULATION_NAME} ${EDGE_RATIO}"
 
 # scripts/run_AMLSim.sh
-cmd="java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Dnormal2sar.tx.prob=${TX_PROB} -Xms2g -Xmx4g -cp jars/*:bin amlsim.AMLSim ${CONF_JSON} ${MODEL_PROP}"
-echo "$cmd"
-time $cmd
+run_cmd "java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Dsimulation_name=${SIMULATION_NAME} -Dnormal2sar.tx.prob=${TX_PROB} -Xms2g -Xmx4g -cp jars/*:bin amlsim.AMLSim ${CONF_JSON} ${MODEL_PROP}"
 
-cmd="python3 scripts/convert_logs.py ${CONF_JSON}"
-echo "$cmd"
-time $cmd
+# scripts/convert_logs.py
+run_cmd "python3 scripts/convert_logs.py ${CONF_JSON} ${SIMULATION_NAME}"
+
+run_cmd "python3 scripts/validation/validate_alerts.py ${CONF_JSON} ${SIMULATION_NAME}"
+
+run_cmd "python3 scripts/count_bank2bank_transactions.py ${CONF_JSON} ${SIMULATION_NAME}"
+
+run_cmd "python3 scripts/visualize/plot_distributions.py ${CONF_JSON} ${SIMULATION_NAME}"
+
 
 # Move to GPML
-cd "$GPML_HOME" || exit 1
+run_cmd "cd $GPML_HOME"
 
-cmd="sh scripts/run_from_amlsim.sh $SIM_HOME $SIM_HOME/$CONF_JSON data/$SIMULATION_NAME"
-echo "$cmd"
-time $cmd
+run_cmd "sh scripts/run_from_amlsim.sh $SIM_HOME $SIM_HOME/$CONF_JSON data/$SIMULATION_NAME"
 

@@ -498,6 +498,80 @@ def plot_diameter(dia_csv, _plot_img):
     plt.savefig(_plot_img)
 
 
+def plot_bank2bank_count(_g: nx.MultiDiGraph, _plot_img: str):
+    acct_bank = nx.get_node_attributes(_g, "bank_id")
+    bank_list = sorted(set(acct_bank.values()))
+    bank2bank_all = Counter()
+    bank2bank_sar = Counter()
+
+    for orig, bene, attr in _g.edges(data=True):
+        orig_bank = acct_bank[orig]
+        bene_bank = acct_bank[bene]
+        is_sar = attr["is_sar"]
+        bank_pair = (orig_bank, bene_bank)
+        bank2bank_all[bank_pair] += 1
+        if is_sar:
+            bank2bank_sar[bank_pair] += 1
+
+    total_num = _g.number_of_edges()
+    internal_num = sum([num for pair, num in bank2bank_all.items() if pair[0] == pair[1]])
+    external_num = total_num - internal_num
+    internal_ratio = internal_num / total_num * 100
+    external_ratio = external_num / total_num * 100
+    internal_sar_num = sum([num for pair, num in bank2bank_sar.items() if pair[0] == pair[1]])
+    external_sar_num = sum([num for pair, num in bank2bank_sar.items() if pair[0] != pair[1]])
+
+    all_count_data = list()
+    sar_count_data = list()
+    for orig_bank in bank_list:
+        all_count_row = [bank2bank_all[(orig_bank, bene_bank)] for bene_bank in bank_list]
+        all_count_total = sum(all_count_row)
+        all_count_data.append(all_count_row + [all_count_total])
+        sar_count_row = [bank2bank_sar[(orig_bank, bene_bank)] for bene_bank in bank_list]
+        sar_count_total = sum(sar_count_row)
+        sar_count_data.append(sar_count_row + [sar_count_total])
+
+    all_count_total = list()
+    sar_count_total = list()
+    for bene_bank in bank_list:
+        all_count_total.append(sum([bank2bank_all[(orig_bank, bene_bank)] for orig_bank in bank_list]))
+        sar_count_total.append(sum([bank2bank_sar[(orig_bank, bene_bank)] for orig_bank in bank_list]))
+    all_count_total.append(sum(all_count_total))
+    sar_count_total.append(sum(sar_count_total))
+
+    all_count_data.append(all_count_total)
+    sar_count_data.append(sar_count_total)
+
+    all_count_csv = list()
+    sar_count_csv = list()
+    for row in all_count_data:
+        all_count_csv.append(["{:,}".format(num) for num in row])
+    for row in sar_count_data:
+        sar_count_csv.append(["{:,}".format(num) for num in row])
+
+    cols = ["To: %s" % bank for bank in bank_list] + ["Total"]
+    rows = ["From: %s" % bank for bank in bank_list] + ["Total"]
+
+    fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(9, 6))
+    table_attr = {"rowLabels": rows, "colLabels": cols, "colWidths": [0.15 for _ in cols],
+                  "loc": "center", "bbox": [0.15, 0.3, 0.75, 0.6]}
+    ax1.axis("off")
+    ax1.table(cellText=all_count_csv, **table_attr)
+    ax1.set_title("Number of all bank-to-bank transactions")
+
+    ax2.axis("off")
+    ax2.table(cellText=sar_count_csv, **table_attr)
+    ax2.set_title("Number of SAR bank-to-bank transactions")
+
+    fig.suptitle("Internal bank transactions: Total = {:,} ({:.2f}%), SAR = {:,}".
+                 format(internal_num, internal_ratio, internal_sar_num) + "\n" +
+                 "External bank transactions: Total = {:,} ({:.2f}%), SAR = {:,}"
+                 .format(external_num, external_ratio, external_sar_num),
+                 y=0.1)
+    plt.tight_layout()
+    fig.savefig(_plot_img)
+
+
 if __name__ == "__main__":
     argv = sys.argv
 
@@ -539,6 +613,7 @@ if __name__ == "__main__":
     count_plot = v_conf["count"]
     cc_plot = v_conf["clustering"]
     dia_plot = v_conf["diameter"]
+    b2b_plot = "bank2bank.png"
 
     print("Plot degree distributions")
     plot_degree_distribution(g, conf, os.path.join(work_dir, deg_plot))
@@ -575,3 +650,6 @@ if __name__ == "__main__":
         plot_diameter(dia_path, plot_img)
     else:
         print("Diameter log file %s not found." % dia_path)
+
+    print("Plot bank-to-bank transaction counts")
+    plot_bank2bank_count(g, os.path.join(work_dir, b2b_plot))

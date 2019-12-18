@@ -37,8 +37,6 @@ run_cmd "python3 scripts/convert_logs.py ${CONF_JSON} ${SIMULATION_NAME}"
 
 run_cmd "python3 scripts/validation/validate_alerts.py ${CONF_JSON} ${SIMULATION_NAME}"
 
-run_cmd "python3 scripts/count_bank2bank_transactions.py ${CONF_JSON} ${SIMULATION_NAME}"
-
 run_cmd "python3 scripts/visualize/plot_distributions.py ${CONF_JSON} ${SIMULATION_NAME}"
 
 

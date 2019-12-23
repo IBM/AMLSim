@@ -43,5 +43,5 @@ run_cmd "python3 scripts/visualize/plot_distributions.py ${CONF_JSON} ${SIMULATI
 # Move to GPML
 run_cmd "cd $GPML_HOME"
 
-run_cmd "sh scripts/run_from_amlsim.sh $SIM_HOME $SIM_HOME/$CONF_JSON data/$SIMULATION_NAME"
+run_cmd "sh scripts/run_from_amlsim.sh $SIM_HOME $SIM_HOME/$CONF_JSON data/$SIMULATION_NAME $SIMULATION_NAME"
 

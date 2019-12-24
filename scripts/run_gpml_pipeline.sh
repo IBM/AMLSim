@@ -22,7 +22,7 @@ TX_PROB=${4:-1.0}
 run_cmd(){
   cmd=$1
   echo "Started: $cmd"
-  time $cmd || ( echo "Failed: $cmd" ; exit 1 )
+  time $cmd || { echo "Failed: $cmd" ; exit 1 ; }
   echo "Finished: $cmd"
 }
 

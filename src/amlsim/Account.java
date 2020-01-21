@@ -51,7 +51,7 @@ public class Account extends Client implements Steppable {
 	 * Constructor of the account object
 	 * @param id Account ID
 	 * @param modelID Transaction model ID (int value)
-     * @param interval Default transaction intervalt
+     * @param interval Default transaction interval
 	 * @param initBalance Initial account balance
 	 * @param start Start step
 	 * @param end End step

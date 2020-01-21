@@ -34,7 +34,7 @@ public class ModelParameters {
     private static float NORMAL_LOW_RATIO = 1.0F;  // Low transaction amount ratio from normal accounts
     private static float NORMAL_HIGH_PROB = 0.0F;  // Probability of transactions with high amount
     private static float NORMAL_LOW_PROB = 0.0F;  // Probability of transactions with low amount
-    private static float NORMAL_SKIP_PROB = 1.0F;  // Probability of skipping transactions
+    private static float NORMAL_SKIP_PROB = 0.0F;  // Probability of skipping transactions
 
     /**
      * Whether no adjustment parameters in this class will be applied for transactions
@@ -43,13 +43,17 @@ public class ModelParameters {
     public static boolean isUnused(){
         return prop == null;
     }
-
-    private static float getRatio(String key){
+    
+    private static float getRatio(String key, float defaultValue){
         String value = System.getProperty(key);
         if(value == null){
-            value = prop.getProperty(key, "1.0");
+            value = prop.getProperty(key, String.valueOf(defaultValue));
         }
         return Float.parseFloat(value);
+    }
+
+    private static float getRatio(String key){
+        return getRatio(key, 1.0F);
     }
 
     public static void loadProperties(String propFile){
@@ -82,11 +86,11 @@ public class ModelParameters {
         NORMAL2SAR_AMOUNT_RATIO = getRatio("normal2sar.amount.ratio");
         NORMAL2NORMAL_AMOUNT_RATIO = getRatio("normal2normal.amount.ratio");
 
-        NORMAL_HIGH_RATIO = getRatio("normal.high.ratio");
-        NORMAL_LOW_RATIO = getRatio("normal.low.ratio");
-        NORMAL_HIGH_PROB = getRatio("normal.high.prob");
-        NORMAL_LOW_PROB = getRatio("normal.low.prob");
-        NORMAL_SKIP_PROB = getRatio("normal.skip.prob");
+        NORMAL_HIGH_RATIO = getRatio("normal.high.ratio", 1.0F);
+        NORMAL_LOW_RATIO = getRatio("normal.low.ratio", 1.0F);
+        NORMAL_HIGH_PROB = getRatio("normal.high.prob", 1.0F);
+        NORMAL_LOW_PROB = getRatio("normal.low.prob", 1.0F);
+        NORMAL_SKIP_PROB = getRatio("normal.skip.prob", 1.0F);
         if(NORMAL_HIGH_RATIO < 1.0){
             throw new IllegalArgumentException("The high transaction amount ratio must be 1.0 or more");
         }

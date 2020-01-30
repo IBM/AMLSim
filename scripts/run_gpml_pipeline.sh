@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ $# -lt 2 ]; then
-  echo "Usage sh $0 [ConfJSON] [SimName] [EdgeRatio] [TxProb]"
+  echo "Usage sh $0 [ConfJSON] [SimName] [EdgeRatio]"
   exit 1
 fi
 
@@ -17,7 +17,6 @@ fi
 export CONF_JSON=$1
 export SIMULATION_NAME=$2
 EDGE_RATIO=${3:-0.0}
-TX_PROB=${4:-1.0}
 
 run_cmd(){
   cmd=$1
@@ -30,12 +29,12 @@ run_cmd(){
 run_cmd "python3 scripts/transaction_graph_generator.py ${CONF_JSON} ${SIMULATION_NAME} ${EDGE_RATIO}"
 
 # scripts/run_AMLSim.sh
-run_cmd "java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Dsimulation_name=${SIMULATION_NAME} -Dnormal2sar.tx.prob=${TX_PROB} -Xms2g -Xmx4g -cp jars/*:bin amlsim.AMLSim ${CONF_JSON} ${MODEL_PROP}"
+run_cmd "java -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -Dsimulation_name=${SIMULATION_NAME} -Xms2g -Xmx4g -cp jars/*:bin amlsim.AMLSim ${CONF_JSON} ${MODEL_PROP}"
 
 # scripts/convert_logs.py
 run_cmd "python3 scripts/convert_logs.py ${CONF_JSON} ${SIMULATION_NAME}"
 
-run_cmd "python3 scripts/validation/validate_alerts.py ${CONF_JSON} ${SIMULATION_NAME}"
+#run_cmd "python3 scripts/validation/validate_alerts.py ${CONF_JSON} ${SIMULATION_NAME}"
 
 run_cmd "python3 scripts/visualize/plot_distributions.py ${CONF_JSON} ${SIMULATION_NAME}"
 

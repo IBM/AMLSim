@@ -36,7 +36,7 @@
     }
   },
   "input": {
-    "directory": "paramFiles/small8",
+    "directory": "paramFiles/1K",
     "schema": "schema.json",
     "accounts": "accounts.csv",
     "alert_patterns": "alertPatterns.csv",
@@ -75,6 +75,8 @@
     "compute_diameter": false,
     "transaction_limit": 0,
     "transaction_interval": 30,
+    "sar_interval": 7,
+    "sar_balance_ratio": 1.0,
     "numBranches": 1000
   },
   "visualizer": {

@@ -75,6 +75,8 @@
     "compute_diameter": false,
     "transaction_limit": 0,
     "transaction_interval": 7,
+    "sar_interval": 7,
+    "sar_balance_ratio": 1.0,
     "numBranches": 1000
   },
   "visualizer": {

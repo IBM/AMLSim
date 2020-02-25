@@ -7,7 +7,7 @@ fi
 
 CONF_JSON=$1
 OUTPUT_LOG=${2:-/dev/null}
-EDGE_RATIO=${3:-0.0}
+EDGE_RATIO=$3
 
 echo "Configuration JSON file: ${CONF_JSON}"
 echo "Output Log file: ${OUTPUT_LOG}"

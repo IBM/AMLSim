@@ -27,35 +27,35 @@ public class SingleTransactionModel extends AbstractTransactionModel {
     }
 
     public void sendTransaction(long step){
-        List<Account> dests = this.account.getBeneList();
-        int numDests = dests.size();
-
-        if(step < this.startStep || this.endStep < step || numDests == 0){
+        List<Account> beneList = this.account.getBeneList();
+        int numBene = beneList.size();
+        
+        if(step < this.startStep || this.endStep < step || numBene == 0){
             return;
         }
         if(step == this.startStep){
-            steps = rand.longs(numDests, this.startStep, this.endStep + 1).sorted().toArray();
+            steps = rand.longs(numBene, this.startStep, this.endStep + 1).sorted().toArray();
         }
 
-        if(index >= numDests){
+        if(index >= numBene){
             index = 0;
         }
 
         float amount = getTransactionAmount();
         long stepRange = this.endStep - this.startStep + 1;
-        int numPerStep = numDests / (int)stepRange;
+        int numPerStep = numBene / (int)stepRange;
 
         if(numPerStep == 0){
             if(step == steps[index]) {
-                Account dest = dests.get(index);
+                Account dest = beneList.get(index);
                 this.sendTransaction(step, amount, dest);
                 index++;
             }
         }else{
             int start = index;
-            int end = Math.min(index + numPerStep, numDests);
+            int end = Math.min(index + numPerStep, numBene);
             for(int i=start; i<end; i++){
-                Account dest = dests.get(i % numDests);
+                Account dest = beneList.get(i % numBene);
                 this.sendTransaction(step, amount, dest);
             }
             index += numPerStep;

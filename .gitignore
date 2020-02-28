@@ -37,6 +37,7 @@ __pycache__/
 paramFiles/city*/
 paramFiles/bank_*
 paramFiles/person_*/
+paramFiles/test_*/
 sample/*_*/
 
 # Output data except README.md

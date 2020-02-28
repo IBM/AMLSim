@@ -267,6 +267,11 @@ class TransactionGenerator:
 
         self.tx_types = get_types(os.path.join(self.input_dir, self.type_file))
 
+    def check_hub_exists(self):
+        if not self.hubs:
+            raise ValueError("No main account candidates found. "
+                             "Please try again with smaller value of the 'degree_threshold' parameter in conf.json.")
+
     def set_main_acct_candidates(self):
         """Choose hub accounts with larger degree than the specified threshold
         as the main account candidates of alert transaction sets
@@ -274,6 +279,7 @@ class TransactionGenerator:
         hub_list = [n for n in self.g.nodes()  # Hub vertices (with large in/out degrees)
                     if self.degree_threshold <= self.g.in_degree(n) + self.g.out_degree(n)]
         self.hubs = set(hub_list)
+        self.check_hub_exists()
 
     def add_normal_sar_edges(self, ratio=1.0):
         """Add extra edges from normal accounts to SAR accounts to adjust transaction graph features
@@ -336,6 +342,7 @@ class TransactionGenerator:
             return main_acct, members
 
         elif bank_id == "":  # Choose members from all accounts
+            self.check_hub_exists()
             main_acct = random.sample(self.hubs, 1)[0]
             self.remove_typology_candidate(main_acct)
 
@@ -700,9 +707,23 @@ class TransactionGenerator:
         sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
                                 start=start_date, end=end_date)  # Transaction subgraph for a typology
 
-        # Set bank ID attribute to a member account
-        def add_node(_n, _bank_id):
-            sub_g.add_node(_n, bank_id=_bank_id)
+        def add_node(_acct, _bank_id):
+            """Set an attribute of bank ID to a member account
+            :param _acct: Account ID
+            :param _bank_id: Bank ID
+            """
+            sub_g.add_node(_acct, bank_id=_bank_id)
+
+        def add_main_acct():
+            """Create a main account ID and a bank ID from hub accounts
+            :return: main account ID and bank ID
+            """
+            self.check_hub_exists()
+            _main_acct = random.sample(self.hubs, 1)[0]
+            _main_bank_id = self.acct_to_bank[_main_acct]
+            self.remove_typology_candidate(_main_acct)
+            add_node(_main_acct, _main_bank_id)
+            return _main_acct, _main_bank_id
 
         def add_edge(_orig, _bene, _amount, _date):
             """Add transaction edge to the AML typology subgraph as well as the whole transaction graph
@@ -715,10 +736,11 @@ class TransactionGenerator:
             self.add_transaction(_orig, _bene, amount=_amount, date=_date)
 
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
-            main_acct = random.sample(self.hubs, 1)[0]
-            main_bank_id = self.acct_to_bank[main_acct]
-            self.remove_typology_candidate(main_acct)
-            add_node(main_acct, main_bank_id)
+            # main_acct = random.sample(self.hubs, 1)[0]
+            # main_bank_id = self.acct_to_bank[main_acct]
+            # self.remove_typology_candidate(main_acct)
+            # add_node(main_acct, main_bank_id)
+            main_acct, main_bank_id = add_main_acct()
 
             if is_external:
                 sub_bank_id = random.choice([b for b in self.get_all_bank_ids() if b != main_bank_id])
@@ -735,10 +757,11 @@ class TransactionGenerator:
                 add_edge(orig, main_acct, amount, date)
 
         elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
-            main_acct = random.sample(self.hubs, 1)[0]
-            main_bank_id = self.acct_to_bank[main_acct]
-            self.remove_typology_candidate(main_acct)
-            add_node(main_acct, main_bank_id)
+            # main_acct = random.sample(self.hubs, 1)[0]
+            # main_bank_id = self.acct_to_bank[main_acct]
+            # self.remove_typology_candidate(main_acct)
+            # add_node(main_acct, main_bank_id)
+            main_acct, main_bank_id = add_main_acct()
 
             if is_external:
                 sub_bank_id = random.choice([b for b in self.get_all_bank_ids() if b != main_bank_id])
@@ -841,14 +864,15 @@ class TransactionGenerator:
                     prev_acct = next_acct
 
             else:
-                main_acct = random.sample(self.hubs, 1)[0]
-                bank_id = self.acct_to_bank[main_acct]
-                self.remove_typology_candidate(main_acct)
-                add_node(main_acct, bank_id)
-                sub_accts = random.sample(self.bank_to_accts[bank_id], num_accounts - 1)
+                # main_acct = random.sample(self.hubs, 1)[0]
+                # main_bank_id = self.acct_to_bank[main_acct]
+                # self.remove_typology_candidate(main_acct)
+                # add_node(main_acct, main_bank_id)
+                main_acct, main_bank_id = add_main_acct()
+                sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
-                    add_node(n, bank_id)
+                    add_node(n, main_bank_id)
                 prev_acct = main_acct
                 for _ in range(num_accounts - 1):
                     next_acct = random.choice([n for n in sub_accts if n != prev_acct])
@@ -874,18 +898,17 @@ class TransactionGenerator:
                     for n in new_members:
                         self.remove_typology_candidate(n)
                         add_node(n, bank_id)
-
                 main_acct = all_accts[0]
-
             else:
-                main_acct = random.sample(self.hubs, 1)[0]
-                bank_id = self.acct_to_bank[main_acct]
-                self.remove_typology_candidate(main_acct)
-                add_node(main_acct, bank_id)
-                sub_accts = random.sample(self.bank_to_accts[bank_id], num_accounts - 1)
+                # main_acct = random.sample(self.hubs, 1)[0]
+                # main_bank_id = self.acct_to_bank[main_acct]
+                # self.remove_typology_candidate(main_acct)
+                # add_node(main_acct, main_bank_id)
+                main_acct, main_bank_id = add_main_acct()
+                sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
-                    add_node(n, bank_id)
+                    add_node(n, main_bank_id)
                 all_accts = [main_acct] + sub_accts
 
             for i in range(num_accounts):

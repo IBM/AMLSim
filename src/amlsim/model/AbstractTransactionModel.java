@@ -19,7 +19,6 @@ public abstract class AbstractTransactionModel {
     public static final int PERIODICAL = 5;
 
     protected static Random rand = new Random(AMLSim.getSeed());
-//    private float transactionAmountRatio = 0.5F;  // The ratio of maximum total amount for transactions to current balance
 
     protected Account account;  // Account object
     protected int interval = 1; // Default transaction interval
@@ -46,16 +45,7 @@ public abstract class AbstractTransactionModel {
 //        return AMLSim.getSimProp().getNormalBaseTxAmount() * ratio;
         return AMLSim.getSimProp().getNormalBaseTxAmount();
     }
-
-//    /**
-//     * Generate the assumed amount of a suspicious transaction for SAR accounts
-//     * @return Suspicious transaction amount
-//     */
-//    public float getSuspiciousTransactionAmount(){
-//        float ratio = generateAmountRatio();
-//        return AMLSim.getSimProp().getSuspiciousTxAmount() * ratio;
-//    }
-
+    
     /**
      * Set an account object which has this model
      * @param account Account object
@@ -70,7 +60,7 @@ public abstract class AbstractTransactionModel {
      * @return The total number of simulation steps
      */
     public int getStepRange(){
-        // If "startStep" and/or "endStep" is undefined (-1), it returns the largest range
+        // If "startStep" and/or "endStep" is undefined (negative), it returns the largest range
         long st = startStep >= 0 ? startStep : 0;
         long ed = endStep > 0 ? endStep : AMLSim.getNumOfSteps();
         return (int)(ed - st + 1);

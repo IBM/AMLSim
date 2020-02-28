@@ -736,17 +736,19 @@ class TransactionGenerator:
             self.add_transaction(_orig, _bene, amount=_amount, date=_date)
 
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
-            # main_acct = random.sample(self.hubs, 1)[0]
-            # main_bank_id = self.acct_to_bank[main_acct]
-            # self.remove_typology_candidate(main_acct)
-            # add_node(main_acct, main_bank_id)
             main_acct, main_bank_id = add_main_acct()
+            num_neighbors = num_accounts - 1
 
             if is_external:
-                sub_bank_id = random.choice([b for b in self.get_all_bank_ids() if b != main_bank_id])
+                sub_bank_candidates = [b for b, nbs in self.bank_to_accts.items()
+                                       if b != main_bank_id and len(nbs) >= num_neighbors]
+                if not sub_bank_candidates:
+                    logger.warning("No banks with appropriate number of neighboring accounts found.")
+                    return
+                sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_accounts - 1)
+            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -757,17 +759,19 @@ class TransactionGenerator:
                 add_edge(orig, main_acct, amount, date)
 
         elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
-            # main_acct = random.sample(self.hubs, 1)[0]
-            # main_bank_id = self.acct_to_bank[main_acct]
-            # self.remove_typology_candidate(main_acct)
-            # add_node(main_acct, main_bank_id)
             main_acct, main_bank_id = add_main_acct()
+            num_neighbors = num_accounts - 1
 
             if is_external:
-                sub_bank_id = random.choice([b for b in self.get_all_bank_ids() if b != main_bank_id])
+                sub_bank_candidates = [b for b, nbs in self.bank_to_accts.items()
+                                       if b != main_bank_id and len(nbs) >= num_neighbors]
+                if not sub_bank_candidates:
+                    logger.warning("No banks with appropriate number of neighboring accounts found.")
+                    return
+                sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_accounts - 1)
+            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -864,10 +868,6 @@ class TransactionGenerator:
                     prev_acct = next_acct
 
             else:
-                # main_acct = random.sample(self.hubs, 1)[0]
-                # main_bank_id = self.acct_to_bank[main_acct]
-                # self.remove_typology_candidate(main_acct)
-                # add_node(main_acct, main_bank_id)
                 main_acct, main_bank_id = add_main_acct()
                 sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
                 for n in sub_accts:
@@ -900,10 +900,6 @@ class TransactionGenerator:
                         add_node(n, bank_id)
                 main_acct = all_accts[0]
             else:
-                # main_acct = random.sample(self.hubs, 1)[0]
-                # main_bank_id = self.acct_to_bank[main_acct]
-                # self.remove_typology_candidate(main_acct)
-                # add_node(main_acct, main_bank_id)
                 main_acct, main_bank_id = add_main_acct()
                 sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
                 for n in sub_accts:
@@ -992,9 +988,6 @@ class TransactionGenerator:
                 add_edge(orig_acct, mid_acct, amount, date)
                 accumulated_amount += amount
                 # print(orig_acct, "->", date, "->", mid_acct)
-
-            # margin = accumulated_amount * self.margin_ratio  # Margin of the intermediate (main) account
-            # scatter_amount = (accumulated_amount - margin) / num_bene_accts
 
             for i in range(num_bene_accts):
                 bene_acct = bene_accts[i]

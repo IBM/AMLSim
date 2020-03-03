@@ -40,9 +40,7 @@ public abstract class AbstractTransactionModel {
      * @return Normal transaction amount
      */
     public float getTransactionAmount(){
-        // Each transaction amount should be independent from the current balance
-//        float ratio = ModelParameters.generateAmountRatio();
-//        return AMLSim.getSimProp().getNormalBaseTxAmount() * ratio;
+        // Each transaction amount should be independent of the current balance
         return AMLSim.getSimProp().getNormalBaseTxAmount();
     }
     
@@ -57,10 +55,10 @@ public abstract class AbstractTransactionModel {
 
     /**
      * Get the simulation step range as the period when this model is valid
+     * If "startStep" and/or "endStep" is undefined (negative), it returns the largest range
      * @return The total number of simulation steps
      */
     public int getStepRange(){
-        // If "startStep" and/or "endStep" is undefined (negative), it returns the largest range
         long st = startStep >= 0 ? startStep : 0;
         long ed = endStep > 0 ? endStep : AMLSim.getNumOfSteps();
         return (int)(ed - st + 1);

@@ -212,8 +212,6 @@ public class AMLSim extends ParameterizedPaySim {
 		String line = reader.readLine();
 		logger.info("Account CSV header: " + line);
 		Map<String, Integer> columnIndex = getColumnIndices(line);
-//		Set<String> extraColumns = new HashSet<>(columnIndex.keySet());
-//		extraColumns.removeAll(baseColumns);
 
 		while((line = reader.readLine()) != null){
 			String[] elements = line.split(",");
@@ -224,12 +222,6 @@ public class AMLSim extends ParameterizedPaySim {
 			int start = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
 			int end = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
 			String bankID = elements[columnIndex.get("BANK_ID")];
-
-//			Map<String, String> extraValues = new HashMap<>();
-//			for(String column : extraColumns){
-//			    int idx = columnIndex.get(column);
-//                extraValues.put(column, elements[idx]);
-//            }
 
 			Account account;
 			if(isSAR){

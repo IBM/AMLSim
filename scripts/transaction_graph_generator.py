@@ -296,7 +296,6 @@ class TransactionGenerator:
         num_origs = len(orig_candidates)
         print("Number of orig/bene candidates: %d/%d" % (num_origs, len(bene_candidates)))
         orig_list = random.choices(orig_candidates, k=num)
-        # orig_list = [orig_candidates[i % num_origs] for i in range(num)]
         bene_list = random.choices(bene_candidates, k=num)
         for i in range(num):
             _orig = orig_list[i]
@@ -304,12 +303,18 @@ class TransactionGenerator:
             self.add_transaction(_orig, _bene)
         logger.info("Added %d edges from normal accounts to sar accounts" % num)
 
-    # Account existence check
     def check_account_exist(self, aid):
+        """Validate an existence of a specified account
+        :param aid: Account ID
+        """
         if not self.g.has_node(aid):
             raise KeyError("Account %s does not exist" % str(aid))
 
     def check_account_absent(self, aid):
+        """Validate an absence of a specified account
+        :param aid: Account ID
+        :return: True if an account of the specified ID is not yet added
+        """
         if self.g.has_node(aid):
             logger.warning("Account %s already exists" % str(aid))
             return False
@@ -320,10 +325,10 @@ class TransactionGenerator:
         return list(self.bank_to_accts.keys())
 
     def get_typology_members(self, num, bank_id=""):
-        """Choose accounts randomly from one or multiple banks.
-        :param num: Number of total account vertices
-        :param bank_id: It chooses members from a single bank with the ID.
-        If empty (default), it chooses members from all banks.
+        """Choose accounts randomly as members of AML typologies from one or multiple banks.
+        :param num: Number of total account vertices (including the main account)
+        :param bank_id: If specified, it chooses members from a single bank with the ID.
+        If empty (default), it chooses members from all banks randomly.
         :return: Main account and account ID list
         """
         if num <= 1:

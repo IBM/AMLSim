@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # Attribute keys
-MAIN_ACCT_KEY = "main_acct"
-IS_SAR_KEY = "is_sar"
+MAIN_ACCT_KEY = "main_acct"  # Main account ID (SAR typology subgraph attribute)
+IS_SAR_KEY = "is_sar"  # SAR flag (account vertex attribute)
 
 DEFAULT_MARGIN_RATIO = 0.1  # Each member will keep this ratio of the received amount
 
@@ -50,13 +50,13 @@ def parse_float(value):
 def parse_flag(value):
     """ Convert string to boolean (True or false)
     :param value: string value
-    :return: True if the value is equal to "true" (case insensitive), otherwise False
+    :return: True if the value is equal to "true" (case-insensitive), otherwise False
     """
     return type(value) == str and value.lower() == "true"
 
 
 def get_positive_or_none(value):
-    """ Get positive value or None
+    """ Get positive value or None (used to parse simulation step parameters)
     :param value: Numerical value or None
     :return: If the value is positive, return this value. Otherwise, return None.
     """
@@ -88,7 +88,7 @@ def directed_configuration_model(_in_deg, _out_deg, seed=0):
     num_nodes = len(_in_deg)
     _g = nx.empty_graph(num_nodes, nx.MultiDiGraph())
     if num_nodes == 0 or max(_in_deg) == 0:
-        return _g  # No edges
+        return _g  # No edges exist
 
     in_tmp_list = list()
     out_tmp_list = list()
@@ -157,15 +157,15 @@ def get_degrees(deg_csv, num_v):
     return _in_deg, _out_deg
 
 
-class InputSchema:
-
-    def __init__(self, input_json):
-        with open(input_json, "r") as rf:
-            self.data = json.load(rf)
-
-    def get_header(self, table_name):
-        fields = self.data[table_name]
-        return [f["name"] for f in fields]
+# class InputSchema:
+#
+#     def __init__(self, input_json):
+#         with open(input_json, "r") as rf:
+#             self.data = json.load(rf)
+#
+#     def get_header(self, table_name):
+#         fields = self.data[table_name]
+#         return [f["name"] for f in fields]
 
 
 class TransactionGenerator:
@@ -216,6 +216,7 @@ class TransactionGenerator:
         self.default_end_range = parse_int(default_conf.get("end_range"))
         self.default_model = parse_int(default_conf.get("transaction_model"))
 
+        # The ratio of amount intermediate accounts receive
         self.margin_ratio = parse_float(default_conf.get("margin_ratio", DEFAULT_MARGIN_RATIO))
         if not 0.0 <= self.margin_ratio <= 1.0:
             raise ValueError("Margin ratio in AML typologies (%f) must be within [0.0, 1.0]" % self.margin_ratio)
@@ -224,27 +225,27 @@ class TransactionGenerator:
 
         # Get input file names and properties
         input_conf = self.conf["input"]
-        self.input_dir = input_conf["directory"]  # Directory name of input files
+        self.input_dir = input_conf["directory"]  # The directory name of input files
         self.account_file = input_conf["accounts"]  # Account list file
-        self.alert_file = input_conf["alert_patterns"]
-        self.degree_file = input_conf["degree"]
-        self.type_file = input_conf["transaction_type"]
-        self.is_aggregated = input_conf["is_aggregated_accounts"]
+        self.alert_file = input_conf["alert_patterns"]  # AML typology definition file
+        self.degree_file = input_conf["degree"]  # Degree distribution file
+        self.type_file = input_conf["transaction_type"]  # Transaction type
+        self.is_aggregated = input_conf["is_aggregated_accounts"]  # Flag whether the account list is aggregated
 
         # Get output file names
         output_conf = self.conf["temporal"]  # The output directory of the graph generator is temporal one
-        self.output_dir = os.path.join(output_conf["directory"], sim_name)
-        self.out_tx_file = output_conf["transactions"]
-        self.out_account_file = output_conf["accounts"]
-        self.out_alert_member_file = output_conf["alert_members"]
+        self.output_dir = os.path.join(output_conf["directory"], sim_name)  # The directory name of temporal files
+        self.out_tx_file = output_conf["transactions"]  # All transaction list CSV file
+        self.out_account_file = output_conf["accounts"]  # All account list CSV file
+        self.out_alert_member_file = output_conf["alert_members"]  # Account list of AML typology members CSV file
 
         # Other properties for the transaction graph generator
         other_conf = self.conf["graph_generator"]
-        self.degree_threshold = parse_int(other_conf["degree_threshold"])
+        self.degree_threshold = parse_int(other_conf["degree_threshold"])  # Degree for candidates of main accounts
         high_risk_countries_str = other_conf.get("high_risk_countries", "")
         high_risk_business_str = other_conf.get("high_risk_business", "")
-        self.high_risk_countries = set(high_risk_countries_str.split(","))
-        self.high_risk_business = set(high_risk_business_str.split(","))
+        self.high_risk_countries = set(high_risk_countries_str.split(","))  # List of high-risk country codes
+        self.high_risk_business = set(high_risk_business_str.split(","))  # List of high-risk business types
 
         self.tx_id = 0  # Transaction ID
         self.alert_id = 0  # Alert ID from the alert parameter file
@@ -268,6 +269,8 @@ class TransactionGenerator:
         self.tx_types = get_types(os.path.join(self.input_dir, self.type_file))
 
     def check_hub_exists(self):
+        """Validate whether one or more hub accounts exist as main accounts of AML typologies
+        """
         if not self.hubs:
             raise ValueError("No main account candidates found. "
                              "Please try again with smaller value of the 'degree_threshold' parameter in conf.json.")
@@ -304,7 +307,7 @@ class TransactionGenerator:
         logger.info("Added %d edges from normal accounts to sar accounts" % num)
 
     def check_account_exist(self, aid):
-        """Validate an existence of a specified account
+        """Validate an existence of a specified account. If absent, it raises KeyError.
         :param aid: Account ID
         """
         if not self.g.has_node(aid):
@@ -322,6 +325,9 @@ class TransactionGenerator:
             return True
 
     def get_all_bank_ids(self):
+        """Get a list of all bank IDs
+        :return: Bank ID list
+        """
         return list(self.bank_to_accts.keys())
 
     def get_typology_members(self, num, bank_id=""):
@@ -329,7 +335,7 @@ class TransactionGenerator:
         :param num: Number of total account vertices (including the main account)
         :param bank_id: If specified, it chooses members from a single bank with the ID.
         If empty (default), it chooses members from all banks randomly.
-        :return: Main account and account ID list
+        :return: Main account and list of member account IDs
         """
         if num <= 1:
             raise ValueError("The number of members must be more than 1")
@@ -631,21 +637,21 @@ class TransactionGenerator:
             for i, k in enumerate(header):
                 if k == "count":  # Number of pattern subgraphs
                     idx_num = i
-                elif k == "type":
+                elif k == "type":  # AML typology type (e.g. fan-out and cycle)
                     idx_type = i
-                elif k == "schedule_id":
+                elif k == "schedule_id":  # Transaction scheduling type
                     idx_schedule = i
-                elif k == "min_accounts":
+                elif k == "min_accounts":  # Minimum number of involved accounts
                     idx_min_accts = i
-                elif k == "max_accounts":
+                elif k == "max_accounts":  # Maximum number of involved accounts
                     idx_max_accts = i
-                elif k == "min_amount":
+                elif k == "min_amount":  # Minimum initial transaction amount
                     idx_min_amt = i
-                elif k == "max_amount":
+                elif k == "max_amount":  # Maximum initial transaction amount
                     idx_max_amt = i
-                elif k == "min_period":
+                elif k == "min_period":  # Minimum overall transaction period (number of simulation steps)
                     idx_min_period = i
-                elif k == "max_period":
+                elif k == "max_period":  # Maximum overall transaction period (number of simulation steps)
                     idx_max_period = i
                 elif k == "bank_id":  # Bank ID for internal-bank transactions
                     idx_bank = i
@@ -668,7 +674,7 @@ class TransactionGenerator:
                 max_amount = parse_float(row[idx_max_amt])
                 min_period = parse_int(row[idx_min_period])
                 max_period = parse_int(row[idx_max_period])
-                bank_id = row[idx_bank] if idx_bank is not None else ""
+                bank_id = row[idx_bank] if idx_bank is not None else ""  # If empty, it has inter-bank transactions
                 is_sar = parse_flag(row[idx_sar])
 
                 if typology_name not in self.alert_types:

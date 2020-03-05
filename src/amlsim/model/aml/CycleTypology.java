@@ -70,10 +70,10 @@ public class CycleTypology extends AMLTypology {
 //        System.out.println(Arrays.toString(steps));
     }
 
-    @Override
-    public int getNumTransactions() {
-        return alert.getMembers().size();  // The number of transactions is the same as the number of members
-    }
+//    @Override
+//    public int getNumTransactions() {
+//        return alert.getMembers().size();  // The number of transactions is the same as the number of members
+//    }
 
     @Override
     public String getType() {
@@ -96,7 +96,7 @@ public class CycleTypology extends AMLTypology {
                 int j = (i + 1) % length;  // i, j: index of the previous, next account
                 Account src = alert.getMembers().get(i);  // The previous account
                 Account dst = alert.getMembers().get(j);  // The next account
-                sendTransaction(step, amount, src, dst, isSAR, alertID);
+                makeTransaction(step, amount, src, dst, isSAR, alertID);
 
                 // Update the next transaction amount
                 float margin = amount * marginRatio;

@@ -3,7 +3,7 @@ package amlsim.model.normal;
 import amlsim.model.AbstractTransactionModel;
 
 /**
- * Empty transaction model which does nothing
+ * Empty transaction model (It does not make any transactions)
  * Used when invalid model IDs are specified
  */
 public class EmptyModel extends AbstractTransactionModel {
@@ -13,7 +13,7 @@ public class EmptyModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void sendTransaction(long step) {
+    public void makeTransaction(long step) {
         // Do nothing in default
     }
 }

@@ -41,12 +41,12 @@ public class CashOutModel extends CashModel {
     }
 
     @Override
-    public void sendTransaction(long step) {
+    public void makeTransaction(long step) {
 //        List<AMLTransaction> txs = new ArrayList<>();
         if(isNextStep(step)){
             Branch branch = account.getBranch();
             float amount = computeAmount();
-            sendTransaction(step, amount, branch, account, "CASH-OUT");
+            makeTransaction(step, amount, branch, account, "CASH-OUT");
         }
     }
 }

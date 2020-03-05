@@ -232,7 +232,7 @@ public class Account extends Client implements Steppable {
             }
 		}
 
-		this.model.sendTransaction(step);
+		this.model.makeTransaction(step);
 		handleCashTransaction(amlsim);
 	}
 
@@ -241,8 +241,8 @@ public class Account extends Client implements Steppable {
 	 */
 	private void handleCashTransaction(AMLSim amlsim){
 		long step = amlsim.schedule.getSteps();
-		this.cashInModel.sendTransaction(step);
-		this.cashOutModel.sendTransaction(step);
+		this.cashInModel.makeTransaction(step);
+		this.cashOutModel.makeTransaction(step);
 	}
 
     public AbstractTransactionModel getModel(){

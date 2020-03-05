@@ -37,7 +37,7 @@ public class SARAccount extends Account {
 		Alert fg = alerts.get(count % alerts.size());
 		AMLTypology model = fg.getModel();
 
-		model.sendTransaction(amlsim.schedule.getSteps());
+		model.makeTransaction(amlsim.schedule.getSteps());
 		return true;
 	}
 

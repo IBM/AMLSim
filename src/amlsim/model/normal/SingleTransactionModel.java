@@ -25,17 +25,17 @@ public class SingleTransactionModel extends AbstractTransactionModel {
 
     public void setParameters(int interval, float balance, long start, long end){
         super.setParameters(interval, balance, start, end);
-        if(this.startStep < 0){
+        if(this.startStep < 0){  // Unlimited start step
             this.startStep = 0;
         }
-        if(this.endStep < 0){
+        if(this.endStep < 0){  // Unlimited end step
             this.endStep = AMLSim.getNumOfSteps();
         }
-        // The transaction step is determined randomly within the given range
+        // The transaction step is determined randomly within the given range of steps
         this.txStep = this.startStep + rand.nextInt((int)(endStep - startStep + 1));
     }
     
-    public void sendTransaction(long step){
+    public void makeTransaction(long step){
         List<Account> beneList = this.account.getBeneList();
         int numBene = beneList.size();
         if(step != this.txStep || numBene == 0){
@@ -45,6 +45,6 @@ public class SingleTransactionModel extends AbstractTransactionModel {
         float amount = getTransactionAmount();
         int index = rand.nextInt(numBene);
         Account dest = beneList.get(index);
-        this.sendTransaction(step, amount, dest);
+        this.makeTransaction(step, amount, dest);
     }
 }

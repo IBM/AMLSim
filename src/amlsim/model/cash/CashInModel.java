@@ -44,11 +44,11 @@ public class CashInModel extends CashModel {
     }
 
     @Override
-    public void sendTransaction(long step) {
+    public void makeTransaction(long step) {
         if(isNextStep(step)){
             Branch branch = account.getBranch();
             float amount = computeAmount();
-            sendTransaction(step, amount, account, branch, "CASH-IN");
+            makeTransaction(step, amount, account, branch, "CASH-IN");
         }
     }
 }

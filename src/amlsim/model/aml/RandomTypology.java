@@ -28,10 +28,10 @@ public class RandomTypology extends AMLTypology {
         nextOrig = alert.getMainAccount();
     }
 
-    @Override
-    public int getNumTransactions() {
-        return alert.getMembers().size();
-    }
+//    @Override
+//    public int getNumTransactions() {
+//        return alert.getMembers().size();
+//    }
 
     RandomTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
@@ -59,7 +59,7 @@ public class RandomTypology extends AMLTypology {
 
         int idx = rand.nextInt(numBenes);
         Account bene = beneList.get(idx);
-        sendTransaction(step, amount, nextOrig, bene, isSAR, (int)alertID);  // Main account makes transactions to one of the neighbors
+        makeTransaction(step, amount, nextOrig, bene, isSAR, (int)alertID);  // Main account makes transactions to one of the neighbors
         nextOrig = bene;  // The next originator account is the previous beneficiary account
     }
 }

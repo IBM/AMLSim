@@ -15,14 +15,14 @@ public class StackTypology extends AMLTypology {
     public void setParameters(int modelID) {
     }
 
-    @Override
-    public int getNumTransactions() {
-        int total_members = alert.getMembers().size();
-        int orig_members = total_members / 3;  // First 1/3 accounts are originator accounts
-        int mid_members = orig_members;  // Second 1/3 accounts are intermediate accounts
-        int bene_members = total_members - orig_members * 2;  // Rest of accounts are beneficiary accounts
-        return orig_members * mid_members + mid_members + bene_members;
-    }
+//    @Override
+//    public int getNumTransactions() {
+//        int total_members = alert.getMembers().size();
+//        int orig_members = total_members / 3;  // First 1/3 accounts are originator accounts
+//        int mid_members = orig_members;  // Second 1/3 accounts are intermediate accounts
+//        int bene_members = total_members - orig_members * 2;  // Rest of accounts are beneficiary accounts
+//        return orig_members * mid_members + mid_members + bene_members;
+//    }
 
     StackTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
@@ -53,7 +53,7 @@ public class StackTypology extends AMLTypology {
 
             for(int j=orig_members; j<(orig_members+mid_members); j++){
                 Account bene = alert.getMembers().get(j);
-                sendTransaction(step, amount1, orig, bene);
+                makeTransaction(step, amount1, orig, bene);
             }
         }
 
@@ -65,7 +65,7 @@ public class StackTypology extends AMLTypology {
 
             for(int j=(orig_members+mid_members); j<total_members; j++){
                 Account bene = alert.getMembers().get(j);
-                sendTransaction(step, amount2, orig, bene);
+                makeTransaction(step, amount2, orig, bene);
             }
         }
     }

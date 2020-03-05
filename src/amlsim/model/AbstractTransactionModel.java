@@ -12,8 +12,8 @@ public abstract class AbstractTransactionModel {
 
     // Transaction model ID
     public static final int SINGLE = 0;  // Make a single transaction to each neighbor account
-    public static final int FAN_OUT = 1;  // Make transactions to all neighbor accounts
-    public static final int FAN_IN = 2;
+    public static final int FAN_OUT = 1;  // Send money to all neighbor accounts
+    public static final int FAN_IN = 2;  // Receive money from neighbor accounts
     public static final int MUTUAL = 3;
     public static final int FORWARD = 4;
     public static final int PERIODICAL = 5;
@@ -71,10 +71,10 @@ public abstract class AbstractTransactionModel {
     public abstract String getType();
 
     /**
-     * Create a transaction
+     * Make a transaction
      * @param step Current simulation step
      */
-    public abstract void sendTransaction(long step);
+    public abstract void makeTransaction(long step);
 
     /**
      * Generate the start transaction step (to decentralize transaction distribution)
@@ -90,14 +90,20 @@ public abstract class AbstractTransactionModel {
      * This method will be called when the account is initialized
      * @param interval Transaction interval
      * @param balance Initial balance of the account
-     * @param start Start simulation step (any transactions cannot be sent before this step)
-     * @param end End step (any transactions cannot be sent after this step)
+     * @param start Start simulation step (It never makes any transactions before this step)
+     * @param end End simulation step (It never makes any transactions after this step)
      */
     public void setParameters(int interval, float balance, long start, long end){
         this.interval = interval;
         setParameters(balance, start, end);
     }
-
+    
+    /**
+     * Set initial parameters of the transaction model (for AML typology models)
+     * @param balance Initial balance of the account
+     * @param start Start simulation step
+     * @param end End simulation step
+     */
     public void setParameters(float balance, long start, long end){
         this.balance = balance;
         this.startStep = start;
@@ -113,7 +119,7 @@ public abstract class AbstractTransactionModel {
      * @param isSAR Whether this transaction is SAR
      * @param alertID Alert ID
      */
-    protected void sendTransaction(long step, float amount, Account orig, Account dest, boolean isSAR, long alertID){
+    protected void makeTransaction(long step, float amount, Account orig, Account dest, boolean isSAR, long alertID){
         if(amount <= 0){  // Invalid transaction amount
             AMLSim.getLogger().warning("Warning: invalid transaction amount: " + amount);
             return;
@@ -133,7 +139,7 @@ public abstract class AbstractTransactionModel {
      * @param dest Destination account
      * @param ttype Transaction type
      */
-    protected void sendTransaction(long step, float amount, Account orig, Account dest, String ttype){
+    protected void makeTransaction(long step, float amount, Account orig, Account dest, String ttype){
         AMLSim.handleTransaction(step, ttype, amount, orig, dest, false, -1);
     }
 
@@ -144,8 +150,8 @@ public abstract class AbstractTransactionModel {
      * @param orig Origin account
      * @param dest Destination account
      */
-    protected void sendTransaction(long step, float amount, Account orig, Account dest){
-        sendTransaction(step, amount, orig, dest, false, -1);
+    protected void makeTransaction(long step, float amount, Account orig, Account dest){
+        makeTransaction(step, amount, orig, dest, false, -1);
     }
 
     /**
@@ -154,8 +160,8 @@ public abstract class AbstractTransactionModel {
      * @param amount Transaction amount
      * @param dest Destination account
      */
-    protected void sendTransaction(long step, float amount, Account dest){
-        this.sendTransaction(step, amount, this.account, dest);
+    protected void makeTransaction(long step, float amount, Account dest){
+        this.makeTransaction(step, amount, this.account, dest);
     }
 
 }

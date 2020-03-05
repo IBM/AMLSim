@@ -53,12 +53,12 @@ public class ScatterGatherTypology extends AMLTypology {
         }
     }
 
-    @Override
-    public int getNumTransactions() {
-        int totalMembers = alert.getMembers().size();
-        int midMembers = totalMembers - 2;
-        return midMembers * 2;
-    }
+//    @Override
+//    public int getNumTransactions() {
+//        int totalMembers = alert.getMembers().size();
+//        int midMembers = totalMembers - 2;
+//        return midMembers * 2;
+//    }
 
     @Override
     public void sendTransactions(long step, Account acct) {
@@ -70,10 +70,10 @@ public class ScatterGatherTypology extends AMLTypology {
         for(int i=0; i<numMidMembers; i++){
             if(scatterSteps[i] == step){
                 Account _bene = intermediate.get(i);
-                sendTransaction(step, scatterAmount, orig, _bene, isSAR, alertID);
+                makeTransaction(step, scatterAmount, orig, _bene, isSAR, alertID);
             }else if(gatherSteps[i] == step) {
                 Account _orig = intermediate.get(i);
-                sendTransaction(step, gatherAmount, _orig, bene, isSAR, alertID);
+                makeTransaction(step, gatherAmount, _orig, bene, isSAR, alertID);
             }
         }
     }

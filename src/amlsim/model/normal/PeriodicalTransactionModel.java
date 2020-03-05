@@ -28,7 +28,7 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void sendTransaction(long step) {
+    public void makeTransaction(long step) {
         if(!isValidStep(step) || this.account.getBeneList().isEmpty()){
             return;
         }
@@ -43,7 +43,7 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
         for(int i=0; i<eachCount; i++) {
             float amount = getTransactionAmount();  // this.balance;
             Account dest = this.account.getBeneList().get(index);
-            this.sendTransaction(step, amount, dest);
+            this.makeTransaction(step, amount, dest);
             index++;
             if(index >= numDests) break;
         }

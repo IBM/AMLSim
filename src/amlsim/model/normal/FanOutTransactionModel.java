@@ -30,7 +30,7 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void sendTransaction(long step) {
+    public void makeTransaction(long step) {
         List<Account> beneList = this.account.getBeneList();  // Destination accounts
         int numBene = beneList.size();
         if(!isValidStep(step) || numBene == 0){  // No more destination accounts
@@ -45,7 +45,7 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
 
         amount = ModelParameters.adjustAmount(account, bene, amount);
         if(amount > 0) {
-            this.sendTransaction(step, amount, bene);
+            this.makeTransaction(step, amount, bene);
         }
         index++;
     }

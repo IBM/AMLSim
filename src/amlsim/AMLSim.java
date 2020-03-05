@@ -24,7 +24,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private static int seed;
 
 	private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
-	private Map<Long, Alert> alertGroups = new HashMap<>();
+	private Map<Long, Alert> alerts = new HashMap<>();  // Alert ID --> Alert (AML typology) object
 	private int numBranches = 0;
 	private ArrayList<Branch> branches = new ArrayList<>();
 	private int normalTxInterval = 30;  // Default transaction interval for normal accounts
@@ -291,8 +291,8 @@ public class AMLSim extends ParameterizedPaySim {
 			}
 
 			Alert alert;
-			if(alertGroups.containsKey(alertID)){  // Get an AML typology object and update the minimum/maximum amount
-				alert = alertGroups.get(alertID);
+			if(alerts.containsKey(alertID)){  // Get an AML typology object and update the minimum/maximum amount
+				alert = alerts.get(alertID);
 				AMLTypology model = alert.getModel();
 				model.updateMinAmount(minAmount);
 				model.updateMaxAmount(maxAmount);
@@ -302,7 +302,7 @@ public class AMLSim extends ParameterizedPaySim {
 			}else{  // Create a new AML typology object
 				AMLTypology model = AMLTypology.createTypology(modelID, minAmount, maxAmount, startStep, endStep);
 				alert = new Alert(alertID, model, this);
-				alertGroups.put(alertID, alert);
+				alerts.put(alertID, alert);
 			}
 			Account account = getAccountFromID(accountID);
 			alert.addMember(account);
@@ -314,7 +314,7 @@ public class AMLSim extends ParameterizedPaySim {
 		}
 		for(long alertID : scheduleModels.keySet()){
 			int modelID = scheduleModels.get(alertID);
-			alertGroups.get(alertID).getModel().setParameters(modelID);
+			alerts.get(alertID).getModel().setParameters(modelID);
 		}
 		reader.close();
 	}
@@ -433,25 +433,40 @@ public class AMLSim extends ParameterizedPaySim {
 		System.out.println("\nIt took: " + total + " seconds to execute the simulation\n");
 		System.out.println("Simulation name: " + AMLSim.simulatorName);
 	}
-
+    
+    /**
+     * Manage a transaction for logging and diameter computation of the whole transaction network
+     * @param step Simulation step
+     * @param desc Transaction description (e.g. type)
+     * @param amt Amount
+     * @param orig Originator account
+     * @param bene Beneficiary account
+     * @param isSAR SAR flag
+     * @param alertID Alert ID
+     */
 	public static void handleTransaction(long step, String desc, float amt, Account orig, Account bene,
 										 boolean isSAR, long alertID){
+        // Reduce the balance of the originator account
         String origID = orig.getID();
-
 		float origBefore = (float)orig.getBalance();
 		orig.withdraw(amt);
 		float origAfter = (float)orig.getBalance();
-
+		
+		// Increase the balance of the beneficiary account
         String beneID = bene.getID();
-
-		float beneBefore = (float)bene.getBalance();
+        float beneBefore = (float)bene.getBalance();
 		bene.deposit(amt);
 		float beneAfter = (float)bene.getBalance();
 
 		txs.addTransaction(step, desc, amt, origID, beneID, origBefore, origAfter, beneBefore, beneAfter, isSAR, alertID);
 		diameter.addEdge(origID, beneID);
 	}
-
+    
+    /**
+     * Write diameters of the transaction network snapshots to a CSV file
+     * @param step Simulation step
+     * @param result Diameter and radius of the transaction network as double array
+     */
 	private void writeDiameter(long step, double[] result){
 		try{
 			BufferedWriter writer = new BufferedWriter(new FileWriter(diameterFile, true));
@@ -464,10 +479,12 @@ public class AMLSim extends ParameterizedPaySim {
 
 
 	public void writeLog() {
+	    // Do nothing (override the method in PaySim)
         // Use transaction repository instead of transaction object list
 	}
 
 	public void writeSummaryFile() {
+	    // Do nothing (override the method in PaySim)
 		// Skip writing summary file of PaySim
 	}
 

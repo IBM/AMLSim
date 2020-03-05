@@ -38,8 +38,8 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     static final int UNORDERED = 2;  // All accounts send money randomly
     static final int SIMULTANEOUS = 3;  // All transactions are performed at single step simultaneously
 
-    float marginRatio = AMLSim.getSimProp().getMarginRatio();  // Each member holds this ratio of the received amount
-
+    final float marginRatio = AMLSim.getSimProp().getMarginRatio();  // Each member holds this ratio of the received amount
+    
     /**
      * Create an AML typology object (alert transaction model)
      * @param modelID Alert transaction model ID as int
@@ -79,12 +79,12 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      */
     public abstract void setParameters(int modelID);
 
-    /**
-     * Get the number of total transactions in this alert
-     * @return Number of transactions
-     */
-    public abstract int getNumTransactions();
-
+//    /**
+//     * Get the number of total transactions in this alert
+//     * @return Number of transactions
+//     */
+//    public abstract int getNumTransactions();
+    
     /**
      * Bind this alert transaction model to the alert
      * @param ag Alert object
@@ -184,7 +184,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     }
 
     @Override
-    public final void sendTransaction(long step) {
+    public final void makeTransaction(long step) {
     }
 
     public abstract void sendTransactions(long step, Account acct);

@@ -23,7 +23,7 @@ public class MutualTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void sendTransaction(long step) {
+    public void makeTransaction(long step) {
         if((step - this.startStep) % interval != 0)return;
 
         Account counterpart = this.account.getPrevOrig();
@@ -40,7 +40,7 @@ public class MutualTransactionModel extends AbstractTransactionModel {
             this.account.addBeneAcct(counterpart);    // Add a new destination
         }
 
-        sendTransaction(step, amount, counterpart);
+        makeTransaction(step, amount, counterpart);
     }
 
 }

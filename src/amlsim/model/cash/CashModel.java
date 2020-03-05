@@ -24,5 +24,5 @@ public abstract class CashModel extends AbstractTransactionModel {
 
     // Abstract methods from TransactionModel
     public abstract String getType();  // Get transaction type description
-    public abstract void sendTransaction(long step);  // Create and add transactions
+    public abstract void makeTransaction(long step);  // Create and add transactions
 }

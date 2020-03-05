@@ -83,7 +83,7 @@ public class FanOutTypology extends AMLTypology {
         for(int i = 0; i< beneList.size(); i++){
             if(steps[i] == step){
                 Account bene = beneList.get(i);
-                sendTransaction(step, amount, orig, bene, isSAR, alertID);
+                makeTransaction(step, amount, orig, bene, isSAR, alertID);
             }
         }
     }

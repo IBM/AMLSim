@@ -24,7 +24,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void sendTransaction(long step) {
+    public void makeTransaction(long step) {
 
         float amount = getTransactionAmount();  // this.balance;
         List<Account> dests = this.account.getBeneList();
@@ -40,7 +40,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
             index = 0;
         }
         Account dest = dests.get(index);
-        this.sendTransaction(step, amount, dest);
+        this.makeTransaction(step, amount, dest);
         index++;
     }
 }

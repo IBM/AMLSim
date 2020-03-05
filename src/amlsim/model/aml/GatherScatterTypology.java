@@ -61,10 +61,10 @@ public class GatherScatterTypology extends AMLTypology {
         }
     }
 
-    @Override
-    public int getNumTransactions() {
-        return origAccts.size() + beneAccts.size();
-    }
+//    @Override
+//    public int getNumTransactions() {
+//        return origAccts.size() + beneAccts.size();
+//    }
 
     @Override
     public void sendTransactions(long step, Account acct) {
@@ -79,7 +79,7 @@ public class GatherScatterTypology extends AMLTypology {
                     Account orig = origAccts.get(i);
                     Account bene = alert.getMainAccount();
                     float amount = getRandomAmount();
-                    sendTransaction(step, amount, orig, bene, isSAR, alertID);
+                    makeTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
                 }
             }
@@ -88,7 +88,7 @@ public class GatherScatterTypology extends AMLTypology {
                 if(scatterSteps[i] == step){
                     Account orig = alert.getMainAccount();
                     Account bene = beneAccts.get(i);
-                    sendTransaction(step, scatterAmount, orig, bene, isSAR, alertID);
+                    makeTransaction(step, scatterAmount, orig, bene, isSAR, alertID);
                 }
             }
         }

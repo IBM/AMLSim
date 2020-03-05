@@ -18,9 +18,9 @@ public class SimProperties {
     private JSONObject cashInProp;
     private JSONObject cashOutProp;
     private String workDir;
-    private float marginRatio;
-    private int seed;
-    private String simName;
+    private float marginRatio;  // Ratio of margin for AML typology transactions
+    private int seed;  // Seed of randomness
+    private String simName;  // Simulation name
 
     private int normalTxInterval;
 //    private int sarTxInterval;
@@ -97,9 +97,9 @@ public class SimProperties {
         return minTxAmount;
     }
 
-    public float getSuspiciousTxAmount(){
-        return maxTxAmount;
-    }
+//    public float getSuspiciousTxAmount(){
+//        return maxTxAmount;
+//    }
 
 //    int getSarTransactionInterval(){
 //        return sarTxInterval;
@@ -133,13 +133,13 @@ public class SimProperties {
         return workDir + outputProp.getString("transaction_log");
     }
 
-    public String getOutputAlertMemberFile(){
-        return workDir + outputProp.getString("alert_members");
-    }
+//    public String getOutputAlertMemberFile(){
+//        return workDir + outputProp.getString("alert_members");
+//    }
 
-    public String getOutputAlertTxFile(){
-        return workDir + outputProp.getString("alert_transactions");
-    }
+//    public String getOutputAlertTxFile(){
+//        return workDir + outputProp.getString("alert_transactions");
+//    }
 
     String getOutputDir(){
         return workDir;

@@ -66,10 +66,10 @@ public class FanInTypology extends AMLTypology {
         }
     }
 
-    @Override
-    public int getNumTransactions() {
-        return alert.getMembers().size() - 1;
-    }
+//    @Override
+//    public int getNumTransactions() {
+//        return alert.getMembers().size() - 1;
+//    }
 
     @Override
     public String getType() {
@@ -84,7 +84,7 @@ public class FanInTypology extends AMLTypology {
         for(int i = 0; i< origList.size(); i++){
             if(steps[i] == step){
                 Account orig = origList.get(i);
-                sendTransaction(step, amount, orig, bene, isSAR, alertID);
+                makeTransaction(step, amount, orig, bene, isSAR, alertID);
             }
         }
     }

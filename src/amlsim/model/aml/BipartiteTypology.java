@@ -32,7 +32,7 @@ public class BipartiteTypology extends AMLTypology {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "BipartiteTypology";
     }
 

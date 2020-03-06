@@ -72,7 +72,7 @@ public class FanInTypology extends AMLTypology {
 //    }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "FanInTypology";
     }
 

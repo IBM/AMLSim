@@ -21,7 +21,8 @@ public class AMLSim extends ParameterizedPaySim {
 	private static final int TX_SIZE = 10000000;  // Transaction buffer size
 	private static TransactionRepository txs = new TransactionRepository(TX_SIZE);
 	private static Logger logger = Logger.getLogger("AMLSim");
-	private static int seed;
+//	private static int seed;
+	private static Random rand;
 
 	private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
 	private Map<Long, Alert> alerts = new HashMap<>();  // Alert ID --> Alert (AML typology) object
@@ -51,7 +52,8 @@ public class AMLSim extends ParameterizedPaySim {
 
 	private AMLSim(long seed) {
 		super(seed);
-		AMLSim.seed = (int)seed;
+//		AMLSim.seed = (int)seed;
+		AMLSim.rand = new Random(seed);
 		super.setTagName("1");
 		Handler handler = new ConsoleHandler();
 		logger.addHandler(handler);
@@ -60,9 +62,13 @@ public class AMLSim extends ParameterizedPaySim {
         simulatorName = simProp.getSimName();
 	}
 
-	public static int getSeed(){
-		return seed;
-	}
+//	public static int getSeed(){
+//		return seed;
+//	}
+ 
+	public static Random getRandom(){
+	    return rand;
+    }
 
 	public static Logger getLogger(){
 	    return logger;
@@ -75,31 +81,54 @@ public class AMLSim extends ParameterizedPaySim {
 	public void setCurrentLoop(int currentLoop){
 		AMLSim.currentLoop = currentLoop;
 	}
-	
-	//Parse the arguments
+    
+    /**
+     * Load properties for PaySim
+     * TODO: to be removed after resolving the PaySim dependency
+     * @param args unused
+     */
+    @Override
 	public void parseArgs(String[] args){
-	    String paysimPropFile = "paramFiles/paysim.properties";  // TODO: to be removed with the PaySim dependency
+	    String paysimPropFile = "paramFiles/paysim.properties";
         super.setPropertiesFile(paysimPropFile);
         logger.info("PaySim Properties File: " + paysimPropFile);
 
         numOfSteps = simProp.getSteps();
         logger.info("Simulation Steps: " + numOfSteps);
 	}
-
+    
+    /**
+     * Start AMLSim
+     * TODO: to be removed after resolving the PaySim dependency
+     * @param args
+     */
+    @Override
 	public void runSimulation(String[] args){
 		parseArgs(args);
 		executeSimulation();
 	}
-
+    
+    /**
+     * Get the number of simulation steps
+     * @return Simulation steps as long
+     */
 	public static long getNumOfSteps(){
 		return numOfSteps;
 	}
-
+    
+    /**
+     * Get an account object from an account ID
+     * @param id Account ID
+     * @return Account object
+     */
     private Account getAccountFromID(String id){
 		int index = this.idMap.get(id);
 		return (Account) this.getClients().get(index);
 	}
-
+    
+    /**
+     * Initialize AMLSim by loading account and transaction list files
+     */
 	public void initSimulation(){
 		// Load account file
 		try{
@@ -479,11 +508,13 @@ public class AMLSim extends ParameterizedPaySim {
 
 
 	public void writeLog() {
+        // TODO: to be removed after resolving the PaySim dependency
 	    // Do nothing (override the method in PaySim)
         // Use transaction repository instead of transaction object list
 	}
 
 	public void writeSummaryFile() {
+	    // TODO: to be removed after resolving the PaySim dependency
 	    // Do nothing (override the method in PaySim)
 		// Skip writing summary file of PaySim
 	}

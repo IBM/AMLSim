@@ -29,7 +29,7 @@ public class StackTypology extends AMLTypology {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "StackTypology";
     }
 

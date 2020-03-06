@@ -21,7 +21,7 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "FanOut";
     }
 

@@ -18,16 +18,16 @@ public class Account extends Client implements Steppable {
 	protected CashInModel cashInModel;
 	protected CashOutModel cashOutModel;
 	protected boolean isSAR = false;
-	private static Random rand = new Random(AMLSim.getSeed());
+//	private static Random rand = new Random(AMLSim.getSeed());
 	private Branch branch = null;
 	private Set<String> origAcctIDs = new HashSet<>();  // Originator account ID set
 	private Set<String> beneAcctIDs = new HashSet<>();  // Beneficiary account ID set
     private List<Account> origAccts = new ArrayList<>();  // Originator accounts from which this account receives money
     private List<Account> beneAccts = new ArrayList<>();  // Beneficiary accounts to which this account sends money
-	private int numSAROrig = 0;  // Number of SAR originator accounts
+//	private int numSAROrig = 0;  // Number of SAR originator accounts
 	private int numSARBene = 0;  // Number of SAR beneficiary accounts
 	private String bankID = "";  // Bank ID
-
+    
     private Account prevOrig = null;  // Previous originator account
 	List<Alert> alerts = new ArrayList<>();
     private Map<String, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
@@ -153,6 +153,7 @@ public class Account extends Client implements Steppable {
 	}
 
 	public String getTxType(Account bene){
+	    Random rand = AMLSim.getRandom();
         String destID = bene.id;
 
 		if(this.tx_types.containsKey(destID)){

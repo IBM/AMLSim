@@ -12,7 +12,8 @@ import amlsim.Account;
  */
 public class ModelParameters {
 
-    private static Random rand = new Random(AMLSim.getSeed());
+//    private static Random rand = new Random(AMLSim.getSeed());
+    private static Random rand = AMLSim.getRandom();
     private static Properties prop = null;
 
     private static float SAR2SAR_EDGE_THRESHOLD = 0.0F;
@@ -37,11 +38,12 @@ public class ModelParameters {
     private static float NORMAL_SKIP_PROB = 0.0F;  // Probability of skipping transactions
 
     /**
-     * Whether no adjustment parameters in this class will be applied for transactions
-     * @return If true, all normal transactions are not affected by any adjustment parameters
+     * Whether it adjusts parameters of normal transactions
+     * @return If true, it affects to normal transaction models
+     * If false, it does not any effects to all normal transactions
      */
-    public static boolean isUnused(){
-        return prop == null;
+    public static boolean isValid(){
+        return prop != null;
     }
     
     private static float getRatio(String key, float defaultValue){
@@ -140,7 +142,7 @@ public class ModelParameters {
         // Generate decentralized amount with up to 10% noise
         float amount = baseAmount * generateAmountRatio();
 
-        if(isUnused()){
+        if(!isValid()){
             return amount;
         }
 
@@ -191,7 +193,7 @@ public class ModelParameters {
      * @return If the transaction should be actually added, return true.
      */
     public static boolean shouldAddEdge(Account orig, Account bene){
-        if(isUnused()){  // Add this edge without qualification
+        if(!isValid()){  // It always adds this edge
             return true;
         }
         // Proportion of SAR beneficiary accounts of the originator account

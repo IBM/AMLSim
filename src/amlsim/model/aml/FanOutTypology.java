@@ -67,7 +67,7 @@ public class FanOutTypology extends AMLTypology {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "FanOutTypology";
     }
 

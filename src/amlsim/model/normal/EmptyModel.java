@@ -8,7 +8,7 @@ import amlsim.model.AbstractTransactionModel;
  */
 public class EmptyModel extends AbstractTransactionModel {
     @Override
-    public String getType() {
+    public String getModelName() {
         return "Default";
     }
 

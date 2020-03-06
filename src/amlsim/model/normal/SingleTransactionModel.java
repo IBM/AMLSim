@@ -8,18 +8,19 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Send money only for once to one of the neighboring accounts
+ * Send money only for once to one of the neighboring accounts regardless the transaction interval parameter
  */
 public class SingleTransactionModel extends AbstractTransactionModel {
 
-    private static Random rand = new Random();
+//    private static Random rand = new Random();
+    private static Random rand = AMLSim.getRandom();
     
     /**
      * Simulation step when this transaction is done
      */
     private long txStep = -1;
     
-    public String getType(){
+    public String getModelName(){
         return "Single";
     }
 

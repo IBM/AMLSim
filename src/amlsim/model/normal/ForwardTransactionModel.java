@@ -19,7 +19,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "Forward";
     }
 

@@ -99,7 +99,7 @@ public class GatherScatterTypology extends AMLTypology {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "GatherScatterTypology";
     }
 }

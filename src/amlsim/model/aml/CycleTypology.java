@@ -76,7 +76,7 @@ public class CycleTypology extends AMLTypology {
 //    }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "CycleTypology";
     }
 

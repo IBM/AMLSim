@@ -20,7 +20,7 @@ public class FanInTransactionModel extends AbstractTransactionModel {
 
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "FanIn";
     }
 

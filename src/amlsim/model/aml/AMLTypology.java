@@ -179,7 +179,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
 
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "AMLTypology";
     }
 

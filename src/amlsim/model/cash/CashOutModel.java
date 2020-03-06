@@ -36,7 +36,7 @@ public class CashOutModel extends CashModel {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "CASH-OUT";
     }
 

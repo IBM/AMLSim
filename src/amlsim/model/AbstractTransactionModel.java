@@ -3,8 +3,6 @@ package amlsim.model;
 import amlsim.Account;
 import amlsim.AMLSim;
 
-import java.util.Random;
-
 /**
  * Base class of transaction models
  */
@@ -18,7 +16,7 @@ public abstract class AbstractTransactionModel {
     public static final int FORWARD = 4;
     public static final int PERIODICAL = 5;
 
-    protected static Random rand = new Random(AMLSim.getSeed());
+//    protected static Random rand = new Random(AMLSim.getSeed());
 
     protected Account account;  // Account object
     protected int interval = 1; // Default transaction interval
@@ -65,10 +63,10 @@ public abstract class AbstractTransactionModel {
     }
 
     /**
-     * Return transaction type
-     * @return Transaction type name
+     * Get transaction model name
+     * @return Transaction model name
      */
-    public abstract String getType();
+    public abstract String getModelName();
 
     /**
      * Make a transaction
@@ -82,7 +80,8 @@ public abstract class AbstractTransactionModel {
      * @return random int value [0, range-1]
      */
     protected static int generateStartStep(int range){
-        return rand.nextInt(range);
+//        return rand.nextInt(range);
+        return AMLSim.getRandom().nextInt(range);
     }
 
     /**

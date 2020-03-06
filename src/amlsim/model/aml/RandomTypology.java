@@ -4,6 +4,7 @@
 
 package amlsim.model.aml;
 
+import amlsim.AMLSim;
 import amlsim.Account;
 
 import java.util.*;
@@ -15,7 +16,8 @@ import java.util.*;
  */
 public class RandomTypology extends AMLTypology {
 
-    private static Random rand = new Random();
+//    private static Random rand = new Random();
+    private static Random rand = AMLSim.getRandom();
     private Set<Long> steps = new HashSet<>();  // Set of simulation steps when the transaction is performed
     private Account nextOrig;  // Originator account for the next transaction
 
@@ -38,7 +40,7 @@ public class RandomTypology extends AMLTypology {
     }
 
     @Override
-    public String getType() {
+    public String getModelName() {
         return "RandomTypology";
     }
 

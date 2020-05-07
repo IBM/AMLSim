@@ -3,6 +3,7 @@ Please cite our following paper if you use the data set for your publications.
 EvolveGCN: Evolving Graph Convolutional Networks for Dynamic Graphs
 https://arxiv.org/abs/1902.10191
 
+Scalable Graph Learning for Anti-Money Laundering: A First Look
 https://arxiv.org/abs/1812.00076
 
 **Important: Please use the "master" branch for the practical use and testing. Other branches such as "new-schema" are outdated and unstable. [Wiki pages](https://github.com/IBM/AMLSim/wiki/) are still under construction and some of them do not catch up with the latest implementations. Please refer this README.md instead.**

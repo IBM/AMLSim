@@ -1,4 +1,4 @@
-Please cite our following paper if you use the data set for your publications. 
+Please cite our following papers if you use the data set for your publications. 
 
 EvolveGCN: Evolving Graph Convolutional Networks for Dynamic Graphs
 https://arxiv.org/abs/1902.10191

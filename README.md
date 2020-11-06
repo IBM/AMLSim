@@ -27,7 +27,7 @@ This project aims at building a multi-agent simulator of anti-money laundering -
     - [MySQL Connector for Java](https://dev.mysql.com/downloads/connector/j/5.1.html) version 5.1
 - Python 3.7 (The following packages can be installed with `pip3 install -r requirements.txt`)
     - numpy
-    - networkx==1.11 (We do not support version 2.* due to performance issues for large graphs)
+    - networkx==1.11 (We do not support version 2.* due to performance issues when creating a large graph)
     - matplotlib==2.2.3 (The latest version is not compatible)
     - pygraphviz
     - powerlaw

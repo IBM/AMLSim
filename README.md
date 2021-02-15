@@ -1,5 +1,8 @@
 Please cite our following papers if you use the data set for your publications. 
 
+BibTeX 
+@misc{AMLSim, author = {Toyotaro Suzumura and Hiroki Kanezashi}, title = {{Anti-Money Laundering Datasets}: {InPlusLab} Anti-Money Laundering DataDatasets}, howpublished = {\url{http://github.com/IBM/AMLSim/}}, year = 2021 }
+
 EvolveGCN: Evolving Graph Convolutional Networks for Dynamic Graphs
 https://arxiv.org/abs/1902.10191
 

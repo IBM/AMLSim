@@ -27,6 +27,9 @@ hs_err_pid*
 .idea/
 *.iml
 
+# VS Code
+.vscode/
+
 # Temporal files
 tmp/
 __pycache__/

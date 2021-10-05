@@ -131,7 +131,7 @@ public class SimProperties {
     }
 
     String getOutputTxLogFile(){
-        return workDir + outputProp.getString("transaction_log");
+        return getOutputDir() + outputProp.getString("transaction_log");
     }
 
 //    public String getOutputAlertMemberFile(){
@@ -143,11 +143,11 @@ public class SimProperties {
 //    }
 
     String getOutputDir(){
-        return workDir;
+        return outputProp.getString("directory") + separator + simName + separator;
     }
 
     String getCounterLogFile(){
-        return workDir + outputProp.getString("counter_log");
+        return getOutputDir() + outputProp.getString("counter_log");
     }
 
     String getDiameterLogFile(){

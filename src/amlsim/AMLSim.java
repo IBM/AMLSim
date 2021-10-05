@@ -390,7 +390,7 @@ public class AMLSim extends ParameterizedPaySim {
 		try {
 			FileWriter writer = new FileWriter(new File(logFileName));
 			this.bufWriter = new BufferedWriter(writer);
-			this.bufWriter.write("step,type,amount,nameOrig,oldbalanceOrg,newbalanceOrig,nameDest,oldbalanceDest,newbalanceDest,isSAR,alertID\n");
+			this.bufWriter.write("step,type,amount,nameOrig,oldbalanceOrig,newbalanceOrig,nameDest,oldbalanceDest,newbalanceDest,isSAR,alertID\n");
 			this.bufWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();

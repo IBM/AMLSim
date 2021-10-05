@@ -23,7 +23,6 @@ public class SimProperties {
     private String simName;  // Simulation name
 
     private int normalTxInterval;
-//    private int sarTxInterval;
     private float minTxAmount;  // Minimum base (normal) transaction amount
     private float maxTxAmount;  // Maximum base (suspicious) transaction amount
 
@@ -94,21 +93,8 @@ public class SimProperties {
     }
 
     public float getNormalBaseTxAmount(){
-//        return minTxAmount;
         return minTxAmount + AMLSim.getRandom().nextFloat() * (maxTxAmount - minTxAmount);
     }
-    
-//    public float getSuspiciousTxAmount(){
-//        return maxTxAmount;
-//    }
-
-//    int getSarTransactionInterval(){
-//        return sarTxInterval;
-//    }
-
-//    float getSatBalanceRatio(){
-//        return simProp.getFloat("sar_balance_ratio");
-//    }
 
     public float getMarginRatio(){
         return marginRatio;
@@ -133,14 +119,6 @@ public class SimProperties {
     String getOutputTxLogFile(){
         return getOutputDir() + outputProp.getString("transaction_log");
     }
-
-//    public String getOutputAlertMemberFile(){
-//        return workDir + outputProp.getString("alert_members");
-//    }
-
-//    public String getOutputAlertTxFile(){
-//        return workDir + outputProp.getString("alert_transactions");
-//    }
 
     String getOutputDir(){
         return outputProp.getString("directory") + separator + simName + separator;

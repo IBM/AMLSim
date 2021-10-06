@@ -10,8 +10,8 @@ import java.util.List;
  */
 public class MutualTransactionModel extends AbstractTransactionModel {
 
-    public void setParameters(int interval, float balance, long start, long end){
-        super.setParameters(interval, balance, start, end);
+    public void setParameters(int interval, long start, long end){
+        super.setParameters(interval, start, end);
         if(this.startStep < 0){  // decentralize the first transaction step
             this.startStep = generateStartStep(interval);
         }

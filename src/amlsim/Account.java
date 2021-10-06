@@ -60,6 +60,7 @@ public class Account extends Client implements Steppable {
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
+		this.setBalance(initBalance);
 
 		switch(modelID){
 			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
@@ -71,15 +72,15 @@ public class Account extends Client implements Steppable {
 			default: System.err.println("Unknown model ID: " + modelID); this.model = new EmptyModel(); break;
 		}
 		this.model.setAccount(this);
-		this.model.setParameters(interval, initBalance, start, end);
+		this.model.setParameters(interval, start, end);
 
 		this.cashInModel = new CashInModel();
 		this.cashInModel.setAccount(this);
-		this.cashInModel.setParameters(interval, initBalance, start, end);
+		this.cashInModel.setParameters(interval, start, end);
 
 		this.cashOutModel = new CashOutModel();
 		this.cashOutModel.setAccount(this);
-		this.cashOutModel.setParameters(interval, initBalance, start, end);
+		this.cashOutModel.setParameters(interval, start, end);
 	}
 
 	/**

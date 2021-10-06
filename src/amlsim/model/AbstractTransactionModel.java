@@ -20,7 +20,6 @@ public abstract class AbstractTransactionModel {
 
     protected Account account;  // Account object
     protected int interval = 1; // Default transaction interval
-    protected float balance;  // Current balance
     protected long startStep = -1;  // The first step of transactions
     protected long endStep = -1;  // The end step of transactions
     protected boolean isSAR = false;
@@ -88,23 +87,20 @@ public abstract class AbstractTransactionModel {
      * Set initial parameters
      * This method will be called when the account is initialized
      * @param interval Transaction interval
-     * @param balance Initial balance of the account
      * @param start Start simulation step (It never makes any transactions before this step)
      * @param end End simulation step (It never makes any transactions after this step)
      */
-    public void setParameters(int interval, float balance, long start, long end){
+    public void setParameters(int interval, long start, long end){
         this.interval = interval;
-        setParameters(balance, start, end);
+        setParameters(start, end);
     }
     
     /**
      * Set initial parameters of the transaction model (for AML typology models)
-     * @param balance Initial balance of the account
      * @param start Start simulation step
      * @param end End simulation step
      */
-    public void setParameters(float balance, long start, long end){
-        this.balance = balance;
+    public void setParameters(long start, long end){
         this.startStep = start;
         this.endStep = end;
     }

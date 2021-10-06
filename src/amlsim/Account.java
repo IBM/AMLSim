@@ -13,18 +13,15 @@ public class Account extends Client implements Steppable {
 
     protected String id;
 
-//    private Map<String, String> extraAttributes;
 	protected AbstractTransactionModel model;
 	protected CashInModel cashInModel;
 	protected CashOutModel cashOutModel;
 	protected boolean isSAR = false;
-//	private static Random rand = new Random(AMLSim.getSeed());
 	private Branch branch = null;
 	private Set<String> origAcctIDs = new HashSet<>();  // Originator account ID set
 	private Set<String> beneAcctIDs = new HashSet<>();  // Beneficiary account ID set
     private List<Account> origAccts = new ArrayList<>();  // Originator accounts from which this account receives money
     private List<Account> beneAccts = new ArrayList<>();  // Beneficiary accounts to which this account sends money
-//	private int numSAROrig = 0;  // Number of SAR originator accounts
 	private int numSARBene = 0;  // Number of SAR beneficiary accounts
 	private String bankID = "";  // Bank ID
     
@@ -102,10 +99,6 @@ public class Account extends Client implements Steppable {
 		return this.bankID;
 	}
 
-//	public String getAttrValue(String name){
-//        return this.extraAttributes.get(name);
-//    }
-
 	public long getStartStep(){
 		return this.startStep;
 	}
@@ -172,7 +165,6 @@ public class Account extends Client implements Steppable {
 	 * @return Originator account list
 	 */
 	public List<Account> getOrigList(){
-//		return new ArrayList<>(this.origAccts.values());
 		return this.origAccts;
 	}
 
@@ -181,12 +173,10 @@ public class Account extends Client implements Steppable {
 	 * @return Beneficiary account list
 	 */
 	public List<Account> getBeneList(){
-//		return new ArrayList<>(this.beneAccts.values());
 		return this.beneAccts;
 	}
 
 	public void printBeneList(){
-//		System.out.println(this.beneAccts.values());
 		System.out.println(this.beneAccts);
 	}
 

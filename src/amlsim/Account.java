@@ -141,7 +141,7 @@ public class Account extends Client implements Steppable {
 		}
 	}
 
-	void addTxType(Account bene, String ttype){
+	public void addTxType(Account bene, String ttype){
 		this.tx_types.put(bene.id, ttype);
 		all_tx_types.add(ttype);
 	}

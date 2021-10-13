@@ -63,7 +63,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
             case GATHER_SCATTER: model = new GatherScatterTypology(minAmount, maxAmount, startStep, endStep); break;
             default: throw new IllegalArgumentException("Unknown typology model ID: " + modelID);
         }
-        model.setParameters(minAmount, startStep, endStep);
+        model.setParameters(startStep, endStep);
         return model;
     }
 

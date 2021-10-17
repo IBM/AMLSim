@@ -121,17 +121,22 @@ def get_degrees(deg_csv, num_v):
     :param num_v: Number of total account vertices
     :return: In-degree and out-degree sequence list
     """
-    _in_deg = list()  # In-degree sequence
-    _out_deg = list()  # Out-degree sequence
     with open(deg_csv, "r") as rf:  # Load in/out-degree sequences from parameter CSV file for each account
         reader = csv.reader(rf)
         next(reader)
-        for row in reader:
-            if row[0].startswith("#"):
-                continue
-            nv = int(row[0])
-            _in_deg.extend(int(row[1]) * [nv])
-            _out_deg.extend(int(row[2]) * [nv])
+        return get_in_and_out_degrees(reader, num_v)
+
+
+def get_in_and_out_degrees(iterable, num_v):
+    _in_deg = list()  # In-degree sequence
+    _out_deg = list()  # Out-degree sequence
+    
+    for row in iterable:
+        if row[0].startswith("#"):
+            continue
+        count = int(row[0])
+        _in_deg.extend([int(row[1])] * count)
+        _out_deg.extend([int(row[2])] * count)
 
     in_len, out_len = len(_in_deg), len(_out_deg)
     if in_len != out_len:
@@ -143,29 +148,16 @@ def get_degrees(deg_csv, num_v):
         raise ValueError("The sum of in-degree (%d) and out-degree (%d) must be same."
                          % (total_in_deg, total_out_deg))
 
-    total_v = in_len
-    if num_v % total_v != 0:
+    if num_v % in_len != 0:
         raise ValueError("The number of total accounts (%d) "
                          "must be a multiple of the degree sequence length (%d)."
-                         % (num_v, total_v))
+                         % (num_v, in_len))
 
-    repeats = num_v // total_v
+    repeats = num_v // in_len
     _in_deg = _in_deg * repeats
     _out_deg = _out_deg * repeats
 
-    assert sum(_in_deg) == sum(_out_deg), "Sequences must have equal sums."
     return _in_deg, _out_deg
-
-
-# class InputSchema:
-#
-#     def __init__(self, input_json):
-#         with open(input_json, "r") as rf:
-#             self.data = json.load(rf)
-#
-#     def get_header(self, table_name):
-#         fields = self.data[table_name]
-#         return [f["name"] for f in fields]
 
 
 class TransactionGenerator:
@@ -710,8 +702,8 @@ class TransactionGenerator:
         else:
             is_external = False
 
-        start_date = random.randrange(0, self.total_steps - period)
-        end_date = start_date + period - 1
+        start_date = random.randrange(0, self.total_steps - period + 1)
+        end_date = start_date + period - 1 # end_date is inclusive
 
         # Create subgraph structure with transaction attributes
         model_id = self.alert_types[typology_name]  # alert model ID
@@ -766,7 +758,7 @@ class TransactionGenerator:
 
             for orig in sub_accts:
                 amount = init_amount
-                date = random.randrange(start_date, end_date)
+                date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, main_acct, amount, date)
 
         elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
@@ -789,7 +781,7 @@ class TransactionGenerator:
 
             for bene in sub_accts:
                 amount = init_amount
-                date = random.randrange(start_date, end_date)
+                date = random.randrange(start_date, end_date + 1)
                 add_edge(main_acct, bene, amount, date)
 
         elif typology_name == "bipartite":  # bipartite (originators -> many-to-many -> beneficiaries)
@@ -815,7 +807,7 @@ class TransactionGenerator:
 
             for orig, bene in itertools.product(orig_accts, bene_accts):  # All-to-all transaction edges
                 amount = init_amount
-                date = random.randrange(start_date, end_date)
+                date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, bene, amount, date)
 
         elif typology_name == "stack":  # stacked bipartite layers
@@ -850,17 +842,17 @@ class TransactionGenerator:
 
             for orig, bene in itertools.product(orig_accts, mid_accts):  # all-to-all transactions
                 amount = init_amount
-                date = random.randrange(start_date, end_date)
+                date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, bene, amount, date)
 
             for orig, bene in itertools.product(mid_accts, bene_accts):  # all-to-all transactions
                 amount = init_amount
-                date = random.randrange(start_date, end_date)
+                date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, bene, amount, date)
 
         elif typology_name == "random":  # Random transactions among members
             amount = init_amount
-            date = random.randrange(start_date, end_date)
+            date = random.randrange(start_date, end_date + 1)
 
             if is_external:
                 all_bank_ids = self.get_all_bank_ids()
@@ -892,7 +884,7 @@ class TransactionGenerator:
 
         elif typology_name == "cycle":  # Cycle transactions
             amount = init_amount
-            dates = sorted([random.randrange(start_date, end_date) for _ in range(num_accounts)])
+            dates = sorted([random.randrange(start_date, end_date + 1) for _ in range(num_accounts)])
 
             if is_external:
                 all_accts = list()
@@ -959,7 +951,7 @@ class TransactionGenerator:
                 margin = scatter_amount * self.margin_ratio  # Margin of the intermediate account
                 amount = scatter_amount - margin
                 scatter_date = random.randrange(start_date, mid_date)
-                gather_date = random.randrange(mid_date, end_date)
+                gather_date = random.randrange(mid_date, end_date + 1)
 
                 add_edge(orig_acct, mid_acct, scatter_amount, scatter_date)
                 add_edge(mid_acct, bene_acct, amount, gather_date)
@@ -1002,7 +994,7 @@ class TransactionGenerator:
 
             for i in range(num_bene_accts):
                 bene_acct = bene_accts[i]
-                date = random.randrange(mid_date, end_date)
+                date = random.randrange(mid_date, end_date + 1)
                 add_edge(mid_acct, bene_acct, amount, date)
                 # print(mid_acct, "->", date, "->", bene_acct)
             # print(orig_accts, mid_acct, bene_accts)

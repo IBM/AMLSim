@@ -24,5 +24,12 @@ Please download external jar files (except `paysim.jar`) from the following site
     - [JSAP](http://www.martiansoftware.com/jsap/) version 2.1
     - [SLF4J](https://www.slf4j.org/download.html) version 1.7.25
 - [MySQL Connector for Java](https://dev.mysql.com/downloads/connector/j/5.1.html) version 5.1.48
+- [JUnit5](https://search.maven.org/artifact/org.junit.platform/junit-platform-console-standalone/1.8.1/jar) version 5
+- [Mockito Core](https://mvnrepository.com/artifact/org.mockito/mockito-core/4.0.0) version 4.0.0
+  - Please download the following dependencies
+    - [Byte Buddy](https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy/1.11.19) version 1.11.19
+    - [Byte Buddy Agent](https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-agent/1.11.19) version 1.11.19
+    - [Objenesis](https://mvnrepository.com/artifact/org.objenesis/objenesis/3.2) version 3.2
+- [Mockito Inline](https://mvnrepository.com/artifact/org.mockito/mockito-inline/4.0.0) version 4.0.0
 
 

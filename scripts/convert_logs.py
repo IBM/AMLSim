@@ -600,7 +600,7 @@ class LogConverter:
         self.schema = Schema(os.path.join(param_dir, schema_file), base_date)
 
         # Input files
-        self.log_file = os.path.join(self.input_dir, output_conf["transaction_log"])
+        self.log_file = os.path.join(self.work_dir, output_conf["transaction_log"])
         self.in_acct_file = input_conf["accounts"]  # Account list file from the transaction graph generator
         self.group_file = input_conf["alert_members"]  # Alert account list file from the transaction graph generator
 

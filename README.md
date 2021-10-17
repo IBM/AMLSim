@@ -28,6 +28,12 @@ This project aims at building a multi-agent simulator of anti-money laundering -
     - [JSAP](http://www.martiansoftware.com/jsap/) version 2.1
     - [SLF4J](https://www.slf4j.org/download.html) version 1.7.25
     - [MySQL Connector for Java](https://dev.mysql.com/downloads/connector/j/5.1.html) version 5.1
+    - [JUnit5](https://search.maven.org/artifact/org.junit.platform/junit-platform-console-standalone/1.8.1/jar) version 5
+    - [Mockito Core](https://mvnrepository.com/artifact/org.mockito/mockito-core/4.0.0) version 4.0.0
+    - [Byte Buddy](https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy/1.11.19) version 1.11.19
+    - [Byte Buddy Agent](https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-agent/1.11.19) version 1.11.19
+    - [Objenesis](https://mvnrepository.com/artifact/org.objenesis/objenesis/3.2) version 3.2
+    - [Mockito Inline](https://mvnrepository.com/artifact/org.mockito/mockito-inline/4.0.0) version 4.0.0
 - Python 3.7 (The following packages can be installed with `pip3 install -r requirements.txt`)
     - numpy
     - networkx==1.11 (We do not support version 2.* due to performance issues when creating a large graph)

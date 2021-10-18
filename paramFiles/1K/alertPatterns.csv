@@ -1,4 +1,4 @@
 count,type,schedule_id,min_accounts,max_accounts,min_amount,max_amount,min_period,max_period,bank_id,is_sar
-3,fan_in,2,5,10,100.0,200.0,5,20,bank,True
-3,fan_out,2,5,10,100.0,200.0,5,20,bank,True
-4,cycle,2,5,10,100.0,200.0,5,20,bank,True
+3,fan_in,2,5,10,1000.0,2000.0,5,20,bank,True
+3,fan_out,2,5,10,1000.0,2000.0,5,20,bank,True
+4,cycle,2,5,10,1000.0,2000.0,5,20,bank,True

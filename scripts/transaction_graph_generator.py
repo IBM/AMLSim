@@ -694,21 +694,6 @@ class TransactionGenerator:
         :param bank_id: Bank ID which it chooses members from. If empty, it chooses members from all banks.
         :param schedule: AML pattern transaction schedule model ID
         """
-        # main_acct, members = self.get_typology_members(num_accounts, bank_id)
-        if bank_id == "" and len(self.bank_to_accts) >= 2:
-            is_external = True
-        elif bank_id != "" and bank_id not in self.bank_to_accts:  # Invalid bank ID
-            raise KeyError("No such bank ID: %s" % bank_id)
-        else:
-            is_external = False
-
-        start_date = random.randrange(0, self.total_steps - period + 1)
-        end_date = start_date + period - 1 # end_date is inclusive
-
-        # Create subgraph structure with transaction attributes
-        model_id = self.alert_types[typology_name]  # alert model ID
-        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
-                                start=start_date, end=end_date)  # Transaction subgraph for a typology
 
         def add_node(_acct, _bank_id):
             """Set an attribute of bank ID to a member account
@@ -737,6 +722,23 @@ class TransactionGenerator:
             """
             sub_g.add_edge(_orig, _bene, amount=_amount, date=_date)
             self.add_transaction(_orig, _bene, amount=_amount, date=_date)
+
+
+        if bank_id == "" and len(self.bank_to_accts) >= 2:
+            is_external = True
+        elif bank_id != "" and bank_id not in self.bank_to_accts:  # Invalid bank ID
+            raise KeyError("No such bank ID: %s" % bank_id)
+        else:
+            is_external = False
+
+        start_date = random.randrange(0, self.total_steps - period + 1)
+        end_date = start_date + period - 1 # end_date is inclusive
+
+        # Create subgraph structure with transaction attributes
+        model_id = self.alert_types[typology_name]  # alert model ID
+        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
+                                start=start_date, end=end_date)  # Transaction subgraph for a typology
+
 
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
             main_acct, main_bank_id = add_main_acct()

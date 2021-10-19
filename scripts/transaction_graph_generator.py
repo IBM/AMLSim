@@ -162,7 +162,7 @@ def get_in_and_out_degrees(iterable, num_v):
 
 class TransactionGenerator:
 
-    def __init__(self, conf_file, sim_name=None):
+    def __init__(self, conf, sim_name=None):
         """Initialize transaction network from parameter files.
         :param conf_file: JSON file as configurations
         :param sim_name: Simulation name (overrides the content in the `conf_json`)
@@ -174,8 +174,7 @@ class TransactionGenerator:
         self.bank_to_accts = defaultdict(set)  # Bank ID -> account set
         self.acct_to_bank = dict()  # Account ID -> bank ID
 
-        with open(conf_file, "r") as rf:
-            self.conf = json.load(rf)
+        self.conf = conf
 
         general_conf = self.conf["general"]
 
@@ -1143,7 +1142,10 @@ if __name__ == "__main__":
     deg_param = os.getenv("DEGREE")
     degree_threshold = 0 if deg_param is None else int(deg_param)
 
-    txg = TransactionGenerator(_conf_file, _sim_name)
+    with open(_conf_file, "r") as rf:
+        conf = json.load(rf)
+
+    txg = TransactionGenerator(conf, _sim_name)
     txg.load_account_list()  # Load account list CSV file
     txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
     if degree_threshold > 0:

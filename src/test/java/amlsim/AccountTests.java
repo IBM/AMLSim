@@ -1,4 +1,4 @@
-package test.java.amlsim;
+package amlsim;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 
-BIN=bin
-if [[ ! -d ${BIN} ]]; then
-    mkdir ${BIN}
+DESTINATION=target/classes/
+if [[ ! -d ${DESTINATION} ]]; then
+    mkdir -p ${DESTINATION}
 fi
 
-javac -encoding UTF-8 -cp "jars/*" -d ${BIN} src/amlsim/*.java src/amlsim/stat/*.java src/amlsim/model/*.java src/amlsim/model/normal/*.java src/amlsim/model/aml/*.java src/amlsim/model/cash/*.java
+if ! command -v mvn &> /dev/null
+then 
+    echo 'maven not installed. compiling using javac'
+    javac -encoding UTF-8 -cp "jars/*" -d ${DESTINATION} src/main/java/amlsim/*.java src/main/java/amlsim/stat/*.java src/main/java/amlsim/model/*.java src/main/java/amlsim/model/normal/*.java src/main/java/amlsim/model/aml/*.java src/main/java/amlsim/model/cash/*.java
+    exit
+else
+    mvn install -DskipTests
+fi
 

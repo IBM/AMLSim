@@ -2,6 +2,7 @@
 
 DESTINATION=target/classes/
 if [[ ! -d ${DESTINATION} ]]; then
+    rm -rf bin/
     mkdir -p ${DESTINATION}
 fi
 

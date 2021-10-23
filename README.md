@@ -44,7 +44,8 @@ This project aims at building a multi-agent simulator of anti-money laundering -
 
 
 # Directory Structure
-See Wiki page [Directory Structure](https://github.com/IBM/AMLSim/wiki/Directory-Structure) for details.
+See Wiki page [Directory Structure](https://github.com/IBM/AMLSim/wiki/Directory-Structure) for details.  
+NOTE: (October 2021): `bin/` folder has been renamed to `target/classes/`
 
 
 
@@ -96,6 +97,39 @@ sh scripts/build_AMLSim.sh
 sh scripts/run_AMLSim.sh conf.json
 ```
 
+## 2.b. Optional: Install and Use Maven as build system.  
+On Mac: `brew install maven`
+If you already have a java installed, you can run `brew uninstall --ignore-dependencies openjdk` because brew installs that along with maven as a dependency.
+
+You only manually need to install 2 jars (MASON and Paysim) to your jars/ folder if you use maven.  Maven will go fetch the other jars for you.  
+Use the following commands to install those 2 jars to your local maven repository.  
+
+```
+mvn install:install-file \
+-Dfile=jars/mason.18.jar \
+-DgroupId=mason \
+-DartifactId=mason \
+-Dversion=18 \
+-Dpackaging=jar \
+-DgeneratePom=true
+```
+
+```
+mvn install:install-file \
+-Dfile=jars/paysim.jar \
+-DgroupId=paysim \
+-DartifactId=paysim \
+-Dversion=1.0.0 \
+-Dpackaging=jar \
+-DgeneratePom=true
+```
+
+Please compile Java files (if not yet) (will detect and use Maven) and launch the simulator.
+```bash
+sh scripts/build_AMLSim.sh
+sh scripts/run_AMLSim.sh conf.json
+```
+
 
 ## 3. Convert the raw transaction log file
 The file names of the output data are defined at the "output" section of `conf.json`.
@@ -139,7 +173,7 @@ python3 scripts/validation/validate_alerts.py conf.json
 
 
 
-## Remove all log and generated image files from `outputs` directory and a temporal directory
+## 6. Remove all log and generated image files from `outputs` directory and a temporal directory
 ```bash
 sh scripts/clean_logs.sh
 ```

@@ -1,6 +1,9 @@
 import unittest
 
-from scripts.transaction_graph_generator import directed_configuration_model, get_degrees, get_in_and_out_degrees
+from transaction_graph_generator import get_degrees
+from transaction_graph_generator import get_in_and_out_degrees
+from transaction_graph_generator import directed_configuration_model
+
 
 class TransactionGraphGeneratorTests(unittest.TestCase):
 
@@ -108,6 +111,8 @@ class TransactionGraphGeneratorTests(unittest.TestCase):
         self.assertEqual(G.degree(10), 0)
         self.assertEqual(G.degree(11), 0)
         self.assertEqual(G.selfloop_edges(), [])
+
+
         
 
 

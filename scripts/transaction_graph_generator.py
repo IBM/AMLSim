@@ -11,7 +11,12 @@ import json
 import os
 import sys
 import logging
+
 from collections import Counter, defaultdict
+
+from amlsim.random_amount import RandomAmount
+from amlsim.rounded_amount import RoundedAmount
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -162,7 +167,7 @@ def get_in_and_out_degrees(iterable, num_v):
 
 class TransactionGenerator:
 
-    def __init__(self, conf_file, sim_name=None):
+    def __init__(self, conf, sim_name=None):
         """Initialize transaction network from parameter files.
         :param conf_file: JSON file as configurations
         :param sim_name: Simulation name (overrides the content in the `conf_json`)
@@ -174,8 +179,7 @@ class TransactionGenerator:
         self.bank_to_accts = defaultdict(set)  # Bank ID -> account set
         self.acct_to_bank = dict()  # Account ID -> bank ID
 
-        with open(conf_file, "r") as rf:
-            self.conf = json.load(rf)
+        self.conf = conf
 
         general_conf = self.conf["general"]
 
@@ -676,39 +680,24 @@ class TransactionGenerator:
 
                 for i in range(num_patterns):
                     num_accts = random.randrange(min_accts, max_accts + 1)
-                    init_amount = random.uniform(min_amount, max_amount)
                     period = random.randrange(min_period, max_period + 1)
-                    self.add_aml_typology(is_sar, typology_name, num_accts, init_amount, period, bank_id, schedule)
+                    self.add_aml_typology(is_sar, typology_name, num_accts, min_amount, max_amount, period, bank_id, schedule)
                     count += 1
                     if count % 1000 == 0:
                         logger.info("Created %d alerts" % count)
 
-    def add_aml_typology(self, is_sar, typology_name, num_accounts, init_amount, period, bank_id="", schedule=1):
+    def add_aml_typology(self, is_sar, typology_name, num_accounts, min_amount, max_amount, period, bank_id="", schedule=1):
         """Add an AML typology transaction set
         :param is_sar: Whether the alerted transaction set is SAR (True) or false-alert (False)
         :param typology_name: Name of pattern type
             ("fan_in", "fan_out", "cycle", "random", "stack", "scatter_gather" or "gather_scatter")
         :param num_accounts: Number of transaction members (accounts)
-        :param init_amount: Initial individual amount
+        :param min_amount: Minimum amount of the transaction
+        :param max_amount: Maximum amount of the transaction
         :param period: Period (number of days) for all transactions
         :param bank_id: Bank ID which it chooses members from. If empty, it chooses members from all banks.
         :param schedule: AML pattern transaction schedule model ID
         """
-        # main_acct, members = self.get_typology_members(num_accounts, bank_id)
-        if bank_id == "" and len(self.bank_to_accts) >= 2:
-            is_external = True
-        elif bank_id != "" and bank_id not in self.bank_to_accts:  # Invalid bank ID
-            raise KeyError("No such bank ID: %s" % bank_id)
-        else:
-            is_external = False
-
-        start_date = random.randrange(0, self.total_steps - period + 1)
-        end_date = start_date + period - 1 # end_date is inclusive
-
-        # Create subgraph structure with transaction attributes
-        model_id = self.alert_types[typology_name]  # alert model ID
-        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
-                                start=start_date, end=end_date)  # Transaction subgraph for a typology
 
         def add_node(_acct, _bank_id):
             """Set an attribute of bank ID to a member account
@@ -738,9 +727,27 @@ class TransactionGenerator:
             sub_g.add_edge(_orig, _bene, amount=_amount, date=_date)
             self.add_transaction(_orig, _bene, amount=_amount, date=_date)
 
+
+        if bank_id == "" and len(self.bank_to_accts) >= 2:
+            is_external = True
+        elif bank_id != "" and bank_id not in self.bank_to_accts:  # Invalid bank ID
+            raise KeyError("No such bank ID: %s" % bank_id)
+        else:
+            is_external = False
+
+        start_date = random.randrange(0, self.total_steps - period + 1)
+        end_date = start_date + period - 1 # end_date is inclusive
+
+        # Create subgraph structure with transaction attributes
+        model_id = self.alert_types[typology_name]  # alert model ID
+        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
+                                start=start_date, end=end_date)  # Transaction subgraph for a typology
+
+
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
             main_acct, main_bank_id = add_main_acct()
             num_neighbors = num_accounts - 1
+            amount = RoundedAmount(min_amount, max_amount).getAmount()
 
             if is_external:
                 sub_bank_candidates = [b for b, nbs in self.bank_to_accts.items()
@@ -757,13 +764,13 @@ class TransactionGenerator:
                 add_node(n, sub_bank_id)
 
             for orig in sub_accts:
-                amount = init_amount
                 date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, main_acct, amount, date)
 
         elif typology_name == "fan_out":  # fan_out pattern (single (main) account --> multiple accounts)
             main_acct, main_bank_id = add_main_acct()
             num_neighbors = num_accounts - 1
+            amount = RoundedAmount(min_amount, max_amount).getAmount()
 
             if is_external:
                 sub_bank_candidates = [b for b, nbs in self.bank_to_accts.items()
@@ -780,7 +787,6 @@ class TransactionGenerator:
                 add_node(n, sub_bank_id)
 
             for bene in sub_accts:
-                amount = init_amount
                 date = random.randrange(start_date, end_date + 1)
                 add_edge(main_acct, bene, amount, date)
 
@@ -806,7 +812,7 @@ class TransactionGenerator:
                 add_node(n, bene_bank_id)
 
             for orig, bene in itertools.product(orig_accts, bene_accts):  # All-to-all transaction edges
-                amount = init_amount
+                amount = RandomAmount(min_amount, max_amount).getAmount()
                 date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, bene, amount, date)
 
@@ -841,17 +847,17 @@ class TransactionGenerator:
                 add_node(n, bene_bank_id)
 
             for orig, bene in itertools.product(orig_accts, mid_accts):  # all-to-all transactions
-                amount = init_amount
+                amount = RandomAmount(min_amount, max_amount).getAmount()
                 date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, bene, amount, date)
 
             for orig, bene in itertools.product(mid_accts, bene_accts):  # all-to-all transactions
-                amount = init_amount
+                amount = RandomAmount(min_amount, max_amount).getAmount()
                 date = random.randrange(start_date, end_date + 1)
                 add_edge(orig, bene, amount, date)
 
         elif typology_name == "random":  # Random transactions among members
-            amount = init_amount
+            amount = RandomAmount(min_amount, max_amount).getAmount()
             date = random.randrange(start_date, end_date + 1)
 
             if is_external:
@@ -883,7 +889,7 @@ class TransactionGenerator:
                     prev_acct = next_acct
 
         elif typology_name == "cycle":  # Cycle transactions
-            amount = init_amount
+            amount = RandomAmount(min_amount, max_amount).getAmount()
             dates = sorted([random.randrange(start_date, end_date + 1) for _ in range(num_accounts)])
 
             if is_external:
@@ -947,7 +953,7 @@ class TransactionGenerator:
 
             for i in range(len(mid_accts)):
                 mid_acct = mid_accts[i]
-                scatter_amount = init_amount
+                scatter_amount = RandomAmount(min_amount, max_amount).getAmount()
                 margin = scatter_amount * self.margin_ratio  # Margin of the intermediate account
                 amount = scatter_amount - margin
                 scatter_date = random.randrange(start_date, mid_date)
@@ -982,8 +988,7 @@ class TransactionGenerator:
 
             accumulated_amount = 0.0
             mid_date = (start_date + end_date) // 2
-            # print(start_date, mid_date, end_date)
-            amount = init_amount
+            amount = RandomAmount(min_amount, max_amount).getAmount()
 
             for i in range(num_orig_accts):
                 orig_acct = orig_accts[i]
@@ -1141,7 +1146,10 @@ if __name__ == "__main__":
     deg_param = os.getenv("DEGREE")
     degree_threshold = 0 if deg_param is None else int(deg_param)
 
-    txg = TransactionGenerator(_conf_file, _sim_name)
+    with open(_conf_file, "r") as rf:
+        conf = json.load(rf)
+
+    txg = TransactionGenerator(conf, _sim_name)
     txg.load_account_list()  # Load account list CSV file
     txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
     if degree_threshold > 0:

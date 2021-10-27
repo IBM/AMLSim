@@ -9,6 +9,8 @@ from random import random
 from collections import defaultdict, Counter
 
 from amlsim.account_data_type_lookup import AccountDataTypeLookup
+from faker import Faker
+import numpy as np
 
 
 def days_to_date(days):
@@ -521,9 +523,11 @@ class Schema:
 
 class LogConverter:
 
-    def __init__(self, conf_file, sim_name=None):
+    def __init__(self, conf_file, sim_name=None, fake=None):
         self.reports = dict()  # SAR ID and transaction subgraph
         self.org_types = dict()  # ID, organization type
+
+        self.fake = fake
 
         with open(conf_file, "r") as rf:
             conf = json.load(rf)
@@ -610,12 +614,30 @@ class LogConverter:
         mapping_id = 1  # Mapping ID for account-alert list
 
         lookup = AccountDataTypeLookup()
+        us_gen = self.fake['en_US']
 
         for row in reader:
             output_row = list(self.schema.acct_defaults)
 
             acct_type = ""
             acct_id = ""
+
+            gender = np.random.choice(['Male', 'Female'], p=[0.5, 0.5])
+
+            good_address = False
+            while good_address == False:
+                address = us_gen.address()
+                split1 = address.split('\n')
+                street_address = split1[0]
+                split2 = split1[1].split(', ')
+                if len(split2) == 2:
+                    good_address = True
+            
+            city = split2[0] 
+            split3 = split2[1].split(' ')
+            state = split3[0]
+            postcode = split3[1]
+            
 
             for output_index, output_item in enumerate(self.schema.data['account']):
                 if 'dataType' in output_item:
@@ -653,6 +675,45 @@ class LogConverter:
                 if 'valueType' in output_item:
                     if output_item['valueType'] == 'date':
                         output_row[output_index] = self.schema.days2date(output_row[output_index])
+
+                
+                if 'name' in output_item:
+                    if output_item['name'] == 'first_name':
+                        output_row[output_index] = us_gen.first_name_male() if gender == "Male" else us_gen.first_name_female()
+                    
+                    if output_item['name'] == 'last_name':
+                        output_row[output_index] = us_gen.last_name_male() if gender == "Male" else us_gen.last_name_female()
+
+                    if output_item['name'] == 'street_addr':
+                        output_row[output_index] = street_address
+
+                    if output_item['name'] == 'city':
+                        output_row[output_index] = city
+
+                    if output_item['name'] == 'state':
+                        output_row[output_index] = state
+
+                    if output_item['name'] == 'country':
+                        output_row[output_index] = "US"
+
+                    if output_item['name'] == 'zip':
+                        output_row[output_index] = postcode
+
+                    if output_item['name'] == 'gender':
+                        output_row[output_index] = gender
+
+                    if output_item['name'] == 'birth_date':
+                        output_row[output_index] = us_gen.date_of_birth()
+
+                    if output_item['name'] == 'ssn':
+                        output_row[output_index] = us_gen.ssn()
+
+                    if output_item['name'] == 'lat':
+                        output_row[output_index] = us_gen.latitude()
+                    
+                    if output_item['name'] == 'lon':
+                        output_row[output_index] = us_gen.longitude()
+
            
 
             acct_writer.writerow(output_row)
@@ -879,7 +940,9 @@ if __name__ == "__main__":
 
     _conf_json = argv[1]
     _sim_name = argv[2] if len(argv) >= 3 else None
-    converter = LogConverter(_conf_json, _sim_name)
+    fake = Faker(['en_US'])
+    Faker.seed(0)
+    converter = LogConverter(_conf_json, _sim_name, fake)
     converter.convert_alert_members()
     converter.convert_acct_tx()
     converter.output_sar_cases()

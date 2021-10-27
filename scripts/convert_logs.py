@@ -681,37 +681,37 @@ class LogConverter:
                     if output_item['name'] == 'first_name':
                         output_row[output_index] = us_gen.first_name_male() if gender == "Male" else us_gen.first_name_female()
                     
-                    if output_item['name'] == 'last_name':
+                    elif output_item['name'] == 'last_name':
                         output_row[output_index] = us_gen.last_name_male() if gender == "Male" else us_gen.last_name_female()
 
-                    if output_item['name'] == 'street_addr':
+                    elif output_item['name'] == 'street_addr':
                         output_row[output_index] = street_address
 
-                    if output_item['name'] == 'city':
+                    elif output_item['name'] == 'city':
                         output_row[output_index] = city
 
-                    if output_item['name'] == 'state':
+                    elif output_item['name'] == 'state':
                         output_row[output_index] = state
 
-                    if output_item['name'] == 'country':
+                    elif output_item['name'] == 'country':
                         output_row[output_index] = "US"
 
-                    if output_item['name'] == 'zip':
+                    elif output_item['name'] == 'zip':
                         output_row[output_index] = postcode
 
-                    if output_item['name'] == 'gender':
+                    elif output_item['name'] == 'gender':
                         output_row[output_index] = gender
 
-                    if output_item['name'] == 'birth_date':
+                    elif output_item['name'] == 'birth_date':
                         output_row[output_index] = us_gen.date_of_birth()
 
-                    if output_item['name'] == 'ssn':
+                    elif output_item['name'] == 'ssn':
                         output_row[output_index] = us_gen.ssn()
 
-                    if output_item['name'] == 'lat':
+                    elif output_item['name'] == 'lat':
                         output_row[output_index] = us_gen.latitude()
                     
-                    if output_item['name'] == 'lon':
+                    elif output_item['name'] == 'lon':
                         output_row[output_index] = us_gen.longitude()
 
            

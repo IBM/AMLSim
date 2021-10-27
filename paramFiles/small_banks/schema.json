@@ -86,7 +86,9 @@
     {
       "name": "country",
       "valueType": "string",
-      "defaultValue": "US"
+      "defaultValue": "US",
+      "dataType": "country"
+
     },
     {
       "name": "zip",

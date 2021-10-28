@@ -868,6 +868,7 @@ class LogConverter:
                                                         model_id, schedule_id, bank_id, **attr)
             writer.writerow(output_row)
 
+
     def output_sar_cases(self):
         """Extract SAR account list involved in alert transactions from transaction log file
         """
@@ -875,8 +876,16 @@ class LogConverter:
         output_file = os.path.join(self.work_dir, self.sar_acct_file)
 
         print("Convert SAR typologies from %s to %s" % (input_file, output_file))
-        rf = open(input_file, "r")
-        reader = csv.reader(rf)
+        with open(input_file, "r") as rf:
+            reader = csv.reader(rf)
+            alerts = self.sar_accounts(reader)
+        
+        with open(output_file, "w") as wf:
+            writer = csv.writer(wf)
+            self.write_sar_accounts(writer, alerts)
+
+    
+    def sar_accounts(self, reader):
         header = next(reader)
         indices = {name: index for index, name in enumerate(header)}
         columns = len(header)
@@ -917,18 +926,22 @@ class LogConverter:
             count += 1
             if count % 100 == 0:
                 print("SAR Typologies: %d/%d" % (count, num_reports))
+        return alerts
+
+
+    def write_sar_accounts(self, writer, sar_accounts):
+        writer.writerow(
+            ["ALERT_ID", "MAIN_ACCOUNT_ID", "MAIN_CUSTOMER_ID", "EVENT_DATE",
+             "ALERT_TYPE", "ACCOUNT_TYPE", "IS_SAR"])
 
         count = 0
-        with open(output_file, "w") as wf:
-            writer = csv.writer(wf)
-            writer.writerow(
-                ["ALERT_ID", "MAIN_ACCOUNT_ID", "MAIN_CUSTOMER_ID", "EVENT_DATE",
-                 "ALERT_TYPE", "ACCOUNT_TYPE", "IS_SAR"])
-            for alert in alerts:
-                sar_id, acct_id, cust_id, date, alert_type, acct_type, is_sar = alert
-                if is_sar == "YES":
-                    writer.writerow((count, acct_id, cust_id, date, alert_type, acct_type, is_sar))
-                    count += 1
+        for alert in sar_accounts:
+            sar_id, acct_id, cust_id, date, alert_type, acct_type, is_sar = alert
+            if is_sar == "YES":
+                writer.writerow(
+                    (count, acct_id, cust_id, date, alert_type, acct_type, is_sar))
+                count += 1
+                
 
 
 if __name__ == "__main__":

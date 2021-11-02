@@ -916,12 +916,12 @@ class LogConverter:
                 if (self.account_recorded(orig_acct) 
                 and self.account_recorded(dest_acct)):
                     continue
-                if (orig_acct not in typology.recorded_members):
+                if (not self.account_recorded(orig_acct)):
                     acct_id = orig_acct
                     cust_id = orig_name
                     typology.recorded_members.add(acct_id)
                     sar_accounts.append((sar_id, acct_id, cust_id, days_to_date(step), reason, self.org_type(acct_id), is_sar))
-                if (dest_acct not in typology.recorded_members):
+                if (not self.account_recorded(dest_acct)):
                     acct_id = dest_acct
                     cust_id = dest_name
                     typology.recorded_members.add(acct_id)

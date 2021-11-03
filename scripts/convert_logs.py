@@ -8,6 +8,10 @@ from dateutil.parser import parse
 from random import random
 from collections import defaultdict, Counter
 
+from amlsim.account_data_type_lookup import AccountDataTypeLookup
+from faker import Faker
+import numpy as np
+
 
 def days_to_date(days):
     date = datetime.datetime(2017, 1, 1) + datetime.timedelta(days=days)
@@ -205,26 +209,6 @@ class Schema:
             self.acct_names.append(name)
             self.acct_defaults.append(default)
             self.acct_types.append(v_type)
-            self.acct_name2idx[name] = idx
-
-            if d_type is None:
-                continue
-            if d_type == "account_id":
-                self.acct_id_idx = idx
-            elif d_type == "account_name":
-                self.acct_name_idx = idx
-            elif d_type == "initial_balance":
-                self.acct_balance_idx = idx
-            elif d_type == "start_time":
-                self.acct_start_idx = idx
-            elif d_type == "end_time":
-                self.acct_end_idx = idx
-            elif d_type == "sar_flag":
-                self.acct_sar_idx = idx
-            elif d_type == "model_id":
-                self.acct_model_idx = idx
-            elif d_type == "bank_id":
-                self.acct_bank_idx = idx
 
         # Transaction list
         for idx, col in enumerate(tx_data):
@@ -409,38 +393,6 @@ class Schema:
         dt = self._base_date + datetime.timedelta(num_days)
         return dt.isoformat() + "Z"  # UTC
 
-    def get_acct_row(self, acct_id, acct_name, init_balance, start_str, end_str, is_sar, model_id, bank_id, **attr):
-        row = list(self.acct_defaults)
-        row[self.acct_id_idx] = acct_id
-        row[self.acct_name_idx] = acct_name
-        row[self.acct_balance_idx] = init_balance
-        try:
-            start = int(start_str)
-            if start >= 0:
-                row[self.acct_start_idx] = start
-        except ValueError:  # If failed, keep the default value
-            pass
-
-        try:
-            end = int(end_str)
-            if end > 0:
-                row[self.acct_end_idx] = end
-        except ValueError:  # If failed, keep the default value
-            pass
-
-        row[self.acct_sar_idx] = is_sar
-        row[self.acct_model_idx] = model_id
-        row[self.acct_bank_idx] = bank_id
-
-        for name, value in attr.items():
-            if name in self.acct_name2idx:
-                idx = self.acct_name2idx[name]
-                row[idx] = value
-
-        for idx, v_type in enumerate(self.acct_types):
-            if v_type == "date":
-                row[idx] = self.days2date(row[idx])  # convert days to date
-        return row
 
     def get_tx_row(self, _tx_id, _timestamp, _amount, _tx_type, _orig, _dest, _is_sar, _alert_id, **attr):
         row = list(self.tx_defaults)
@@ -571,9 +523,11 @@ class Schema:
 
 class LogConverter:
 
-    def __init__(self, conf_file, sim_name=None):
+    def __init__(self, conf_file, sim_name=None, fake=None):
         self.reports = dict()  # SAR ID and transaction subgraph
         self.org_types = dict()  # ID, organization type
+
+        self.fake = fake
 
         with open(conf_file, "r") as rf:
             conf = json.load(rf)
@@ -656,33 +610,112 @@ class LogConverter:
         ent_writer.writerow(self.schema.party_party_names)
 
         header = next(reader)
-        indices = {name: index for index, name in enumerate(header)}  # Column name and index
-        id_idx = indices["ACCOUNT_ID"]
-        name_idx = indices["CUSTOMER_ID"]
-        balance_idx = indices["INIT_BALANCE"]
-        start_idx = indices["START_DATE"]
-        end_idx = indices["END_DATE"]
-        type_idx = indices["ACCOUNT_TYPE"]
-        sar_idx = indices["IS_SAR"]
-        model_idx = indices["TX_BEHAVIOR_ID"]
-        bank_idx = indices["BANK_ID"]
 
         mapping_id = 1  # Mapping ID for account-alert list
 
+        lookup = AccountDataTypeLookup()
+        us_gen = self.fake['en_US']
+
         for row in reader:
-            # Convert an account row
-            acct_id = row[id_idx]
-            acct_name = row[name_idx]
-            balance = row[balance_idx]
-            start = row[start_idx]
-            end = row[end_idx]
-            acct_type = row[type_idx]
-            acct_sar = row[sar_idx]
-            acct_model = row[model_idx]
-            bank_id = row[bank_idx]
-            attr = {name: row[index] for name, index in indices.items()}
-            output_row = self.schema.get_acct_row(acct_id, acct_name, balance, start, end,
-                                                  acct_sar, acct_model, bank_id, **attr)
+            output_row = list(self.schema.acct_defaults)
+
+            acct_type = ""
+            acct_id = ""
+
+            gender = np.random.choice(['Male', 'Female'], p=[0.5, 0.5])
+
+            good_address = False
+            while good_address == False:
+                address = us_gen.address()
+                split1 = address.split('\n')
+                street_address = split1[0]
+                split2 = split1[1].split(', ')
+                if len(split2) == 2:
+                    good_address = True
+            
+            city = split2[0] 
+            split3 = split2[1].split(' ')
+            state = split3[0]
+            postcode = split3[1]
+            
+
+            for output_index, output_item in enumerate(self.schema.data['account']):
+                if 'dataType' in output_item:
+                    output_type = output_item['dataType']
+                    input_type = lookup.inputType(output_type)
+                    input_index = next(idx for idx, header_type in enumerate(header) if input_type == header_type)
+
+                    if output_type == "start_time":
+                        try:
+                            start = int(row[input_index])
+                            if start >= 0:
+                                output_row[output_index] = start
+                        except ValueError:  # If failed, keep the default value
+                            pass
+
+                    elif output_type == "end_time":
+                        try:
+                            end = int(row[input_index])
+                            if end > 0:
+                                output_row[output_index] = end
+                        except ValueError:  # If failed, keep the default value
+                            pass
+
+                    elif output_type == "account_id":
+                        acct_id = row[input_index]
+                        output_row[output_index] = acct_id
+
+                    elif output_type == "account_type":
+                        acct_type = row[input_index]
+                        output_row[output_index] = acct_type
+        
+                    else:
+                        output_row[output_index] = row[input_index]
+
+                if 'valueType' in output_item:
+                    if output_item['valueType'] == 'date':
+                        output_row[output_index] = self.schema.days2date(output_row[output_index])
+
+                
+                if 'name' in output_item:
+                    if output_item['name'] == 'first_name':
+                        output_row[output_index] = us_gen.first_name_male() if gender == "Male" else us_gen.first_name_female()
+                    
+                    elif output_item['name'] == 'last_name':
+                        output_row[output_index] = us_gen.last_name_male() if gender == "Male" else us_gen.last_name_female()
+
+                    elif output_item['name'] == 'street_addr':
+                        output_row[output_index] = street_address
+
+                    elif output_item['name'] == 'city':
+                        output_row[output_index] = city
+
+                    elif output_item['name'] == 'state':
+                        output_row[output_index] = state
+
+                    elif output_item['name'] == 'country':
+                        output_row[output_index] = "US"
+
+                    elif output_item['name'] == 'zip':
+                        output_row[output_index] = postcode
+
+                    elif output_item['name'] == 'gender':
+                        output_row[output_index] = gender
+
+                    elif output_item['name'] == 'birth_date':
+                        output_row[output_index] = us_gen.date_of_birth()
+
+                    elif output_item['name'] == 'ssn':
+                        output_row[output_index] = us_gen.ssn()
+
+                    elif output_item['name'] == 'lat':
+                        output_row[output_index] = us_gen.latitude()
+                    
+                    elif output_item['name'] == 'lon':
+                        output_row[output_index] = us_gen.longitude()
+
+           
+
             acct_writer.writerow(output_row)
             self.org_types[acct_id] = acct_type
 
@@ -907,7 +940,9 @@ if __name__ == "__main__":
 
     _conf_json = argv[1]
     _sim_name = argv[2] if len(argv) >= 3 else None
-    converter = LogConverter(_conf_json, _sim_name)
+    fake = Faker(['en_US'])
+    Faker.seed(0)
+    converter = LogConverter(_conf_json, _sim_name, fake)
     converter.convert_alert_members()
     converter.convert_acct_tx()
     converter.output_sar_cases()

@@ -43,7 +43,7 @@ def load_alert_param(_alert_param_csv):
             alert_type = row[type_idx]
             is_ordered = int(row[schedule_idx]) > 0
             accounts = (int(row[min_acct_idx]), int(row[max_acct_idx]))
-            amount = (float(row[min_amt_idx]), int(row[max_amt_idx]))
+            amount = (float(row[min_amt_idx]), float(row[max_amt_idx]))
             period = (int(row[min_period_idx]), int(row[max_period_idx]))
             is_multiple_banks = row[bank_idx] == ""
             is_sar = row[sar_idx].lower() == "true"

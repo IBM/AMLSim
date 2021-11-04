@@ -48,6 +48,7 @@ class AMLTypology:
         self.reason = reason  # Description of the SAR
         self.transactions = dict()  # Transaction ID, attributes
         self.members = set()  # Accounts involved in the alert transactions
+        self.recorded_members = set() # Accounts that have already been recorded. Avoid duplicates
         self.total_amount = 0.0  # Total transaction amount
         self.count = 0  # Number of transactions
 
@@ -73,111 +74,101 @@ class AMLTypology:
         max_days = max([tx[1] for tx in self.transactions.values()])
         return days_to_date(max_days)
 
-    def get_alerts(self):
-        rows = list()
-        for tx_id, tx in self.transactions.items():
-            origAcct = str(tx[2])
-            origName = str(tx[4])
-            date = days_to_date(tx[1])
-            rows.append((origAcct, origName, date))
-        return rows
-
 
 class Schema:
-    def __init__(self, json_file, base_date):
+    def __init__(self, data, base_date):
         self._base_date = base_date
 
-        with open(json_file, "r") as rf:
-            self.data = json.load(rf)
+        self.data = data
 
-            self.acct_num_cols = None
-            self.acct_names = list()
-            self.acct_defaults = list()
-            self.acct_types = list()
-            self.acct_name2idx = dict()
-            self.acct_id_idx = None
-            self.acct_name_idx = None
-            self.acct_balance_idx = None
-            self.acct_start_idx = None
-            self.acct_end_idx = None
-            self.acct_sar_idx = None
-            self.acct_model_idx = None
-            self.acct_bank_idx = None
+        self.acct_num_cols = None
+        self.acct_names = list()
+        self.acct_defaults = list()
+        self.acct_types = list()
+        self.acct_name2idx = dict()
+        self.acct_id_idx = None
+        self.acct_name_idx = None
+        self.acct_balance_idx = None
+        self.acct_start_idx = None
+        self.acct_end_idx = None
+        self.acct_sar_idx = None
+        self.acct_model_idx = None
+        self.acct_bank_idx = None
 
-            self.tx_num_cols = None
-            self.tx_names = list()
-            self.tx_defaults = list()
-            self.tx_types = list()
-            self.tx_name2idx = dict()
-            self.tx_id_idx = None
-            self.tx_time_idx = None
-            self.tx_amount_idx = None
-            self.tx_type_idx = None
-            self.tx_orig_idx = None
-            self.tx_dest_idx = None
-            self.tx_sar_idx = None
-            self.tx_alert_idx = None
+        self.tx_num_cols = None
+        self.tx_names = list()
+        self.tx_defaults = list()
+        self.tx_types = list()
+        self.tx_name2idx = dict()
+        self.tx_id_idx = None
+        self.tx_time_idx = None
+        self.tx_amount_idx = None
+        self.tx_type_idx = None
+        self.tx_orig_idx = None
+        self.tx_dest_idx = None
+        self.tx_sar_idx = None
+        self.tx_alert_idx = None
 
-            self.alert_acct_num_cols = None
-            self.alert_acct_names = list()
-            self.alert_acct_defaults = list()
-            self.alert_acct_types = list()
-            self.alert_acct_name2idx = dict()
-            self.alert_acct_alert_idx = None
-            self.alert_acct_reason_idx = None
-            self.alert_acct_id_idx = None
-            self.alert_acct_name_idx = None
-            self.alert_acct_sar_idx = None
-            self.alert_acct_model_idx = None
-            self.alert_acct_schedule_idx = None
-            self.alert_acct_bank_idx = None
+        self.alert_acct_num_cols = None
+        self.alert_acct_names = list()
+        self.alert_acct_defaults = list()
+        self.alert_acct_types = list()
+        self.alert_acct_name2idx = dict()
+        self.alert_acct_alert_idx = None
+        self.alert_acct_reason_idx = None
+        self.alert_acct_id_idx = None
+        self.alert_acct_name_idx = None
+        self.alert_acct_sar_idx = None
+        self.alert_acct_model_idx = None
+        self.alert_acct_schedule_idx = None
+        self.alert_acct_bank_idx = None
 
-            self.alert_tx_num_cols = None
-            self.alert_tx_names = list()
-            self.alert_tx_defaults = list()
-            self.alert_tx_types = list()
-            self.alert_tx_name2idx = dict()
-            self.alert_tx_id_idx = None
-            self.alert_tx_type_idx = None
-            self.alert_tx_sar_idx = None
-            self.alert_tx_idx = None
-            self.alert_tx_orig_idx = None
-            self.alert_tx_dest_idx = None
-            self.alert_tx_tx_type_idx = None
-            self.alert_tx_amount_idx = None
-            self.alert_tx_time_idx = None
+        self.alert_tx_num_cols = None
+        self.alert_tx_names = list()
+        self.alert_tx_defaults = list()
+        self.alert_tx_types = list()
+        self.alert_tx_name2idx = dict()
+        self.alert_tx_id_idx = None
+        self.alert_tx_type_idx = None
+        self.alert_tx_sar_idx = None
+        self.alert_tx_idx = None
+        self.alert_tx_orig_idx = None
+        self.alert_tx_dest_idx = None
+        self.alert_tx_tx_type_idx = None
+        self.alert_tx_amount_idx = None
+        self.alert_tx_time_idx = None
 
-            self.party_ind_num_cols = None
-            self.party_ind_names = list()
-            self.party_ind_defaults = list()
-            self.party_ind_types = list()
-            self.party_ind_name2idx = dict()
-            self.party_ind_id_idx = None
+        self.party_ind_num_cols = None
+        self.party_ind_names = list()
+        self.party_ind_defaults = list()
+        self.party_ind_types = list()
+        self.party_ind_name2idx = dict()
+        self.party_ind_id_idx = None
 
-            self.party_org_num_cols = None
-            self.party_org_names = list()
-            self.party_org_defaults = list()
-            self.party_org_types = list()
-            self.party_org_name2idx = dict()
-            self.party_org_id_idx = None
+        self.party_org_num_cols = None
+        self.party_org_names = list()
+        self.party_org_defaults = list()
+        self.party_org_types = list()
+        self.party_org_name2idx = dict()
+        self.party_org_id_idx = None
 
-            self.acct_party_num_cols = None
-            self.acct_party_names = list()
-            self.acct_party_defaults = list()
-            self.acct_party_types = list()
-            self.acct_party_name2idx = dict()
-            self.acct_party_mapping_idx = None
-            self.acct_party_acct_idx = None
-            self.acct_party_party_idx = None
+        self.acct_party_num_cols = None
+        self.acct_party_names = list()
+        self.acct_party_defaults = list()
+        self.acct_party_types = list()
+        self.acct_party_name2idx = dict()
+        self.acct_party_mapping_idx = None
+        self.acct_party_acct_idx = None
+        self.acct_party_party_idx = None
 
-            self.party_party_num_cols = None
-            self.party_party_names = list()
-            self.party_party_defaults = list()
-            self.party_party_types = list()
-            self.party_party_name2idx = dict()
-            self.party_party_ref_idx = None
-            self.party_party_first_idx = None
-            self.party_party_second_idx = None
+        self.party_party_num_cols = None
+        self.party_party_names = list()
+        self.party_party_defaults = list()
+        self.party_party_types = list()
+        self.party_party_name2idx = dict()
+        self.party_party_ref_idx = None
+        self.party_party_first_idx = None
+        self.party_party_second_idx = None
         self._parse()
 
     def _parse(self):
@@ -523,35 +514,36 @@ class Schema:
 
 class LogConverter:
 
-    def __init__(self, conf_file, sim_name=None, fake=None):
+    def __init__(self, conf, sim_name=None, fake=None):
         self.reports = dict()  # SAR ID and transaction subgraph
         self.org_types = dict()  # ID, organization type
 
         self.fake = fake
 
-        with open(conf_file, "r") as rf:
-            conf = json.load(rf)
-
-        general_conf = conf["general"]
-        input_conf = conf["temporal"]  # Input directory of this converter is temporal directory
-        output_conf = conf["output"]
+        general_conf = conf.get('general', {})
+        input_conf = conf.get('temporal', {})  # Input directory of this converter is temporal directory
+        output_conf = conf.get('output', {})
 
         # self.sim_name = os.getenv("SIMULATION_NAME")
         # if self.sim_name is None:
         #     self.sim_name = general_conf["simulation_name"]
-        self.sim_name = sim_name if sim_name is not None else general_conf["simulation_name"]
+        self.sim_name = sim_name if sim_name is not None else general_conf.get("simulation_name", "sample")
         print("Simulation name:", self.sim_name)
 
-        self.input_dir = os.path.join(input_conf["directory"], self.sim_name)
-        self.work_dir = os.path.join(output_conf["directory"], self.sim_name)
+        self.input_dir = os.path.join(input_conf.get('directory', ''), self.sim_name)
+        self.work_dir = os.path.join(output_conf.get('directory', ''), self.sim_name)
         if not os.path.isdir(self.work_dir):
             os.makedirs(self.work_dir)
 
-        param_dir = conf["input"]["directory"]
-        schema_file = conf["input"]["schema"]
-        base_date_str = general_conf["base_date"]
+        param_dir = conf.get('input', {}).get('directory', '')
+        schema_file = conf.get('input', {}).get('schema', '')
+        base_date_str = general_conf.get('base_date', '2017-01-01')
         base_date = parse(base_date_str)
-        self.schema = Schema(os.path.join(param_dir, schema_file), base_date)
+
+        json_file = os.path.join(param_dir, schema_file)
+        with open(json_file, "r") as rf:
+            data = json.load(rf)
+        self.schema = Schema(data, base_date)
 
         # Input files
         self.log_file = os.path.join(self.work_dir, output_conf["transaction_log"])
@@ -717,7 +709,7 @@ class LogConverter:
            
 
             acct_writer.writerow(output_row)
-            self.org_types[acct_id] = acct_type
+            self.org_types[int(acct_id)] = acct_type
 
             # Write a party row per account
             is_individual = random() >= 0.5  # 50%: individual, 50%: organization
@@ -853,7 +845,7 @@ class LogConverter:
         for row in reader:
             reason = row[indices["reason"]]
             alert_id = int(row[indices["alertID"]])
-            account_id = row[indices["accountID"]]
+            account_id = int(row[indices["accountID"]])
             is_sar = row[indices["isSAR"]].lower() == "true"
             model_id = row[indices["modelID"]]
             schedule_id = row[indices["scheduleID"]]
@@ -868,6 +860,7 @@ class LogConverter:
                                                         model_id, schedule_id, bank_id, **attr)
             writer.writerow(output_row)
 
+
     def output_sar_cases(self):
         """Extract SAR account list involved in alert transactions from transaction log file
         """
@@ -875,8 +868,16 @@ class LogConverter:
         output_file = os.path.join(self.work_dir, self.sar_acct_file)
 
         print("Convert SAR typologies from %s to %s" % (input_file, output_file))
-        rf = open(input_file, "r")
-        reader = csv.reader(rf)
+        with open(input_file, "r") as rf:
+            reader = csv.reader(rf)
+            alerts = self.sar_accounts(reader)
+        
+        with open(output_file, "w") as wf:
+            writer = csv.writer(wf)
+            self.write_sar_accounts(writer, alerts)
+
+    
+    def sar_accounts(self, reader):
         header = next(reader)
         indices = {name: index for index, name in enumerate(header)}
         columns = len(header)
@@ -901,34 +902,53 @@ class LogConverter:
                 self.reports[alert_id].add_tx(tx_id, amount, days, orig, dest, orig_name, dest_name, attr)
                 tx_id += 1
 
-        alerts = set()
+        sar_accounts = list()
         count = 0
         num_reports = len(self.reports)
-        for sar_id, group in self.reports.items():
-            if group.count == 0:
+        for sar_id, typology in self.reports.items():
+            if typology.count == 0:
                 continue
-            data = group.get_alerts()
-            reason = group.get_reason()
-            escalated = "YES" if group.is_sar else "NO"  # SAR or false alert
-            for row in data:
-                acct_id, cust_id, date = row
-                org_type = "INDIVIDUAL" if self.org_types[acct_id] == "I" else "COMPANY"
-                alerts.add((sar_id, acct_id, cust_id, date, reason, org_type, escalated))
+            reason = typology.get_reason()
+            is_sar = "YES" if typology.is_sar else "NO"  # SAR or false alert
+            for key, transaction in typology.transactions.items():
+                amount, step, orig_acct, dest_acct, orig_name, dest_name, attr = transaction
+                
+                if (self.account_recorded(orig_acct) 
+                and self.account_recorded(dest_acct)):
+                    continue
+                if (not self.account_recorded(orig_acct)):
+                    acct_id = orig_acct
+                    cust_id = orig_name
+                    typology.recorded_members.add(acct_id)
+                    sar_accounts.append((sar_id, acct_id, cust_id, days_to_date(step), reason, self.org_type(acct_id), is_sar))
+                if (not self.account_recorded(dest_acct)):
+                    acct_id = dest_acct
+                    cust_id = dest_name
+                    typology.recorded_members.add(acct_id)
+                    sar_accounts.append((sar_id, acct_id, cust_id, days_to_date(step), reason, self.org_type(acct_id), is_sar))
+                
             count += 1
             if count % 100 == 0:
                 print("SAR Typologies: %d/%d" % (count, num_reports))
+        return sar_accounts
 
-        count = 0
-        with open(output_file, "w") as wf:
-            writer = csv.writer(wf)
-            writer.writerow(
-                ["ALERT_ID", "MAIN_ACCOUNT_ID", "MAIN_CUSTOMER_ID", "EVENT_DATE",
-                 "ALERT_TYPE", "ACCOUNT_TYPE", "IS_SAR"])
-            for alert in alerts:
-                sar_id, acct_id, cust_id, date, alert_type, acct_type, is_sar = alert
-                if is_sar == "YES":
-                    writer.writerow((count, acct_id, cust_id, date, alert_type, acct_type, is_sar))
-                    count += 1
+    def org_type(self, acct_id):
+        return "INDIVIDUAL" if self.org_types[acct_id] == "I" else "COMPANY"
+
+
+    def write_sar_accounts(self, writer, sar_accounts):
+        writer.writerow(
+            ["ALERT_ID", "ACCOUNT_ID", "CUSTOMER_ID", "EVENT_DATE",
+             "ALERT_TYPE", "ACCOUNT_TYPE", "IS_SAR"])
+
+        for alert in sar_accounts:
+            writer.writerow(alert)
+
+    def account_recorded(self, acct_id):
+        for sar_id, typology in self.reports.items():
+            if acct_id in typology.recorded_members:
+                return True
+        return False
 
 
 if __name__ == "__main__":
@@ -940,9 +960,13 @@ if __name__ == "__main__":
 
     _conf_json = argv[1]
     _sim_name = argv[2] if len(argv) >= 3 else None
+
+    with open(_conf_json, "r") as rf:
+        conf = json.load(rf)
+    converter = LogConverter(conf, _sim_name)
     fake = Faker(['en_US'])
     Faker.seed(0)
-    converter = LogConverter(_conf_json, _sim_name, fake)
+    converter = LogConverter(conf, _sim_name, fake)
     converter.convert_alert_members()
     converter.convert_acct_tx()
     converter.output_sar_cases()

@@ -16,9 +16,9 @@ public class CycleTypology extends AMLTypology {
 
     // Transaction schedule
     private long[] steps;  // Array of simulation steps when each transaction is scheduled to be made
-    private float amount = 0.0F;  // Current transaction amount
+    private double amount = 0.0;  // Current transaction amount
 
-    CycleTypology(float minAmount, float maxAmount, int startStep, int endStep){
+    CycleTypology(double minAmount, double maxAmount, int startStep, int endStep){
         super(minAmount, maxAmount, startStep, endStep);
     }
 
@@ -99,7 +99,7 @@ public class CycleTypology extends AMLTypology {
                 makeTransaction(step, amount, src, dst, isSAR, alertID);
 
                 // Update the next transaction amount
-                float margin = amount * marginRatio;
+                double margin = amount * marginRatio;
                 amount = Math.max(amount - margin, minAmount);
             }
         }

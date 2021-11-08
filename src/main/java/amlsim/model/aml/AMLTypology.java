@@ -38,7 +38,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     static final int UNORDERED = 2;  // All accounts send money randomly
     static final int SIMULTANEOUS = 3;  // All transactions are performed at single step simultaneously
 
-    final float marginRatio = AMLSim.getSimProp().getMarginRatio();  // Each member holds this ratio of the received amount
+    final double marginRatio = AMLSim.getSimProp().getMarginRatio();  // Each member holds this ratio of the received amount
     
     /**
      * Create an AML typology object (alert transaction model)
@@ -49,8 +49,8 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      * @param endStep End simulation step (all transactions will finish before this step)
      * @return AML typology model object
      */
-    public static AMLTypology createTypology(int modelID, float minAmount, float maxAmount,
-                                             int startStep, int endStep){
+    public static AMLTypology createTypology(int modelID, double minAmount, double maxAmount,
+                                             int startStep, int endStep) {
         AMLTypology model;
         switch(modelID){
             case AML_FAN_OUT: model = new FanOutTypology(minAmount, maxAmount, startStep, endStep); break;
@@ -68,8 +68,8 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     }
 
     Alert alert;
-    protected float minAmount;
-    protected float maxAmount;
+    protected double minAmount;
+    protected double maxAmount;
     protected long startStep;
     protected long endStep;
 
@@ -114,7 +114,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      * @param startStep Start simulation step of alert transactions (any transactions cannot be carried out before this step)
      * @param endStep End simulation step of alert transactions (any transactions cannot be carried out after this step)
      */
-    public AMLTypology(float minAmount, float maxAmount, int startStep, int endStep){
+    public AMLTypology(double minAmount, double maxAmount, int startStep, int endStep){
         this.minAmount = minAmount;
         this.maxAmount = maxAmount;
         this.startStep = startStep;
@@ -125,7 +125,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      * Update the minimum transaction amount if the given amount is smaller than the current one
      * @param minAmount New minimum amount
      */
-    public void updateMinAmount(float minAmount){
+    public void updateMinAmount(double minAmount) {
         this.minAmount = Math.min(this.minAmount, minAmount);
     }
 
@@ -133,7 +133,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      * Update the maximum transaction amount if the given amount is larger than the current one
      * @param maxAmount New maximum amount
      */
-    public void updateMaxAmount(float maxAmount){
+    public void updateMaxAmount(double maxAmount) {
         this.maxAmount = Math.max(this.maxAmount, maxAmount);
     }
 
@@ -149,8 +149,8 @@ public abstract class AMLTypology extends AbstractTransactionModel {
      * Generate a random amount
      * @return A random amount within "minAmount" and "maxAmount"
      */
-    float getRandomAmount(){
-        return alert.getSimulator().random.nextFloat() * (maxAmount - minAmount) + minAmount;
+    double getRandomAmount(){
+        return alert.getSimulator().random.nextDouble() * (maxAmount - minAmount) + minAmount;
     }
 
     /**

@@ -35,7 +35,7 @@ public class RandomTypology extends AMLTypology {
 //        return alert.getMembers().size();
 //    }
 
-    RandomTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
+    RandomTypology(double minAmount, double maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -57,7 +57,7 @@ public class RandomTypology extends AMLTypology {
         int numBenes = beneList.size();
         if(numBenes == 0)return;
 
-        float amount = getRandomAmount();
+        double amount = getRandomAmount();
 
         int idx = rand.nextInt(numBenes);
         Account bene = beneList.get(idx);

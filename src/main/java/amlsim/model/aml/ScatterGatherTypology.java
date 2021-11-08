@@ -14,17 +14,17 @@ public class ScatterGatherTypology extends AMLTypology {
     private List<Account> intermediate = new ArrayList<>();
     private long[] scatterSteps;
     private long[] gatherSteps;
-    private float scatterAmount;
-    private float gatherAmount;
+    private double scatterAmount;
+    private double gatherAmount;
 
-    ScatterGatherTypology(float minAmount, float maxAmount, int startStep, int endStep) {
+    ScatterGatherTypology(double minAmount, double maxAmount, int startStep, int endStep) {
         super(minAmount, maxAmount, startStep, endStep);
     }
 
     @Override
     public void setParameters(int modelID) {
         scatterAmount = maxAmount;
-        float margin = scatterAmount * marginRatio;
+        double margin = scatterAmount * marginRatio;
         gatherAmount = Math.max(scatterAmount - margin, minAmount);
 
         orig = alert.getMainAccount();

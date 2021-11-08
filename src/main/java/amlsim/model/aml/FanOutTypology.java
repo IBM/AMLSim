@@ -19,7 +19,7 @@ public class FanOutTypology extends AMLTypology {
 
     private long[] steps;
 
-    FanOutTypology(float minAmount, float maxAmount, int minStep, int maxStep){
+    FanOutTypology(double minAmount, double maxAmount, int minStep, int maxStep){
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -78,7 +78,7 @@ public class FanOutTypology extends AMLTypology {
         }
         long alertID = alert.getAlertID();
         boolean isSAR = alert.isSAR();
-        float amount = getRandomAmount();
+        double amount = getRandomAmount();
 
         for(int i = 0; i< beneList.size(); i++){
             if(steps[i] == step){

@@ -20,7 +20,7 @@ public class TransactionRepository {
 
     private long[] steps;
     private String[] descriptions;
-    private float[] amounts;
+    private double[] amounts;
     private String[] origIDs;
     private String[] destIDs;
 
@@ -41,7 +41,7 @@ public class TransactionRepository {
         this.size = size;
         this.steps = new long[size];
         this.descriptions = new String[size];
-        this.amounts = new float[size];
+        this.amounts = new double[size];
         this.origIDs = new String[size];
         this.destIDs = new String[size];
 
@@ -57,7 +57,7 @@ public class TransactionRepository {
         this.limit = limit;
     }
 
-    void addTransaction(long step, String desc, float amt, String origID, String destID, float origBefore,
+    void addTransaction(long step, String desc, double amt, String origID, String destID, float origBefore,
                         float origAfter, float destBefore, float destAfter, boolean isSAR, long aid){
         if(count >= limit){
             if(count == limit){

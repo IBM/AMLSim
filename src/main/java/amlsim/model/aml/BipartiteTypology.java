@@ -18,16 +18,8 @@ public class BipartiteTypology extends AMLTypology {
     public void setParameters(int modelID) {
 
     }
-
-//    @Override
-//    public int getNumTransactions() {
-//        int numMembers = alert.getMembers().size();
-//        int numOriginators = numMembers / 2;  // The former half accounts are originators
-//        int numBeneficiaries = numMembers - numOriginators;
-//        return numOriginators * numBeneficiaries;  // all-to-all
-//    }
     
-    public BipartiteTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
+    public BipartiteTypology(double minAmount, double maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -38,7 +30,7 @@ public class BipartiteTypology extends AMLTypology {
 
     @Override
     public void sendTransactions(long step, Account acct) {
-        float amount = getRandomAmount();  // The amount of each transaction
+        double amount = getRandomAmount();  // The amount of each transaction
         List<Account> members = alert.getMembers();  // All members
 
         int last_orig_index = members.size() / 2;  // The first half accounts are originators

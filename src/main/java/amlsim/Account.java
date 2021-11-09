@@ -38,6 +38,8 @@ public class Account extends Client implements Steppable {
 	protected long startStep = 0;
 	protected long endStep = 0;
 
+	public Random random;
+
 
 	public Account(){
         this.id = "-";
@@ -53,20 +55,22 @@ public class Account extends Client implements Steppable {
 	 * @param start Start step
 	 * @param end End step
 	 */
-    public Account(String id, int modelID, int interval, float initBalance, long start, long end){
+    public Account(String id, int modelID, int interval, float initBalance, long start, long end, String bankID, Random rand) {
 		this.id = id;
 		this.startStep = start;
 		this.endStep = end;
 		this.setBalance(initBalance);
+		this.bankID = bankID;
+		this.random = rand;
 
 		switch(modelID){
-			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(); break;
-			case AbstractTransactionModel.FAN_OUT: this.model = new FanOutTransactionModel(); break;
-			case AbstractTransactionModel.FAN_IN: this.model = new FanInTransactionModel(); break;
-			case AbstractTransactionModel.MUTUAL: this.model = new MutualTransactionModel(); break;
-			case AbstractTransactionModel.FORWARD: this.model = new ForwardTransactionModel(); break;
-			case AbstractTransactionModel.PERIODICAL: this.model = new PeriodicalTransactionModel(); break;
-			default: System.err.println("Unknown model ID: " + modelID); this.model = new EmptyModel(); break;
+			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(this, this.random); break;
+			case AbstractTransactionModel.FAN_OUT: this.model = new FanOutTransactionModel(this, this.random); break;
+			case AbstractTransactionModel.FAN_IN: this.model = new FanInTransactionModel(this, this.random); break;
+			case AbstractTransactionModel.MUTUAL: this.model = new MutualTransactionModel(this, this.random); break;
+			case AbstractTransactionModel.FORWARD: this.model = new ForwardTransactionModel(this, this.random); break;
+			case AbstractTransactionModel.PERIODICAL: this.model = new PeriodicalTransactionModel(this, this.random); break;
+			default: System.err.println("Unknown model ID: " + modelID); this.model = new EmptyModel(this, this.random); break;
 		}
 		this.model.setAccount(this);
 		this.model.setParameters(interval, start, end);
@@ -78,21 +82,6 @@ public class Account extends Client implements Steppable {
 		this.cashOutModel = new CashOutModel();
 		this.cashOutModel.setAccount(this);
 		this.cashOutModel.setParameters(interval, start, end);
-	}
-
-	/**
-	 * Constructor with bank ID
-	 * @param id Account ID
-	 * @param modelID　Transaction model ID
-	 * @param interval Default transaction interval
-	 * @param initBalance Initial account balance
-	 * @param start Start step
-	 * @param end End step
-	 * @param bankID Bank ID
-	 */
-	public Account(String id, int modelID, int interval, float initBalance, long start, long end, String bankID){
-    	this(id, modelID, interval, initBalance, start, end);
-    	this.bankID = bankID;
 	}
 
 	public String getBankID() {
@@ -146,17 +135,16 @@ public class Account extends Client implements Steppable {
 		all_tx_types.add(ttype);
 	}
 
-	public String getTxType(Account bene){
-	    Random rand = AMLSim.getRandom();
-        String destID = bene.id;
+	public String getTxType(Account bene) {
+		String destID = bene.id;
 
-		if(this.tx_types.containsKey(destID)){
+		if (this.tx_types.containsKey(destID)) {
 			return tx_types.get(destID);
-		}else if(!this.tx_types.isEmpty()){
+		} else if (!this.tx_types.isEmpty()) {
 			List<String> values = new ArrayList<>(this.tx_types.values());
-			return values.get(rand.nextInt(values.size()));
-		}else{
-			return Account.all_tx_types.get(rand.nextInt(Account.all_tx_types.size()));
+			return values.get(this.random.nextInt(values.size()));
+		} else {
+			return Account.all_tx_types.get(this.random.nextInt(Account.all_tx_types.size()));
 		}
 	}
 

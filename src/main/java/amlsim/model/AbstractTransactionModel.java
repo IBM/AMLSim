@@ -1,6 +1,7 @@
 package amlsim.model;
 
 import amlsim.Account;
+
 import amlsim.AMLSim;
 
 /**
@@ -30,15 +31,6 @@ public abstract class AbstractTransactionModel {
      */
     public int getNumberOfTransactions(){
         return (int)AMLSim.getNumOfSteps() / interval;
-    }
-
-    /**
-     * Generate the assumed amount of a normal transaction
-     * @return Normal transaction amount
-     */
-    public float getTransactionAmount(){
-        // Each transaction amount should be independent of the current balance
-        return AMLSim.getSimProp().getNormalBaseTxAmount();
     }
     
     /**
@@ -114,9 +106,14 @@ public abstract class AbstractTransactionModel {
      * @param isSAR Whether this transaction is SAR
      * @param alertID Alert ID
      */
-    protected void makeTransaction(long step, float amount, Account orig, Account dest, boolean isSAR, long alertID){
+    protected void makeTransaction(long step, double amount, Account orig, Account dest, boolean isSAR, long alertID){
         if(amount <= 0){  // Invalid transaction amount
             AMLSim.getLogger().warning("Warning: invalid transaction amount: " + amount);
+            return;
+        }
+        if (amount > orig.getBalance())
+        {
+            AMLSim.getLogger().warning("Warning: transferring more than there: " + amount + " " + orig.getBalance());
             return;
         }
         String ttype = orig.getTxType(dest);
@@ -145,7 +142,7 @@ public abstract class AbstractTransactionModel {
      * @param orig Origin account
      * @param dest Destination account
      */
-    protected void makeTransaction(long step, float amount, Account orig, Account dest){
+    protected void makeTransaction(long step, double amount, Account orig, Account dest){
         makeTransaction(step, amount, orig, dest, false, -1);
     }
 
@@ -155,7 +152,7 @@ public abstract class AbstractTransactionModel {
      * @param amount Transaction amount
      * @param dest Destination account
      */
-    protected void makeTransaction(long step, float amount, Account dest){
+    protected void makeTransaction(long step, double amount, Account dest){
         this.makeTransaction(step, amount, this.account, dest);
     }
 

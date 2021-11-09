@@ -6,6 +6,7 @@ package amlsim.model.aml;
 
 import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 
 import java.util.*;
 
@@ -16,7 +17,8 @@ public class CycleTypology extends AMLTypology {
 
     // Transaction schedule
     private long[] steps;  // Array of simulation steps when each transaction is scheduled to be made
-    private double amount = 0.0;  // Current transaction amount
+
+    private Random random = AMLSim.getRandom();
 
     CycleTypology(double minAmount, double maxAmount, int startStep, int endStep){
         super(minAmount, maxAmount, startStep, endStep);
@@ -26,16 +28,14 @@ public class CycleTypology extends AMLTypology {
      * Define schedule of transaction
      * @param modelID Schedule model ID as integer
      */
-    public void setParameters(int modelID){
-        amount = maxAmount;  // Initialize the transaction amount
-
+    public void setParameters(int modelID) {
+        
         List<Account> members = alert.getMembers();  // All members
         int length = members.size();  // Number of members (total transactions)
         steps = new long[length];
 
         int allStep = (int)AMLSim.getNumOfSteps();
         int period = (int)(endStep - startStep);
-        int defaultInterval = Math.max(period / length, 1);
         this.startStep = generateStartStep(allStep - period);  //  decentralize the first transaction step
         this.endStep = Math.min(this.startStep + period, allStep);
 
@@ -90,17 +90,26 @@ public class CycleTypology extends AMLTypology {
         long alertID = alert.getAlertID();
         boolean isSAR = alert.isSAR();
 
+        double amount = Double.MAX_VALUE;
+        TargetedTransactionAmount transactionAmount;
+
         // Create cycle transactions
-        for(int i=0; i<length; i++) {
+        for (int i = 0; i < length; i++) {
             if (steps[i] == step) {
-                int j = (i + 1) % length;  // i, j: index of the previous, next account
-                Account src = alert.getMembers().get(i);  // The previous account
-                Account dst = alert.getMembers().get(j);  // The next account
-                makeTransaction(step, amount, src, dst, isSAR, alertID);
+                int j = (i + 1) % length; // i, j: index of the previous, next account
+                Account src = alert.getMembers().get(i); // The previous account
+                Account dst = alert.getMembers().get(j); // The next account
+
+                if (src.getBalance() < amount)
+                {
+                    amount = src.getBalance();
+                }
+                transactionAmount = new TargetedTransactionAmount(amount, random);
+                makeTransaction(step, transactionAmount.doubleValue(), src, dst, isSAR, alertID);
 
                 // Update the next transaction amount
                 double margin = amount * marginRatio;
-                amount = Math.max(amount - margin, minAmount);
+                amount = amount - margin;
             }
         }
     }

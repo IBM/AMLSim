@@ -1,5 +1,8 @@
 package amlsim.model.normal;
 
+import java.util.Random;
+
+import amlsim.Account;
 import amlsim.model.AbstractTransactionModel;
 
 /**
@@ -7,6 +10,13 @@ import amlsim.model.AbstractTransactionModel;
  * Used when invalid model IDs are specified
  */
 public class EmptyModel extends AbstractTransactionModel {
+
+    public EmptyModel(
+        Account account,
+        Random random
+    ) {
+    }
+
     @Override
     public String getModelName() {
         return "Default";

@@ -1,6 +1,7 @@
 package amlsim.model.normal;
 
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 import amlsim.model.AbstractTransactionModel;
 
 import java.util.*;
@@ -10,6 +11,17 @@ import java.util.*;
  */
 public class ForwardTransactionModel extends AbstractTransactionModel {
     private int index = 0;
+
+    private Random random;
+    private Account account;
+
+    public ForwardTransactionModel(
+        Account account,
+        Random random
+    ) {
+        this.random = random;
+        this.account = account;
+    }
 
     public void setParameters(int interval, long start, long end){
         super.setParameters(interval, start, end);
@@ -26,7 +38,8 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
     @Override
     public void makeTransaction(long step) {
 
-        float amount = getTransactionAmount();  // this.balance;
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(this.account.getBalance(), random);
+        
         List<Account> dests = this.account.getBeneList();
         int numDests = dests.size();
         if(numDests == 0){
@@ -40,7 +53,7 @@ public class ForwardTransactionModel extends AbstractTransactionModel {
             index = 0;
         }
         Account dest = dests.get(index);
-        this.makeTransaction(step, amount, dest);
+        this.makeTransaction(step, transactionAmount.doubleValue(), dest);
         index++;
     }
 }

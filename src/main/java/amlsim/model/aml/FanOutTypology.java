@@ -4,7 +4,9 @@
 
 package amlsim.model.aml;
 
+import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 
 import java.util.*;
 
@@ -16,6 +18,8 @@ public class FanOutTypology extends AMLTypology {
     // Originator and beneficiary accounts
     private Account orig;
     private List<Account> beneList = new ArrayList<>();
+
+    private Random random = AMLSim.getRandom();
 
     private long[] steps;
 
@@ -78,13 +82,22 @@ public class FanOutTypology extends AMLTypology {
         }
         long alertID = alert.getAlertID();
         boolean isSAR = alert.isSAR();
-        double amount = getRandomAmount();
+        double amount = this.getTransactionAmount().doubleValue();
 
-        for(int i = 0; i< beneList.size(); i++){
-            if(steps[i] == step){
+        for (int i = 0; i < beneList.size(); i++) {
+            if (steps[i] == step) {
                 Account bene = beneList.get(i);
                 makeTransaction(step, amount, orig, bene, isSAR, alertID);
             }
         }
+    }
+
+
+    private TargetedTransactionAmount getTransactionAmount() {
+        if (this.beneList.size() == 0)
+        {
+            return new TargetedTransactionAmount(0, this.random);
+        }
+        return new TargetedTransactionAmount(orig.getBalance() / this.beneList.size(), random);
     }
 }

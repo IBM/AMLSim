@@ -108,12 +108,7 @@ public abstract class AbstractTransactionModel {
      */
     protected void makeTransaction(long step, double amount, Account orig, Account dest, boolean isSAR, long alertID){
         if(amount <= 0){  // Invalid transaction amount
-            AMLSim.getLogger().warning("Warning: invalid transaction amount: " + amount);
-            return;
-        }
-        if (amount > orig.getBalance())
-        {
-            AMLSim.getLogger().warning("Warning: transferring more than there: " + amount + " " + orig.getBalance());
+           // AMLSim.getLogger().warning("Warning: invalid transaction amount: " + amount);
             return;
         }
         String ttype = orig.getTxType(dest);

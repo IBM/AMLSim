@@ -38,7 +38,7 @@ public class Account extends Client implements Steppable {
 	protected long startStep = 0;
 	protected long endStep = 0;
 
-	public Random random;
+	private Random random;
 
 
 	public Account(){

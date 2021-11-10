@@ -1,6 +1,8 @@
 package amlsim.model.aml;
 
+import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 
 import java.util.*;
 
@@ -16,6 +18,7 @@ public class ScatterGatherTypology extends AMLTypology {
     private long[] gatherSteps;
     private double scatterAmount;
     private double gatherAmount;
+    private Random random = AMLSim.getRandom();
 
     ScatterGatherTypology(double minAmount, double maxAmount, int startStep, int endStep) {
         super(minAmount, maxAmount, startStep, endStep);
@@ -70,10 +73,16 @@ public class ScatterGatherTypology extends AMLTypology {
         for(int i=0; i<numMidMembers; i++){
             if(scatterSteps[i] == step){
                 Account _bene = intermediate.get(i);
-                makeTransaction(step, scatterAmount, orig, _bene, isSAR, alertID);
+
+                double target = Math.min(orig.getBalance(), scatterAmount);
+                TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(target, random);
+                makeTransaction(step, transactionAmount.doubleValue(), orig, _bene, isSAR, alertID);
             }else if(gatherSteps[i] == step) {
                 Account _orig = intermediate.get(i);
-                makeTransaction(step, gatherAmount, _orig, bene, isSAR, alertID);
+
+                double target = Math.min(_orig.getBalance(), scatterAmount);
+                TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(target, random);
+                makeTransaction(step, transactionAmount.doubleValue(), _orig, bene, isSAR, alertID);
             }
         }
     }

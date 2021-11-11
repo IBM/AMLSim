@@ -4,12 +4,18 @@
 
 package amlsim.model.aml;
 
+import java.util.Random;
+
+import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 
 /**
  * Stacked bipartite transactions
  */
 public class StackTypology extends AMLTypology {
+
+    private Random random = AMLSim.getRandom();
     
     @Override
     public void setParameters(int modelID) {
@@ -24,7 +30,7 @@ public class StackTypology extends AMLTypology {
 //        return orig_members * mid_members + mid_members + bene_members;
 //    }
 
-    StackTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
+    StackTypology(double minAmount, double maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -41,9 +47,6 @@ public class StackTypology extends AMLTypology {
         int mid_members = orig_members;  // Second 1/3 accounts are intermediate accounts
         int bene_members = total_members - orig_members * 2;  // Rest of accounts are beneficiary accounts
 
-        float amount1 = getRandomAmount();
-        float total_flow = amount1 * orig_members * mid_members;  // Total transaction amount
-        float amount2 = total_flow / (mid_members * bene_members);
 
         for(int i=0; i<orig_members; i++){  // originator accounts --> Intermediate accounts
             Account orig = alert.getMembers().get(i);
@@ -51,9 +54,13 @@ public class StackTypology extends AMLTypology {
                 continue;
             }
 
-            for(int j=orig_members; j<(orig_members+mid_members); j++){
+            int numBene = (orig_members + mid_members) - orig_members;
+            TargetedTransactionAmount transactionAmount = getTransactionAmount(numBene, orig.getBalance());
+
+
+            for (int j = orig_members; j < (orig_members + mid_members); j++) {
                 Account bene = alert.getMembers().get(j);
-                makeTransaction(step, amount1, orig, bene);
+                makeTransaction(step, transactionAmount.doubleValue(), orig, bene);
             }
         }
 
@@ -63,10 +70,21 @@ public class StackTypology extends AMLTypology {
                 continue;
             }
 
-            for(int j=(orig_members+mid_members); j<total_members; j++){
+            int numBene = total_members - (orig_members + mid_members);
+            TargetedTransactionAmount transactionAmount = getTransactionAmount(numBene, orig.getBalance());
+
+            for (int j = (orig_members + mid_members); j < total_members; j++) {
                 Account bene = alert.getMembers().get(j);
-                makeTransaction(step, amount2, orig, bene);
+                makeTransaction(step, transactionAmount.doubleValue(), orig, bene);
             }
         }
+    }
+
+
+    private TargetedTransactionAmount getTransactionAmount(int numBene, double origBalance) {
+        if (numBene == 0) {
+            return new TargetedTransactionAmount(0, random);
+        }
+        return new TargetedTransactionAmount(origBalance / numBene, random);
     }
 }

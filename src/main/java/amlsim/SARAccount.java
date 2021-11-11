@@ -1,5 +1,7 @@
 package amlsim;
 
+import java.util.Random;
+
 import amlsim.model.aml.*;
 import sim.engine.SimState;
 
@@ -10,14 +12,10 @@ public class SARAccount extends Account {
 
 	private int count = 0;
 
-	SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, String bankID){
-		super(id, modelID, interval, init_balance, start, end, bankID);
+	SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, String bankID, Random random) {
+		super(id, modelID, interval, init_balance, start, end, bankID, random);
 		this.isSAR = true;
 	}
-
-//	public void setSARModelParameters(int interval){
-//		this.sarModel.setParameters(interval, (float)this.getBalance(), this.startStep, this.endStep);
-//	}
 
 	public void handleAction(SimState state){
 	    AMLSim amlsim = (AMLSim) state;

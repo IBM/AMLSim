@@ -18,13 +18,13 @@ public class SimProperties {
     private JSONObject cashInProp;
     private JSONObject cashOutProp;
     private String workDir;
-    private float marginRatio;  // Ratio of margin for AML typology transactions
+    private double marginRatio;  // Ratio of margin for AML typology transactions
     private int seed;  // Seed of randomness
     private String simName;  // Simulation name
 
     private int normalTxInterval;
-    private float minTxAmount;  // Minimum base (normal) transaction amount
-    private float maxTxAmount;  // Maximum base (suspicious) transaction amount
+    private double minTxAmount;  // Minimum base (normal) transaction amount
+    private double maxTxAmount;  // Maximum base (suspicious) transaction amount
 
     SimProperties(String jsonName) throws IOException{
         String jsonStr = loadTextFile(jsonName);
@@ -37,15 +37,15 @@ public class SimProperties {
         outputProp = jsonObject.getJSONObject("output");
 
         normalTxInterval = simProp.getInt("transaction_interval");
-        minTxAmount = defaultProp.getFloat("min_amount");
-        maxTxAmount = defaultProp.getFloat("max_amount");
+        minTxAmount = defaultProp.getDouble("min_amount");
+        maxTxAmount = defaultProp.getDouble("max_amount");
 
         System.out.printf("General transaction interval: %d\n", normalTxInterval);
         System.out.printf("Base transaction amount: Normal = %f, Suspicious= %f\n", minTxAmount, maxTxAmount);
         
         cashInProp = defaultProp.getJSONObject("cash_in");
         cashOutProp = defaultProp.getJSONObject("cash_out");
-        marginRatio = defaultProp.getFloat("margin_ratio");
+        marginRatio = defaultProp.getDouble("margin_ratio");
 
         String envSeed = System.getenv("RANDOM_SEED");
         seed = envSeed != null ? Integer.parseInt(envSeed) : generalProp.getInt("random_seed");
@@ -92,11 +92,15 @@ public class SimProperties {
         return normalTxInterval;
     }
 
-    public float getNormalBaseTxAmount(){
-        return minTxAmount + AMLSim.getRandom().nextFloat() * (maxTxAmount - minTxAmount);
+    public double getMinTransactionAmount() {
+        return minTxAmount;
     }
 
-    public float getMarginRatio(){
+    public double getMaxTransactionAmount() {
+        return maxTxAmount;
+    }
+
+    public double getMarginRatio(){
         return marginRatio;
     }
 

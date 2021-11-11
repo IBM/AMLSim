@@ -6,6 +6,7 @@ package amlsim.model.aml;
 
 import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 
 import java.util.*;
 
@@ -16,8 +17,7 @@ import java.util.*;
  */
 public class RandomTypology extends AMLTypology {
 
-//    private static Random rand = new Random();
-    private static Random rand = AMLSim.getRandom();
+    private static Random random = AMLSim.getRandom();
     private Set<Long> steps = new HashSet<>();  // Set of simulation steps when the transaction is performed
     private Account nextOrig;  // Originator account for the next transaction
 
@@ -35,7 +35,7 @@ public class RandomTypology extends AMLTypology {
 //        return alert.getMembers().size();
 //    }
 
-    RandomTypology(float minAmount, float maxAmount, int minStep, int maxStep) {
+    RandomTypology(double minAmount, double maxAmount, int minStep, int maxStep) {
         super(minAmount, maxAmount, minStep, maxStep);
     }
 
@@ -57,11 +57,11 @@ public class RandomTypology extends AMLTypology {
         int numBenes = beneList.size();
         if(numBenes == 0)return;
 
-        float amount = getRandomAmount();
-
-        int idx = rand.nextInt(numBenes);
+        int idx = random.nextInt(numBenes);
         Account bene = beneList.get(idx);
-        makeTransaction(step, amount, nextOrig, bene, isSAR, (int)alertID);  // Main account makes transactions to one of the neighbors
+
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(nextOrig.getBalance(), random);
+        makeTransaction(step, transactionAmount.doubleValue(), nextOrig, bene, isSAR, (int)alertID);  // Main account makes transactions to one of the neighbors
         nextOrig = bene;  // The next originator account is the previous beneficiary account
     }
 }

@@ -4,7 +4,10 @@
 
 package amlsim.model.aml;
 
+import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
+import amlsim.TargetedTransactionAmount;
 
 import java.util.*;
 
@@ -22,7 +25,11 @@ public class FanInTypology extends AMLTypology {
     private static final int FIXED_INTERVAL = 2;
     private static final int RANDOM_RANGE = 3;
 
-    FanInTypology(float minAmount, float maxAmount, int start, int end){
+    private TargetedTransactionAmount transactionAmount;
+
+    private Random random = AMLSim.getRandom();
+
+    FanInTypology(double minAmount, double maxAmount, int start, int end){
         super(minAmount, maxAmount, start, end);
     }
 
@@ -79,12 +86,13 @@ public class FanInTypology extends AMLTypology {
     public void sendTransactions(long step, Account acct){
         long alertID = alert.getAlertID();
         boolean isSAR = alert.isSAR();
-        float amount = getRandomAmount();
 
-        for(int i = 0; i< origList.size(); i++){
-            if(steps[i] == step){
+        for (int i = 0; i < origList.size(); i++) {
+            if (steps[i] == step) {
                 Account orig = origList.get(i);
-                makeTransaction(step, amount, orig, bene, isSAR, alertID);
+
+                this.transactionAmount = new TargetedTransactionAmount(orig.getBalance(), this.random);
+                makeTransaction(step, this.transactionAmount.doubleValue(), orig, bene, isSAR, alertID);
             }
         }
     }

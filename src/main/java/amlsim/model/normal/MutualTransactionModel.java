@@ -4,11 +4,23 @@ import amlsim.*;
 import amlsim.model.AbstractTransactionModel;
 
 import java.util.List;
+import java.util.Random;
 
 /**
  * Return money to one of the previous senders
  */
 public class MutualTransactionModel extends AbstractTransactionModel {
+
+    private Random random;
+    private Account account;
+
+    public MutualTransactionModel(
+        Account account,
+        Random random
+    ) {
+        this.random = random;
+        this.account = account;
+    }
 
     public void setParameters(int interval, long start, long end){
         super.setParameters(interval, start, end);
@@ -35,12 +47,14 @@ public class MutualTransactionModel extends AbstractTransactionModel {
                 counterpart = origs.get(0);
             }
         }
-        float amount = getTransactionAmount();  // this.balance;
+
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(this.account.getBalance(), random);
+
         if(!this.account.getBeneList().contains(counterpart)) {
             this.account.addBeneAcct(counterpart);    // Add a new destination
         }
 
-        makeTransaction(step, amount, counterpart);
+        makeTransaction(step, transactionAmount.doubleValue(), counterpart);
     }
 
 }

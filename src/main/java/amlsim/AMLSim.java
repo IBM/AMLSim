@@ -252,11 +252,14 @@ public class AMLSim extends ParameterizedPaySim {
 			int end = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
 			String bankID = elements[columnIndex.get("BANK_ID")];
 
+
 			Account account;
-			if(isSAR){
-				account = new SARAccount(accountID, modelID, normalTxInterval, initBalance, start, end, bankID);
-			}else{
-				account = new Account(accountID, modelID, normalTxInterval, initBalance, start, end, bankID);
+			if (isSAR) {
+				account = new SARAccount(accountID, modelID, normalTxInterval, initBalance, start, end, bankID,
+						getRandom());
+			} else {
+				account = new Account(accountID, modelID, normalTxInterval, initBalance, start, end, bankID,
+						getRandom());
 			}
 
 			int index = this.getClients().size();
@@ -306,8 +309,8 @@ public class AMLSim extends ParameterizedPaySim {
 			boolean isMain = elements[columnIndex.get("isMain")].toLowerCase().equals("true");
 			boolean isSAR = elements[columnIndex.get("isSAR")].toLowerCase().equals("true");
 			int modelID = Integer.parseInt(elements[columnIndex.get("modelID")]);
-			float minAmount = Float.parseFloat(elements[columnIndex.get("minAmount")]);
-			float maxAmount = Float.parseFloat(elements[columnIndex.get("maxAmount")]);
+			double minAmount = Double.parseDouble(elements[columnIndex.get("minAmount")]);
+		    double maxAmount = Double.parseDouble(elements[columnIndex.get("maxAmount")]);
 			int startStep = Integer.parseInt(elements[columnIndex.get("startStep")]);
 			int endStep = Integer.parseInt(elements[columnIndex.get("endStep")]);
 			int scheduleID = Integer.parseInt(elements[columnIndex.get("scheduleID")]);
@@ -473,7 +476,7 @@ public class AMLSim extends ParameterizedPaySim {
      * @param isSAR SAR flag
      * @param alertID Alert ID
      */
-	public static void handleTransaction(long step, String desc, float amt, Account orig, Account bene,
+	public static void handleTransaction(long step, String desc, double amt, Account orig, Account bene,
 										 boolean isSAR, long alertID){
         // Reduce the balance of the originator account
         String origID = orig.getID();

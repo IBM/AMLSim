@@ -2,6 +2,7 @@ package amlsim.model.normal;
 
 import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 import amlsim.model.AbstractTransactionModel;
 
 import java.util.List;
@@ -11,14 +12,21 @@ import java.util.Random;
  * Send money only for once to one of the neighboring accounts regardless the transaction interval parameter
  */
 public class SingleTransactionModel extends AbstractTransactionModel {
-
-//    private static Random rand = new Random();
-    private static Random rand = AMLSim.getRandom();
-    
     /**
      * Simulation step when this transaction is done
      */
     private long txStep = -1;
+
+    private Random random;
+    private Account account;
+
+    public SingleTransactionModel(
+        Account account,
+        Random random
+    ) {
+        this.random = random;
+        this.account = account;
+    }
     
     public String getModelName(){
         return "Single";
@@ -33,7 +41,7 @@ public class SingleTransactionModel extends AbstractTransactionModel {
             this.endStep = AMLSim.getNumOfSteps();
         }
         // The transaction step is determined randomly within the given range of steps
-        this.txStep = this.startStep + rand.nextInt((int)(endStep - startStep + 1));
+        this.txStep = this.startStep + this.random.nextInt((int)(endStep - startStep + 1));
     }
     
     public void makeTransaction(long step){
@@ -43,9 +51,10 @@ public class SingleTransactionModel extends AbstractTransactionModel {
             return;
         }
 
-        float amount = getTransactionAmount();
-        int index = rand.nextInt(numBene);
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(this.account.getBalance(), random);
+
+        int index = this.random.nextInt(numBene);
         Account dest = beneList.get(index);
-        this.makeTransaction(step, amount, dest);
+        this.makeTransaction(step, transactionAmount.doubleValue(), dest);
     }
 }

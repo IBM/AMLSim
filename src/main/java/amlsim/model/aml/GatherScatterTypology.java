@@ -1,6 +1,8 @@
 package amlsim.model.aml;
 
+import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 
 import java.util.*;
 
@@ -14,10 +16,11 @@ public class GatherScatterTypology extends AMLTypology {
     private long[] gatherSteps;
     private long[] scatterSteps;
     private long middleStep;
-    private float totalReceivedAmount = 0.0F;
-    private float scatterAmount = 0.0F;  // Scatter transaction amount will be defined after gather transactions
+    private double totalReceivedAmount = 0.0;
+    private double scatterAmount = 0.0;  // Scatter transaction amount will be defined after gather transactions
+    private Random random = AMLSim.getRandom();
 
-    GatherScatterTypology(float minAmount, float maxAmount, int startStep, int endStep) {
+    GatherScatterTypology(double minAmount, double maxAmount, int startStep, int endStep) {
         super(minAmount, maxAmount, startStep, endStep);
     }
 
@@ -78,7 +81,7 @@ public class GatherScatterTypology extends AMLTypology {
                 if(gatherSteps[i] == step){
                     Account orig = origAccts.get(i);
                     Account bene = alert.getMainAccount();
-                    float amount = getRandomAmount();
+                    double amount = new TargetedTransactionAmount(orig.getBalance(), random).doubleValue();
                     makeTransaction(step, amount, orig, bene, isSAR, alertID);
                     totalReceivedAmount += amount;
                 }
@@ -88,12 +91,14 @@ public class GatherScatterTypology extends AMLTypology {
                 if(scatterSteps[i] == step){
                     Account orig = alert.getMainAccount();
                     Account bene = beneAccts.get(i);
-                    makeTransaction(step, scatterAmount, orig, bene, isSAR, alertID);
+                    double target = Math.min(orig.getBalance(), scatterAmount);
+                    TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(target, random);
+                    makeTransaction(step, transactionAmount.doubleValue(), orig, bene, isSAR, alertID);
                 }
             }
         }
         if(step == middleStep){  // Define the amount of scatter transactions
-            float margin = totalReceivedAmount * marginRatio;
+            double margin = totalReceivedAmount * marginRatio;
             scatterAmount = (totalReceivedAmount - margin) / numScatters;
         }
     }

@@ -1,6 +1,10 @@
 package amlsim.model.normal;
 
+import java.util.Random;
+
+
 import amlsim.Account;
+import amlsim.TargetedTransactionAmount;
 import amlsim.model.AbstractTransactionModel;
 
 
@@ -10,6 +14,17 @@ import amlsim.model.AbstractTransactionModel;
 public class PeriodicalTransactionModel extends AbstractTransactionModel {
 
     private int index = 0;
+
+    private Random random;
+    private Account account;
+
+    public PeriodicalTransactionModel(
+        Account account,
+        Random random
+    ) {
+        this.random = random;
+        this.account = account;
+    }
 
     public void setParameters(int interval, long start, long end){
         super.setParameters(interval, start, end);
@@ -40,12 +55,14 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
         int totalCount = getNumberOfTransactions();  // Total number of transactions
         int eachCount = (numDests < totalCount) ? 1 : numDests / totalCount;
 
-        for(int i=0; i<eachCount; i++) {
-            float amount = getTransactionAmount();  // this.balance;
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(this.account.getBalance() / eachCount, random);
+
+        for (int i = 0; i < eachCount; i++) {
             Account dest = this.account.getBeneList().get(index);
-            this.makeTransaction(step, amount, dest);
+            this.makeTransaction(step, transactionAmount.doubleValue(), dest);
             index++;
-            if(index >= numDests) break;
+            if (index >= numDests)
+                break;
         }
         index = 0;
     }

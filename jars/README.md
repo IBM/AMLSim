@@ -1,13 +1,9 @@
 # External jar files
-Please download external jar files (except `paysim.jar`) from the following sites and put them just under this directory.
+Please download external jar files from the following sites and put them under this directory.
 
 
-- [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 18
-  - Download "mason18.zip" from the homepage and extract the jar file.
-- [PaySim](http://edgarlopez.net/simulation-tools/paysim/)
-  - Please use `paysim.jar` under `jars` directory which already exists.
-  The latest version of [the GitHub repository](https://github.com/EdgarLopezPhD/PaySim)
-  is not compatible with our implementation.
+- [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 20
+  - Download "mason20.zip" from the homepage and extract the jar file.
 - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) version 3.6.1
   - Download "commons-math3-3.6.1-bin.tar.gz" and extract the following jar files.
     - commons-math3-3.6.1.jar

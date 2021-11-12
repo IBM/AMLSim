@@ -16,9 +16,8 @@ This project aims at building a multi-agent simulator of anti-money laundering -
 
 
 # Dependencies
-- Java 8 (Download and copy all jar files to `jars` directory: See also `jars/README.md`)
-    - [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 18
-    - [PaySim](https://github.com/EdgarLopezPhD/PaySim) (jar file already exists)
+- Java 8 (Download and copy all jar files to `jars/` directory: See also `jars/README.md`)
+    - [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 20
     - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) version 3.6.1
     - [JSON in Java](https://jar-download.com/artifacts/org.json/json/20180813) version 20180813
     - [WebGraph](http://webgraph.di.unimi.it/) version 3.6.1
@@ -101,25 +100,15 @@ sh scripts/run_AMLSim.sh conf.json
 On Mac: `brew install maven`
 If you already have a java installed, you can run `brew uninstall --ignore-dependencies openjdk` because brew installs that along with maven as a dependency.
 
-You only manually need to install 2 jars (MASON and Paysim) to your jars/ folder if you use maven.  Maven will go fetch the other jars for you.  
-Use the following commands to install those 2 jars to your local maven repository.  
+If you choose to use Maven, you only manually need to fetch and place 1 jar file (MASON) in your `jars/` folder and then install it using the command shown below.  If you do not use Maven, you will have to place all the dependency jar files listed as dependencies above in the `jars/` folder.   
+If using Maven, use the following commands to install the MASON dependency to your local Maven repository.  
 
 ```
 mvn install:install-file \
--Dfile=jars/mason.18.jar \
+-Dfile=jars/mason.20.jar \
 -DgroupId=mason \
 -DartifactId=mason \
--Dversion=18 \
--Dpackaging=jar \
--DgeneratePom=true
-```
-
-```
-mvn install:install-file \
--Dfile=jars/paysim.jar \
--DgroupId=paysim \
--DartifactId=paysim \
--Dversion=1.0.0 \
+-Dversion=20 \
 -Dpackaging=jar \
 -DgeneratePom=true
 ```
@@ -170,7 +159,6 @@ python3 scripts/visualize/plot_distributions.py conf.json
 ```
 python3 scripts/validation/validate_alerts.py conf.json
 ```
-
 
 
 ## 6. Remove all log and generated image files from `outputs` directory and a temporal directory

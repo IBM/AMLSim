@@ -12,6 +12,6 @@ then
     javac -encoding UTF-8 -cp "jars/*" -d ${DESTINATION} src/main/java/amlsim/*.java src/main/java/amlsim/stat/*.java src/main/java/amlsim/model/*.java src/main/java/amlsim/model/normal/*.java src/main/java/amlsim/model/aml/*.java src/main/java/amlsim/model/cash/*.java
     exit
 else
-    mvn install -DskipTests
+    mvn clean package -DskipTests
 fi
 

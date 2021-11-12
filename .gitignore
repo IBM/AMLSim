@@ -10,7 +10,6 @@ logs/
 
 # Package Files #
 *.jar
-!paysim.jar
 *.war
 *.ear
 *.zip

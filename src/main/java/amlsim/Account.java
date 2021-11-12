@@ -110,13 +110,13 @@ public class Account implements Steppable {
 		this.balance = balance;
 	}
 
-	public void withdraw(double ammount) {
-		if (this.balance < ammount) {
-			this.balance = 0;
-		} else {
-			this.balance -= ammount;
-		}
-	}
+    public void withdraw(double ammount) {
+        if (this.balance < ammount) {
+            this.balance = 0;
+        } else {
+            this.balance -= ammount;
+        }
+    }
 
 	public void deposit(double ammount){
 		this.balance += ammount;

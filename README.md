@@ -100,7 +100,7 @@ sh scripts/run_AMLSim.sh conf.json
 On Mac: `brew install maven`
 If you already have a java installed, you can run `brew uninstall --ignore-dependencies openjdk` because brew installs that along with maven as a dependency.
 
-If you choose to use Maven, you only manually need to fetch and place 1 jar file (MASON) in your `jars/` folder and then install it using the command shown below.  If you do not use Maven, you will have to place all the dependency jar files listed as dependencies above in the `jars/` folder.   
+If you choose to use Maven, you only manually need to fetch and place 1 jar file (MASON) in your `jars/` folder and then install it using the command shown below.  If you do not use Maven, you will have to place all the dependency jar files listed above as dependencies in the `jars/` folder.   
 If using Maven, use the following commands to install the MASON dependency to your local Maven repository.  
 
 ```

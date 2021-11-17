@@ -172,7 +172,7 @@ class TransactionGenerator:
         :param conf_file: JSON file as configurations
         :param sim_name: Simulation name (overrides the content in the `conf_json`)
         """
-        self.g = nx.MultiDiGraph()  # Transaction graph object
+        self.g = nx.DiGraph()  # Transaction graph object
         self.num_accounts = 0  # Number of total accounts
         self.hubs = set()  # Hub account vertices (main account candidates of AML typology subgraphs)
         self.attr_names = list()  # Additional account attribute names
@@ -250,6 +250,8 @@ class TransactionGenerator:
         self.alert_types = {"fan_out": 1, "fan_in": 2, "cycle": 3, "bipartite": 4, "stack": 5,
                             "random": 6, "scatter_gather": 7, "gather_scatter": 8}  # Pattern name and model ID
 
+        self.acct_file = os.path.join(self.input_dir, self.account_file)
+
         def get_types(type_csv):
             tx_types = list()
             with open(type_csv, "r") as _rf:
@@ -299,7 +301,8 @@ class TransactionGenerator:
         for i in range(num):
             _orig = orig_list[i]
             _bene = bene_list[i]
-            self.add_transaction(_orig, _bene)
+            self.g.add_edge(_orig, _bene)
+            self.add_edge_info(_orig, _bene)
         logger.info("Added %d edges from normal accounts to sar accounts" % num)
 
     def check_account_exist(self, aid):
@@ -365,13 +368,12 @@ class TransactionGenerator:
     def load_account_list(self):
         """Load and add account vertices from a CSV file
         """
-        acct_file = os.path.join(self.input_dir, self.account_file)
         if self.is_aggregated:
-            self.load_account_list_param(acct_file)
+            self.load_account_list_param()
         else:
-            self.load_account_list_raw(acct_file)
+            self.load_account_list_raw()
 
-    def load_account_list_raw(self, acct_file):
+    def load_account_list_raw(self):
         """Load and add account vertices from a CSV file with raw account info
         header: uuid,seq,first_name,last_name,street_addr,city,state,zip,gender,phone_number,birth_date,ssn
         :param acct_file: Raw account list file path
@@ -393,7 +395,7 @@ class TransactionGenerator:
         self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
                                 "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
 
-        with open(acct_file, "r") as rf:
+        with open(self.acct_file, "r") as rf:
             reader = csv.reader(rf)
             header = next(reader)
             name2idx = {n: i for i, n in enumerate(header)}
@@ -448,70 +450,55 @@ class TransactionGenerator:
                         "phone_number": phone_number, "birth_date": birth_date, "ssn": ssn, "lon": lon, "lat": lat}
 
                 init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
-                self.add_account(aid, init_balance, start, end, default_country, default_acct_type, model, **attr)
+                self.add_account(aid, init_balance=init_balance, country=default_country, business=default_acct_type, is_sar=False, **attr)
                 count += 1
 
-    def load_account_list_param(self, acct_file):
+    def set_num_accounts(self):
+        with open(self.acct_file, "r") as rf:
+            reader = csv.reader(rf)
+            # Parse header
+            header = next(reader)
+
+            count = 0
+            for row in reader:
+                if row[0].startswith("#"):
+                    continue
+                num = int(row[header.index('count')])
+                count += num
+
+        self.num_accounts = count
+
+
+    def load_account_list_param(self):
+
         """Load and add account vertices from a CSV file with aggregated parameters
         Each row may represent two or more accounts
         :param acct_file: Account parameter file path
         """
-        idx_num = None  # Number of accounts per row
-        idx_min = None  # Minimum initial balance
-        idx_max = None  # Maximum initial balance
-        idx_start = None  # Start step
-        idx_end = None  # End step
-        idx_country = None  # Country
-        idx_business = None  # Business type
-        idx_model = None  # Transaction model
-        idx_bank = None  # Bank ID
 
-        with open(acct_file, "r") as rf:
+        with open(self.acct_file, "r") as rf:
             reader = csv.reader(rf)
             # Parse header
             header = next(reader)
-            for i, k in enumerate(header):
-                if k == "count":
-                    idx_num = i
-                elif k == "min_balance":
-                    idx_min = i
-                elif k == "max_balance":
-                    idx_max = i
-                elif k == "start_day":
-                    idx_start = i
-                elif k == "end_day":
-                    idx_end = i
-                elif k == "country":
-                    idx_country = i
-                elif k == "business_type":
-                    idx_business = i
-                elif k == "model":
-                    idx_model = i
-                elif k == "bank_id":
-                    idx_bank = i
-                else:
-                    logger.warning("Unknown column name in %s: %s" % (acct_file, k))
 
             acct_id = 0
             for row in reader:
                 if row[0].startswith("#"):
                     continue
-                num = int(row[idx_num])
-                min_balance = parse_float(row[idx_min])
-                max_balance = parse_float(row[idx_max])
-                start_day = parse_int(row[idx_start]) if idx_start is not None else -1
-                end_day = parse_int(row[idx_end]) if idx_end is not None else -1
-                country = row[idx_country]
-                business = row[idx_business]
-                model_id = parse_int(row[idx_model])
-                bank_id = row[idx_bank] if idx_bank is not None else self.default_bank_id
+                num = int(row[header.index('count')])
+                min_balance = parse_float(row[header.index('min_balance')])
+                max_balance = parse_float(row[header.index('max_balance')])
+                country = row[header.index('country')]
+                business = row[header.index('business_type')]
+                bank_id = row[header.index('bank_id')] 
+                if bank_id is None:
+                    bank_id = self.default_bank_id
 
                 for i in range(num):
                     init_balance = random.uniform(min_balance, max_balance)  # Generate amount
-                    self.add_account(acct_id, init_balance, start_day, end_day, country, business, model_id, bank_id)
+                    self.add_account(acct_id, init_balance=init_balance, country=country, business=business, bank_id=bank_id, is_sar=False)
                     acct_id += 1
 
-        self.num_accounts = acct_id
         logger.info("Generated %d accounts." % self.num_accounts)
 
     def generate_normal_transactions(self):
@@ -521,17 +508,18 @@ class TransactionGenerator:
         """
         deg_file = os.path.join(self.input_dir, self.degree_file)
         in_deg, out_deg = get_degrees(deg_file, self.num_accounts)
-        g = directed_configuration_model(in_deg, out_deg, self.seed)
+        G = directed_configuration_model(in_deg, out_deg, self.seed)
+        G = nx.DiGraph(G)
+        self.g = G
 
-        logger.info("Add %d base transactions" % g.number_of_edges())
+        logger.info("Add %d base transactions" % self.g.number_of_edges())
         nodes = self.g.nodes()
-        for src_i, dst_i in g.edges():
-            assert (src_i != dst_i)
+        for src_i, dst_i in self.g.edges():
             src = nodes[src_i]
             dst = nodes[dst_i]
-            self.add_transaction(src, dst)  # Add edges to transaction graph
+            self.add_edge_info(src, dst)  # Add edge info.
 
-    def add_account(self, acct_id, init_balance, start, end, country, business, model_id, bank_id=None, **attr):
+    def add_account(self, acct_id, **attr):
         """Add an account vertex
         :param acct_id: Account ID
         :param init_balance: Initial amount
@@ -539,21 +527,20 @@ class TransactionGenerator:
         :param end: The day when the account closed
         :param country: Country name
         :param business: Business type
-        :param model_id: Transaction model ID
         :param bank_id: Bank ID
-        :param attr: Optional attributes
+        :param attr: Optional attributes-
         :return:
         """
-        if bank_id is None:
-            bank_id = self.default_bank_id
+        
+        if attr['bank_id'] is None:
+            attr['bank_id'] = self.default_bank_id
 
-        # Add an account vertex with an ID and attributes if and only if it is not yet added
-        if self.check_account_absent(acct_id):
-            self.g.add_node(acct_id, label="account", init_balance=init_balance, start=start, end=end,
-                            country=country, business=business, is_sar=False,
-                            model_id=model_id, bank_id=bank_id, **attr)
-            self.bank_to_accts[bank_id].add(acct_id)
-            self.acct_to_bank[acct_id] = bank_id
+        if self.g.has_node(acct_id):
+            self.g.node[acct_id] = attr
+        else:
+            self.g.add_node(acct_id, **attr)
+        self.bank_to_accts[attr['bank_id']].add(acct_id)
+        self.acct_to_bank[acct_id] = attr['bank_id']
 
     def remove_typology_candidate(self, acct):
         """Remove an account vertex from AML typology member candidates
@@ -564,23 +551,19 @@ class TransactionGenerator:
         del self.acct_to_bank[acct]
         self.bank_to_accts[bank_id].discard(acct)
 
-    def add_transaction(self, orig, bene, amount=None, date=None, tx_type=None):
-        """Add a transaction edge
+    def add_edge_info(self, orig, bene):
+        """Adds info to edge. Based on add_transaction.
+        Add transaction will go away eventually.
         :param orig: Originator account ID
         :param bene: Beneficiary account ID
-        :param amount: Transaction amount
-        :param date: Transaction date
-        :param tx_type: Transaction type description
         :return:
         """
         self.check_account_exist(orig)  # Ensure the originator and beneficiary accounts exist
         self.check_account_exist(bene)
         if orig == bene:
             raise ValueError("Self loop from/to %s is not allowed for transaction networks" % str(orig))
-        self.g.add_edge(orig, bene, key=self.tx_id, label="transaction", amount=amount, date=date, ttype=tx_type)
+        self.g.edge[orig][bene]['id'] = self.tx_id
         self.tx_id += 1
-        if self.tx_id % 1000000 == 0:
-            logger.info("Added %d transactions" % self.tx_id)
 
     # Load Custom Topology Files
     def add_subgraph(self, members, topology):
@@ -596,7 +579,8 @@ class TransactionGenerator:
         for e in topology.edges():
             src = node_map[e[0]]
             dst = node_map[e[1]]
-            self.add_transaction(src, dst)
+            self.g.add_edge(src, dst)
+            self.add_edge_info(src, dst)
 
     def load_edgelist(self, members, csv_name):
         """Load edgelist and add edges with existing account vertices
@@ -604,7 +588,7 @@ class TransactionGenerator:
         :param csv_name: Edgelist file name
         :return:
         """
-        topology = nx.MultiDiGraph()
+        topology = nx.DiGraph()
         topology = nx.read_edgelist(csv_name, delimiter=",", create_using=topology)
         self.add_subgraph(members, topology)
 
@@ -725,7 +709,8 @@ class TransactionGenerator:
             :param _date: Transaction timestamp
             """
             sub_g.add_edge(_orig, _bene, amount=_amount, date=_date)
-            self.add_transaction(_orig, _bene, amount=_amount, date=_date)
+            self.g.add_edge(_orig, _bene)
+            self.add_edge_info(_orig, _bene)
 
 
         if bank_id == "" and len(self.bank_to_accts) >= 2:
@@ -740,8 +725,8 @@ class TransactionGenerator:
 
         # Create subgraph structure with transaction attributes
         model_id = self.alert_types[typology_name]  # alert model ID
-        sub_g = nx.MultiDiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
-                                start=start_date, end=end_date)  # Transaction subgraph for a typology
+        sub_g = nx.DiGraph(model_id=model_id, reason=typology_name, scheduleID=schedule,
+                           start=start_date, end=end_date)  # Transaction subgraph for a typology
 
 
         if typology_name == "fan_in":  # fan_in pattern (multiple accounts --> single (main) account)
@@ -1026,22 +1011,19 @@ class TransactionGenerator:
         acct_file = os.path.join(self.output_dir, self.out_account_file)
         with open(acct_file, "w") as wf:
             writer = csv.writer(wf)
-            base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "START_DATE", "END_DATE", "COUNTRY",
-                          "ACCOUNT_TYPE", "IS_SAR", "TX_BEHAVIOR_ID", "BANK_ID"]
+            base_attrs = ["ACCOUNT_ID", "CUSTOMER_ID", "INIT_BALANCE", "COUNTRY",
+                          "ACCOUNT_TYPE", "IS_SAR", "BANK_ID"]
             writer.writerow(base_attrs + self.attr_names)
             for n in self.g.nodes(data=True):
                 aid = n[0]  # Account ID
                 cid = "C_" + str(aid)  # Customer ID bounded to this account
                 prop = n[1]  # Account attributes
                 balance = "{0:.2f}".format(prop["init_balance"])  # Initial balance
-                start = prop["start"]  # Start time (when the account is opened)
-                end = prop["end"]  # End time (when the account is closed)
                 country = prop["country"]  # Country
                 business = prop["business"]  # Business type
                 is_sar = "true" if prop[IS_SAR_KEY] else "false"  # Whether this account is involved in SAR
-                model_id = prop["model_id"]  # Transaction behavior model ID
                 bank_id = prop["bank_id"]  # Bank ID
-                values = [aid, cid, balance, start, end, country, business, is_sar, model_id, bank_id]
+                values = [aid, cid, balance, country, business, is_sar, bank_id]
                 for attr_name in self.attr_names:
                     values.append(prop[attr_name])
                 writer.writerow(values)
@@ -1052,10 +1034,11 @@ class TransactionGenerator:
         with open(tx_file, "w") as wf:
             writer = csv.writer(wf)
             writer.writerow(["id", "src", "dst", "ttype"])
-            for e in self.g.edges(data=True, keys=True):
+            for e in self.g.edges(data=True):
                 src = e[0]
                 dst = e[1]
-                tid = e[2]
+                attr = e[2]
+                tid = attr['id']
                 tx_type = random.choice(self.tx_types)
                 writer.writerow([tid, src, dst, tx_type])
         logger.info("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))
@@ -1150,8 +1133,9 @@ if __name__ == "__main__":
         conf = json.load(rf)
 
     txg = TransactionGenerator(conf, _sim_name)
-    txg.load_account_list()  # Load account list CSV file
+    txg.set_num_accounts()
     txg.generate_normal_transactions()  # Load a parameter CSV file for the base transaction types
+    txg.load_account_list()  # Load account list CSV file
     if degree_threshold > 0:
         logger.info("Generated normal transaction network")
         txg.count_fan_in_out_patterns(degree_threshold)

@@ -1,0 +1,4 @@
+count,type,schedule_id,min_accounts,max_accounts,min_period,max_period,bank_id,is_sar
+100,single,2,1,1,5,20,bank,False
+300,fan_out,2,5,10,5,20,bank,False
+300,fan_in,2,5,10,5,20,bank,False

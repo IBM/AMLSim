@@ -243,7 +243,7 @@ class TransactionGenerator:
         self.high_risk_countries = set(high_risk_countries_str.split(","))  # List of high-risk country codes
         self.high_risk_business = set(high_risk_business_str.split(","))  # List of high-risk business types
 
-        self.tx_id = 0  # Transaction ID
+        self.edge_id = 0  # Edge ID. Formerly Transaction ID
         self.alert_id = 0  # Alert ID from the alert parameter file
         self.alert_groups = dict()  # Alert ID and alert transaction subgraph
         # TODO: Move the mapping of AML pattern to configuration JSON file
@@ -562,8 +562,8 @@ class TransactionGenerator:
         self.check_account_exist(bene)
         if orig == bene:
             raise ValueError("Self loop from/to %s is not allowed for transaction networks" % str(orig))
-        self.g.edge[orig][bene]['id'] = self.tx_id
-        self.tx_id += 1
+        self.g.edge[orig][bene]['edge_id'] = self.edge_id
+        self.edge_id += 1
 
     # Load Custom Topology Files
     def add_subgraph(self, members, topology):
@@ -1038,7 +1038,7 @@ class TransactionGenerator:
                 src = e[0]
                 dst = e[1]
                 attr = e[2]
-                tid = attr['id']
+                tid = attr['edge_id']
                 tx_type = random.choice(self.tx_types)
                 writer.writerow([tid, src, dst, tx_type])
         logger.info("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))

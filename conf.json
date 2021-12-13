@@ -40,6 +40,7 @@
     "schema": "schema.json",
     "accounts": "accounts.csv",
     "alert_patterns": "alertPatterns.csv",
+    "normal_models": "normalModels.csv",
     "degree": "degree.csv",
     "transaction_type": "transactionType.csv",
     "is_aggregated_accounts": true

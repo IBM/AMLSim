@@ -12,7 +12,12 @@ import os
 import sys
 import logging
 
+import cProfile
+
+
 from collections import Counter, defaultdict
+from amlsim.nominator import Nominator
+from amlsim.normal_model import NormalModel
 
 from amlsim.random_amount import RandomAmount
 from amlsim.rounded_amount import RoundedAmount
@@ -178,6 +183,9 @@ class TransactionGenerator:
         self.attr_names = list()  # Additional account attribute names
         self.bank_to_accts = defaultdict(set)  # Bank ID -> account set
         self.acct_to_bank = dict()  # Account ID -> bank ID
+        self.normal_model_counts = dict()
+        self.normal_models = list()
+        self.normal_model_id = 1
 
         self.conf = conf
 
@@ -224,6 +232,7 @@ class TransactionGenerator:
         self.input_dir = input_conf["directory"]  # The directory name of input files
         self.account_file = input_conf["accounts"]  # Account list file
         self.alert_file = input_conf["alert_patterns"]  # AML typology definition file
+        self.normal_models_file = input_conf["normal_models"] # Normal models definition file
         self.degree_file = input_conf["degree"]  # Degree distribution file
         self.type_file = input_conf["transaction_type"]  # Transaction type
         self.is_aggregated = input_conf["is_aggregated_accounts"]  # Flag whether the account list is aggregated
@@ -274,13 +283,23 @@ class TransactionGenerator:
                              "Please try again with smaller value of the 'degree_threshold' parameter in conf.json.")
 
     def set_main_acct_candidates(self):
+        """ Set self.hubs to be a set of hub nodes
+            Throw an error if not done successfully.
+        """
+        hub_list = self.hub_nodes()
+        self.hubs = set(hub_list)
+        self.check_hub_exists()
+
+
+    def hub_nodes(self):
         """Choose hub accounts with larger degree than the specified threshold
         as the main account candidates of alert transaction sets
         """
-        hub_list = [n for n in self.g.nodes()  # Hub vertices (with large in/out degrees)
-                    if self.degree_threshold <= self.g.in_degree(n) + self.g.out_degree(n)]
-        self.hubs = set(hub_list)
-        self.check_hub_exists()
+        nodes = [n for n in self.g.nodes()  # Hub vertices (with large in/out degrees)
+                 if self.degree_threshold <= self.g.in_degree(n)
+                 or self.degree_threshold <= self.g.out_degree(n)]
+        return nodes
+
 
     def add_normal_sar_edges(self, ratio=1.0):
         """Add extra edges from normal accounts to SAR accounts to adjust transaction graph features
@@ -496,7 +515,7 @@ class TransactionGenerator:
 
                 for i in range(num):
                     init_balance = random.uniform(min_balance, max_balance)  # Generate amount
-                    self.add_account(acct_id, init_balance=init_balance, country=country, business=business, bank_id=bank_id, is_sar=False)
+                    self.add_account(acct_id, init_balance=init_balance, country=country, business=business, bank_id=bank_id, is_sar=False, normal_models=list())
                     acct_id += 1
 
         logger.info("Generated %d accounts." % self.num_accounts)
@@ -541,6 +560,7 @@ class TransactionGenerator:
             self.g.add_node(acct_id, **attr)
         self.bank_to_accts[attr['bank_id']].add(acct_id)
         self.acct_to_bank[acct_id] = attr['bank_id']
+
 
     def remove_typology_candidate(self, acct):
         """Remove an account vertex from AML typology member candidates
@@ -591,6 +611,195 @@ class TransactionGenerator:
         topology = nx.DiGraph()
         topology = nx.read_edgelist(csv_name, delimiter=",", create_using=topology)
         self.add_subgraph(members, topology)
+
+
+    def load_normal_models(self):
+        """Load a Normal Model parameter file
+        """
+        normal_models_file = os.path.join(self.input_dir, self.normal_models_file)
+        with open(normal_models_file, "r") as csvfile:
+            reader = csv.reader(csvfile)
+            self.read_normal_models(reader)
+
+
+    def read_normal_models(self, reader):
+        """Parse the Normal Model parameter file
+        """
+        header = next(reader)
+
+        self.nominator = Nominator(self.g, self.degree_threshold)
+
+        for row in reader:
+            count = int(row[header.index('count')])
+            type = row[header.index('type')]
+            schedule_id = int(row[header.index('schedule_id')])
+            min_accounts = int(row[header.index('min_accounts')])
+            max_accounts = int(row[header.index('max_accounts')])
+            min_period = int(row[header.index('min_period')])
+            max_period = int(row[header.index('max_period')])
+            bank_id = row[header.index('bank_id')]
+            if bank_id is None:
+                bank_id = self.default_bank_id
+
+            self.nominator.initialize_count(type, count)
+
+
+    def build_normal_models(self):
+        while(self.nominator.has_more()):
+            for type in self.nominator.types():
+                count = self.nominator.count(type)
+                if count > 0:
+                    self.choose_normal_model(type)
+                    self.normal_model_id += 1
+        logger.info("Generated %d normal models." % len(self.normal_models))
+        logger.info("Normal model counts %s", self.nominator.used_count_dict)
+        
+
+    def choose_normal_model(self, type):
+        if type == 'fan_in':
+            self.fan_in_model(type)
+        elif type == 'fan_out':
+            self.fan_out_model(type)
+        elif type == 'forward':
+            self.forward_model(type)
+        elif type == 'single':
+            self.single_model(type)
+        elif type == 'mutual':
+            self.mutual_model(type)
+        elif type == 'periodical':
+            self.periodical_model(type)
+
+        
+    def fan_in_model(self, type):     
+        node_id = self.nominator.next(type)
+
+        if node_id is None:
+            return
+
+        candidates = self.nominator.fan_in_breakdown(type, node_id)
+
+        if not candidates:
+            raise ValueError('should always be candidates')
+
+        normal_models = self.nominator.normal_models_in_type_relationship(type, node_id, {node_id})
+        for nm in normal_models:
+            nm.remove_node_ids(candidates)
+            
+        result_ids = candidates | { node_id }
+        normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
+
+        for result_id in result_ids:
+            self.g.node[result_id]['normal_models'].append(normal_model)
+
+        self.normal_models.append(normal_model)
+        
+        self.nominator.post_fan_in(node_id, type)
+
+
+    def fan_out_model(self, type):
+        node_id = self.nominator.next(type)
+
+        if node_id is None:
+            return
+
+        candidates = self.nominator.fan_out_breakdown(type, node_id)
+
+        if not candidates:
+            raise ValueError('should always be candidates')
+
+        normal_models = self.nominator.normal_models_in_type_relationship(type, node_id, {node_id})
+        for nm in normal_models:
+            nm.remove_node_ids(candidates)
+
+        result_ids = candidates | { node_id }
+        normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
+        for id in result_ids:
+            self.g.node[id]['normal_models'].append(normal_model)
+
+        self.normal_models.append(normal_model)
+
+        self.nominator.post_fan_out(node_id, type)
+    
+
+    def forward_model(self, type):
+        node_id = self.nominator.next(type)
+
+        if node_id is None:
+            return
+
+        succ_ids = self.g.successors(node_id)
+        pred_ids = self.g.predecessors(node_id)
+
+        sets = [{node_id, pred_id, succ_id} for pred_id in pred_ids for succ_id in succ_ids]
+
+        set = next(
+            set for set in sets if not self.nominator.is_in_type_relationship(type, node_id, set)
+        )
+        normal_model = NormalModel(self.normal_model_id, type, list(set), node_id)
+        for id in set:
+            self.g.node[id]['normal_models'].append(normal_model)
+
+        self.normal_models.append(normal_model)
+
+        self.nominator.post_forward(node_id, type)
+                
+
+    def single_model(self, type):
+        node_id = self.nominator.next(type)
+
+        if node_id is None:
+            return
+        
+        succ_ids = self.g.successors(node_id)
+        succ_id = next(succ_id for succ_id in succ_ids if not self.nominator.is_in_type_relationship(type, node_id, {node_id, succ_id}))
+
+        result_ids = { node_id, succ_id }
+        normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
+        for id in result_ids:
+            self.g.node[id]['normal_models'].append(normal_model)
+
+        self.normal_models.append(normal_model)
+
+        self.nominator.post_single(node_id, type)
+
+    
+    def periodical_model(self, type):
+        node_id = self.nominator.next(type)
+
+        if node_id is None:
+            return
+        
+        succ_ids = self.g.successors(node_id)
+        succ_id = next(succ_id for succ_id in succ_ids if not self.nominator.is_in_type_relationship(type, node_id, {node_id, succ_id}))
+
+        result_ids = { node_id, succ_id }
+        normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
+        for id in result_ids:
+            self.g.node[id]['normal_models'].append(normal_model)
+
+        self.normal_models.append(normal_model)
+
+        self.nominator.post_periodical(node_id, type)
+
+    
+    def mutual_model(self, type):
+        node_id = self.nominator.next(type)
+
+        if node_id is None:
+            return
+        
+        succ_ids = self.g.successors(node_id)
+        succ_id = next(succ_id for succ_id in succ_ids if not self.nominator.is_in_type_relationship(type, node_id, {node_id, succ_id}))
+
+        result_ids = { node_id, succ_id }
+        normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
+        for id in result_ids:
+            self.g.node[id]['normal_models'].append(normal_model)
+
+        self.normal_models.append(normal_model)
+
+        self.nominator.post_mutual(node_id, type)
+        
 
     def load_alert_patterns(self):
         """Load an AML typology parameter file
@@ -1081,7 +1290,7 @@ class TransactionGenerator:
         logger.info("Exported %d members for %d AML typologies to %s" %
                     (acct_count, len(self.alert_groups), alert_member_file))
 
-    def count_fan_in_out_patterns(self, threshold=2):
+    def count__patterns(self, threshold=2):
         """Count the number of fan-in and fan-out patterns in the generated transaction graph
         """
         in_deg = Counter(self.g.in_degree().values())  # in-degree, count
@@ -1139,7 +1348,10 @@ if __name__ == "__main__":
     if degree_threshold > 0:
         logger.info("Generated normal transaction network")
         txg.count_fan_in_out_patterns(degree_threshold)
-    txg.set_main_acct_candidates()  # Load a parameter CSV file for degrees of the base transaction graph
+    txg.load_normal_models() # Load a parameter CSV file for Normal Models
+    #cProfile.run('txg.build_normal_models()')
+    txg.build_normal_models()
+    txg.set_main_acct_candidates()
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
     txg.add_normal_sar_edges(_ratio)
 

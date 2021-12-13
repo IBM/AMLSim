@@ -554,10 +554,8 @@ class TransactionGenerator:
         if attr['bank_id'] is None:
             attr['bank_id'] = self.default_bank_id
 
-        if self.g.has_node(acct_id):
-            self.g.node[acct_id] = attr
-        else:
-            self.g.add_node(acct_id, **attr)
+        self.g.node[acct_id] = attr
+
         self.bank_to_accts[attr['bank_id']].add(acct_id)
         self.acct_to_bank[acct_id] = attr['bank_id']
 
@@ -897,7 +895,11 @@ class TransactionGenerator:
             :param _acct: Account ID
             :param _bank_id: Bank ID
             """
-            sub_g.add_node(_acct, bank_id=_bank_id)
+            attr_dict = self.g.node[_acct]
+            attr_dict[IS_SAR_KEY] = True
+
+            sub_g.add_node(_acct, attr_dict)
+
 
         def add_main_acct():
             """Create a main account ID and a bank ID from hub accounts
@@ -1208,11 +1210,6 @@ class TransactionGenerator:
         sub_g.graph[MAIN_ACCT_KEY] = main_acct  # Main account ID
         sub_g.graph[IS_SAR_KEY] = is_sar  # SAR flag
         self.alert_groups[self.alert_id] = sub_g
-
-        # Add the SAR flag to all member account vertices
-        if is_sar:
-            for n in sub_g.nodes():
-                self.g.node[n][IS_SAR_KEY] = True
         self.alert_id += 1
 
     def write_account_list(self):

@@ -121,4 +121,53 @@ class AccountTests {
             mocked.verify(() -> AMLSim.handleTransaction(1L, "TRANSFER", 41.00808114922017d, anAccount, beneAccount, false, -1L), times(1));
         }
     }
-}
+
+
+
+    @Test
+    public void SingleTransactionModelHasBenesNotMain()
+    {
+        long step = 1;
+        when(this.schedule.getSteps()).thenReturn(step);
+
+        try (MockedStatic<AMLSim> mocked = mockStatic(AMLSim.class);
+            MockedStatic<ModelParameters> mockey = mockStatic(ModelParameters.class)
+        ) 
+        {
+            SimProperties mockedProperties = mock(SimProperties.class);
+            when(mockedProperties.getMaxTransactionAmount()).thenReturn(100.0);
+
+            mocked.when(AMLSim::getRandom).thenReturn(new Random(1));
+            mocked.when(AMLSim::getSimProp).thenReturn(
+                mockedProperties
+            );
+            mocked.when(AMLSim::getLogger).thenReturn(
+                Logger.getLogger("AMLSim")
+            );
+            mockey.when(() -> ModelParameters.shouldAddEdge(any(), any())).thenReturn(true);
+
+            Account anAccount = new Account("1", 5, 1000.0f, "bankid", this.random);
+            Account beneAccount = new Account("2", 5, 1000.0f, "bankid", this.random);
+            
+            anAccount.addBeneAcct(beneAccount);
+            anAccount.addTxType(beneAccount, "TRANSFER");
+
+            AccountGroup accountGroup = new AccountGroup(1, this.amlSim);
+            accountGroup.addMember(anAccount);
+            accountGroup.addMember(beneAccount);
+            accountGroup.setMainAccount(beneAccount);
+
+            SingleTransactionModel model = new SingleTransactionModel(accountGroup, this.random);
+            model.setParameters(30, 1, 1);
+            
+            accountGroup.setModel(
+               model
+            );
+
+            anAccount.accountGroups.add(accountGroup);
+            
+            anAccount.handleAction(amlSim);
+            mocked.verify(() -> AMLSim.handleTransaction(1L, "TRANSFER", 41.00808114922017d, anAccount, beneAccount, false, -1L), never());
+        }
+    }
+}  

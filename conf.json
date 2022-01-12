@@ -49,7 +49,8 @@
     "directory": "tmp",
     "transactions": "transactions.csv",
     "accounts": "accounts.csv",
-    "alert_members": "alert_members.csv"
+    "alert_members": "alert_members.csv",
+    "normal_models": "normal_models.csv"
   },
   "output": {
     "directory": "outputs",

@@ -12,14 +12,13 @@ import java.util.Random;
 public class MutualTransactionModel extends AbstractTransactionModel {
 
     private Random random;
-    private Account account;
 
     public MutualTransactionModel(
-        Account account,
+        AccountGroup accountGroup,
         Random random
     ) {
+        this.accountGroup = accountGroup;
         this.random = random;
-        this.account = account;
     }
 
     public void setParameters(int interval, long start, long end){
@@ -35,12 +34,12 @@ public class MutualTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void makeTransaction(long step) {
+    public void sendTransactions(long step, Account account) {
         if((step - this.startStep) % interval != 0)return;
 
-        Account counterpart = this.account.getPrevOrig();
+        Account counterpart = account.getPrevOrig();
         if(counterpart == null){
-            List<Account> origs = this.account.getOrigList();
+            List<Account> origs = account.getOrigList();
             if(origs.isEmpty()) {
                 return;
             }else{
@@ -48,13 +47,12 @@ public class MutualTransactionModel extends AbstractTransactionModel {
             }
         }
 
-        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(this.account.getBalance(), random);
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(account.getBalance(), random);
 
-        if(!this.account.getBeneList().contains(counterpart)) {
-            this.account.addBeneAcct(counterpart);    // Add a new destination
+        if(!account.getBeneList().contains(counterpart)) {
+            account.addBeneAcct(counterpart);    // Add a new destination
         }
 
-        makeTransaction(step, transactionAmount.doubleValue(), counterpart);
+        makeTransaction(step, transactionAmount.doubleValue(), account, counterpart);
     }
-
 }

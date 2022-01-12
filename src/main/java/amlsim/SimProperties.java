@@ -116,8 +116,12 @@ public class SimProperties {
         return workDir + inputProp.getString("transactions");
     }
 
-    String getInputAlertMemberFile(){
+    String getInputAlertMemberFile() {
         return workDir + inputProp.getString("alert_members");
+    }
+
+    String getNormalModelsFile() {
+        return workDir + inputProp.getString("normal_models");
     }
 
     String getOutputTxLogFile(){

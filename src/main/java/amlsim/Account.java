@@ -3,7 +3,6 @@ package amlsim;
 import amlsim.model.*;
 import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
-import amlsim.model.normal.*;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import java.util.*;
@@ -12,7 +11,6 @@ public class Account implements Steppable {
 
     protected String id;
 
-	protected AbstractTransactionModel model;
 	protected CashInModel cashInModel;
 	protected CashOutModel cashOutModel;
 	protected boolean isSAR = false;
@@ -25,7 +23,10 @@ public class Account implements Steppable {
 	private String bankID = "";  // Bank ID
     
     private Account prevOrig = null;  // Previous originator account
+
 	List<Alert> alerts = new ArrayList<>();
+	List<AccountGroup> accountGroups = new ArrayList<>();
+
     private Map<String, String> tx_types = new HashMap<>();  // Receiver Client ID --> Transaction Type
 
 	private static List<String> all_tx_types = new ArrayList<>();
@@ -40,47 +41,31 @@ public class Account implements Steppable {
 	private Random random;
 
 
-	public Account(){
-        this.id = "-";
-		this.model = null;
+	public Account() {
+		this.id = "-";
 	}
 
 	/**
 	 * Constructor of the account object
 	 * @param id Account ID
-	 * @param modelID Transaction model ID (int value)
      * @param interval Default transaction interval
 	 * @param initBalance Initial account balance
 	 * @param start Start step
 	 * @param end End step
 	 */
-    public Account(String id, int modelID, int interval, float initBalance, long start, long end, String bankID, Random rand) {
+    public Account(String id, int interval, float initBalance, String bankID, Random rand) {
 		this.id = id;
-		this.startStep = start;
-		this.endStep = end;
 		this.setBalance(initBalance);
 		this.bankID = bankID;
 		this.random = rand;
 
-		switch(modelID){
-			case AbstractTransactionModel.SINGLE: this.model = new SingleTransactionModel(this, this.random); break;
-			case AbstractTransactionModel.FAN_OUT: this.model = new FanOutTransactionModel(this, this.random); break;
-			case AbstractTransactionModel.FAN_IN: this.model = new FanInTransactionModel(this, this.random); break;
-			case AbstractTransactionModel.MUTUAL: this.model = new MutualTransactionModel(this, this.random); break;
-			case AbstractTransactionModel.FORWARD: this.model = new ForwardTransactionModel(this, this.random); break;
-			case AbstractTransactionModel.PERIODICAL: this.model = new PeriodicalTransactionModel(this, this.random); break;
-			default: System.err.println("Unknown model ID: " + modelID); this.model = new EmptyModel(this, this.random); break;
-		}
-		this.model.setAccount(this);
-		this.model.setParameters(interval, start, end);
-
 		this.cashInModel = new CashInModel();
 		this.cashInModel.setAccount(this);
-		this.cashInModel.setParameters(interval, start, end);
+		this.cashInModel.setParameters(interval, -1, -1);
 
 		this.cashOutModel = new CashOutModel();
 		this.cashOutModel.setAccount(this);
-		this.cashOutModel.setParameters(interval, start, end);
+		this.cashOutModel.setParameters(interval, -1, -1);
 	}
 
 	public String getBankID() {
@@ -199,11 +184,16 @@ public class Account implements Steppable {
 	}
 
 	/**
-	 * Register this account to the specified alert group
-	 * @param ag Alert group
+	 * Register this account to the specified alert.
+	 * @param alert Alert
 	 */
-	void addAlertGroup(Alert ag){
-		this.alerts.add(ag);
+	public void addAlert(Alert alert) {
+		this.alerts.add(alert);
+	}
+    
+
+	public void addAccountGroup(AccountGroup accountGroup) {
+		this.accountGroups.add(accountGroup);
 	}
 
 	/**
@@ -225,13 +215,20 @@ public class Account implements Steppable {
 	public void handleAction(SimState state) {
 		AMLSim amlsim = (AMLSim) state;
 		long step = state.schedule.getSteps();
-		for(Alert ag : alerts){
-            if(this == ag.getMainAccount()){
-                ag.registerTransactions(step, this);
-            }
+		
+		for (Alert alert : this.alerts) {
+			if (this == alert.getMainAccount()) {
+				alert.registerTransactions(step, this);
+			}
 		}
 
-		this.model.makeTransaction(step);
+		for (AccountGroup accountGroup : this.accountGroups) {
+			Account account = accountGroup.getMainAccount();
+			if (this == accountGroup.getMainAccount()) {
+				accountGroup.registerTransactions(step, account);
+			}
+		}
+
 		handleCashTransaction(amlsim);
 	}
 
@@ -243,10 +240,6 @@ public class Account implements Steppable {
 		this.cashInModel.makeTransaction(step);
 		this.cashOutModel.makeTransaction(step);
 	}
-
-    public AbstractTransactionModel getModel(){
-	    return model;
-    }
 
 	/**
 	 * Get the previous originator account

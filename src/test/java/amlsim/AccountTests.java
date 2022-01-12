@@ -3,8 +3,8 @@ package amlsim;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
-import amlsim.model.AbstractTransactionModel;
 import amlsim.model.ModelParameters;
+import amlsim.model.normal.SingleTransactionModel;
 import sim.engine.Schedule;
 
 import java.util.Random;
@@ -49,7 +49,7 @@ class AccountTests {
         try (MockedStatic<AMLSim> mocked = mockStatic(AMLSim.class)) {
             mocked.when(AMLSim::getRandom).thenReturn(new Random(1));
 
-            Account anAccount = new Account("1", AbstractTransactionModel.SINGLE, 5, 1000.0f, 0, 1, "bankid", this.random);
+            Account anAccount = new Account("1", 5, 1000.0f, "bankid", this.random);
             anAccount.handleAction(amlSim);
 
             mocked.verify(() -> AMLSim.handleTransaction(1, "TRANSFER", 1000.0f, anAccount, anAccount, false, 1), never());
@@ -62,8 +62,8 @@ class AccountTests {
         long step = 1;
         when(this.schedule.getSteps()).thenReturn(step);
 
-        Account anAccount = new Account("1", AbstractTransactionModel.SINGLE, 5, 1000.0f, 1, 1, "bankid", this.random);
-        Account beneAccount = new Account("2", AbstractTransactionModel.SINGLE, 5, 1000.0f, 1, 1, "bankid", this.random);
+        Account anAccount = new Account("1", 5, 1000.0f, "bankid", this.random);
+        Account beneAccount = new Account("2", 5, 1000.0f, "bankid", this.random);
 
         try (MockedStatic<AMLSim> mocked = mockStatic(AMLSim.class)) 
         {
@@ -97,14 +97,28 @@ class AccountTests {
             );
             mockey.when(() -> ModelParameters.shouldAddEdge(any(), any())).thenReturn(true);
 
-            Account anAccount = new Account("1", AbstractTransactionModel.SINGLE, 5, 1000.0f, 1, 1, "bankid", this.random);
-            Account beneAccount = new Account("2", AbstractTransactionModel.SINGLE, 5, 1000.0f, 1, 1, "bankid", this.random);
+            Account anAccount = new Account("1", 5, 1000.0f, "bankid", this.random);
+            Account beneAccount = new Account("2", 5, 1000.0f, "bankid", this.random);
             
             anAccount.addBeneAcct(beneAccount);
             anAccount.addTxType(beneAccount, "TRANSFER");
+
+            AccountGroup accountGroup = new AccountGroup(1, this.amlSim);
+            accountGroup.addMember(anAccount);
+            accountGroup.addMember(beneAccount);
+            accountGroup.setMainAccount(anAccount);
+
+            SingleTransactionModel model = new SingleTransactionModel(accountGroup, this.random);
+            model.setParameters(30, 1, 1);
+            
+            accountGroup.setModel(
+               model
+            );
+
+            anAccount.accountGroups.add(accountGroup);
             
             anAccount.handleAction(amlSim);
-            mocked.verify(() -> AMLSim.handleTransaction(1L, "TRANSFER", 40.74398012118764d, anAccount, beneAccount, false, -1L), times(1));
+            mocked.verify(() -> AMLSim.handleTransaction(1L, "TRANSFER", 41.00808114922017d, anAccount, beneAccount, false, -1L), times(1));
         }
     }
 }

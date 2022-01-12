@@ -12,8 +12,8 @@ public class SARAccount extends Account {
 
 	private int count = 0;
 
-	SARAccount(String id, int modelID, int interval, float init_balance, int start, int end, String bankID, Random random) {
-		super(id, modelID, interval, init_balance, start, end, bankID, random);
+	SARAccount(String id, int interval, float init_balance, String bankID, Random random) {
+		super(id, interval, init_balance, bankID, random);
 		this.isSAR = true;
 	}
 
@@ -35,6 +35,8 @@ public class SARAccount extends Account {
 		Alert fg = alerts.get(count % alerts.size());
 		AMLTypology model = fg.getModel();
 
+		// this is no-op
+		// figure out why this was here.
 		model.makeTransaction(amlsim.schedule.getSteps());
 		return true;
 	}

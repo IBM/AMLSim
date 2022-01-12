@@ -1,6 +1,3 @@
-
-
-
 class NormalModel:
     def __init__(self, id, type, node_ids, main_id):
         self.id = id 

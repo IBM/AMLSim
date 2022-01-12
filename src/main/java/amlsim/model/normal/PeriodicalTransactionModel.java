@@ -2,8 +2,8 @@ package amlsim.model.normal;
 
 import java.util.Random;
 
-
 import amlsim.Account;
+import amlsim.AccountGroup;
 import amlsim.TargetedTransactionAmount;
 import amlsim.model.AbstractTransactionModel;
 
@@ -16,14 +16,13 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
     private int index = 0;
 
     private Random random;
-    private Account account;
 
     public PeriodicalTransactionModel(
-        Account account,
+        AccountGroup accountGroup,
         Random random
     ) {
+        this.accountGroup = accountGroup;
         this.random = random;
-        this.account = account;
     }
 
     public void setParameters(int interval, long start, long end){
@@ -43,11 +42,11 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void makeTransaction(long step) {
-        if(!isValidStep(step) || this.account.getBeneList().isEmpty()){
+    public void sendTransactions(long step, Account account) {
+        if(!isValidStep(step) || account.getBeneList().isEmpty()){
             return;
         }
-        int numDests = this.account.getBeneList().size();
+        int numDests = account.getBeneList().size();
         if(index >= numDests){
             index = 0;
         }
@@ -55,11 +54,11 @@ public class PeriodicalTransactionModel extends AbstractTransactionModel {
         int totalCount = getNumberOfTransactions();  // Total number of transactions
         int eachCount = (numDests < totalCount) ? 1 : numDests / totalCount;
 
-        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(this.account.getBalance() / eachCount, random);
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(account.getBalance() / eachCount, random);
 
         for (int i = 0; i < eachCount; i++) {
-            Account dest = this.account.getBeneList().get(index);
-            this.makeTransaction(step, transactionAmount.doubleValue(), dest);
+            Account dest = account.getBeneList().get(index);
+            this.makeTransaction(step, transactionAmount.doubleValue(), account, dest);
             index++;
             if (index >= numDests)
                 break;

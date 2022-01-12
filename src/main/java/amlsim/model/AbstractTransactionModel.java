@@ -1,7 +1,7 @@
 package amlsim.model;
 
 import amlsim.Account;
-
+import amlsim.AccountGroup;
 import amlsim.AMLSim;
 
 /**
@@ -10,16 +10,16 @@ import amlsim.AMLSim;
 public abstract class AbstractTransactionModel {
 
     // Transaction model ID
-    public static final int SINGLE = 0;  // Make a single transaction to each neighbor account
-    public static final int FAN_OUT = 1;  // Send money to all neighbor accounts
-    public static final int FAN_IN = 2;  // Receive money from neighbor accounts
-    public static final int MUTUAL = 3;
-    public static final int FORWARD = 4;
-    public static final int PERIODICAL = 5;
+    public static final String SINGLE = "single";  // Make a single transaction to each neighbor account
+    public static final String FAN_OUT = "fan_out";  // Send money to all neighbor accounts
+    public static final String FAN_IN = "fan_in";  // Receive money from neighbor accounts
+    public static final String MUTUAL = "mutual";
+    public static final String FORWARD = "forward";
+    public static final String PERIODICAL = "periodical";
 
 //    protected static Random rand = new Random(AMLSim.getSeed());
 
-    protected Account account;  // Account object
+    protected AccountGroup accountGroup;  // Account group object
     protected int interval = 1; // Default transaction interval
     protected long startStep = -1;  // The first step of transactions
     protected long endStep = -1;  // The end step of transactions
@@ -34,12 +34,12 @@ public abstract class AbstractTransactionModel {
     }
     
     /**
-     * Set an account object which has this model
-     * @param account Account object
+     * Set an account object group which has this model
+     * 
+     * @param accountGroup account group object
      */
-    public void setAccount(Account account){
-        this.account = account;
-        this.isSAR = account.isSAR();
+    public void setAccountGroup(AccountGroup accountGroup) {
+        this.accountGroup = accountGroup;
     }
 
     /**
@@ -59,12 +59,7 @@ public abstract class AbstractTransactionModel {
      */
     public abstract String getModelName();
 
-    /**
-     * Make a transaction
-     * @param step Current simulation step
-     */
-    public abstract void makeTransaction(long step);
-
+    
     /**
      * Generate the start transaction step (to decentralize transaction distribution)
      * @param range Simulation step range
@@ -96,6 +91,13 @@ public abstract class AbstractTransactionModel {
         this.startStep = start;
         this.endStep = end;
     }
+
+    /**
+     * The new workhorse method.
+     * @param step
+     * @param account
+     */
+    public abstract void sendTransactions(long step, Account account);
 
     /**
      * Generate and register a transaction (for alert transactions)
@@ -140,15 +142,4 @@ public abstract class AbstractTransactionModel {
     protected void makeTransaction(long step, double amount, Account orig, Account dest){
         makeTransaction(step, amount, orig, dest, false, -1);
     }
-
-    /**
-     * Generate and register a transaction (for normal transactions)
-     * @param step Current simulation step
-     * @param amount Transaction amount
-     * @param dest Destination account
-     */
-    protected void makeTransaction(long step, double amount, Account dest){
-        this.makeTransaction(step, amount, this.account, dest);
-    }
-
 }

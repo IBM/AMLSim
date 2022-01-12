@@ -243,7 +243,8 @@ class TransactionGenerator:
         self.out_tx_file = output_conf["transactions"]  # All transaction list CSV file
         self.out_account_file = output_conf["accounts"]  # All account list CSV file
         self.out_alert_member_file = output_conf["alert_members"]  # Account list of AML typology members CSV file
-
+        self.out_normal_models_file = output_conf["normal_models"] # List of normal models CSV file
+ 
         # Other properties for the transaction graph generator
         other_conf = self.conf["graph_generator"]
         self.degree_threshold = parse_int(other_conf["degree_threshold"])  # Degree for candidates of main accounts
@@ -1287,6 +1288,19 @@ class TransactionGenerator:
         logger.info("Exported %d members for %d AML typologies to %s" %
                     (acct_count, len(self.alert_groups), alert_member_file))
 
+    def write_normal_models(self):
+        output_file = os.path.join(self.output_dir, self.out_normal_models_file)
+        with open(output_file, "w") as wf:
+            writer = csv.writer(wf)
+            column_headers = ["modelID", "type", "accountID", "isMain", "isSAR", "scheduleID"]
+            writer.writerow(column_headers)
+            
+            for normal_model in self.normal_models:
+                for account_id in normal_model.node_ids:
+                    values = [normal_model.id, normal_model.type, account_id, normal_model.is_main(account_id), False, 2]
+                    writer.writerow(values)
+
+
     def count__patterns(self, threshold=2):
         """Count the number of fan-in and fan-out patterns in the generated transaction graph
         """
@@ -1358,3 +1372,4 @@ if __name__ == "__main__":
     txg.write_account_list()  # Export accounts to a CSV file
     txg.write_transaction_list()  # Export transactions to a CSV file
     txg.write_alert_account_list()  # Export alert accounts to a CSV file
+    txg.write_normal_models()

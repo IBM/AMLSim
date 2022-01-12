@@ -1,47 +1,46 @@
 package amlsim;
 
-import amlsim.model.aml.AMLTypology;
+import amlsim.model.AbstractTransactionModel;
 
 import java.util.*;
 
-/*
- * Group of suspicious transactions and involving accounts as an AML typology
- * Accounts in this class perform suspicious transactions based on the given typology (model)
- */
-public class Alert {
-
-    private long alertID;  // Alert identifier
+public class AccountGroup {
+    
+    private long accountGroupId;
     private List<Account> members;  // Accounts involved in this alert
     private Account mainAccount;   // Main account of this alert
-    private AMLTypology model;    // Transaction model
+    private AbstractTransactionModel model;    // Transaction model
     private AMLSim amlsim;  // AMLSim main object
 
-    Alert(long alertID, AMLTypology model, AMLSim sim){
-        this.alertID = alertID;
+    AccountGroup(long accountGroupId, AMLSim sim) {
+        this.accountGroupId = accountGroupId;
         this.members = new ArrayList<>();
         this.mainAccount = null;
-        this.model = model;
-        this.model.setAlert(this);
         this.amlsim = sim;
+    }
+
+
+    void setModel(AbstractTransactionModel model) {
+        this.model = model;
     }
 
     /**
      * Add transactions
+     * 
      * @param step Current simulation step
      */
-    void registerTransactions(long step, Account acct){
-        if(model.isValidStep(step)){
-            model.sendTransactions(step, acct);
-        }
+    void registerTransactions(long step, Account acct) {
+        // maybe add is valid step.
+        model.sendTransactions(step, acct);
     }
 
     /**
      * Involve an account in this alert
+     * 
      * @param acct Account object
      */
-    void addMember(Account acct){
+    void addMember(Account acct) {
         this.members.add(acct);
-        acct.addAlert(this);
     }
 
     /**
@@ -53,11 +52,11 @@ public class Alert {
     }
 
     /**
-     * Get alert identifier as long type
-     * @return Alert identifier
+     * Get account group identifier as long type
+     * @return Account group identifier
      */
-    public long getAlertID(){
-        return alertID;
+    public long getAccoutGroupId(){
+        return this.accountGroupId;
     }
 
     /**
@@ -84,12 +83,11 @@ public class Alert {
         this.mainAccount = account;
     }
 
-    public AMLTypology getModel(){
+    public AbstractTransactionModel getModel() {
         return model;
     }
 
-    public boolean isSAR(){
+    public boolean isSAR() {
         return this.mainAccount != null && this.mainAccount.isSAR();
     }
 }
-

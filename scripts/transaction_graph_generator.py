@@ -300,7 +300,7 @@ class TransactionGenerator:
                  if self.degree_threshold <= self.g.in_degree(n)
                  or self.degree_threshold <= self.g.out_degree(n)]
         return nodes
-        
+
 
     def check_account_exist(self, aid):
         """Validate an existence of a specified account. If absent, it raises KeyError.
@@ -587,6 +587,13 @@ class TransactionGenerator:
         topology = nx.DiGraph()
         topology = nx.read_edgelist(csv_name, delimiter=",", create_using=topology)
         self.add_subgraph(members, topology)
+
+
+    def mark_active_edges(self):
+        nx.set_edge_attributes(self.g, 'active', False)
+        for normal_model in self.normal_models:
+            subgraph = self.g.subgraph(normal_model.node_ids)
+            nx.set_edge_attributes(subgraph, 'active', True)
 
 
     def load_normal_models(self):
@@ -1224,7 +1231,8 @@ class TransactionGenerator:
                 attr = e[2]
                 tid = attr['edge_id']
                 tx_type = random.choice(self.tx_types)
-                writer.writerow([tid, src, dst, tx_type])
+                if attr['active']:
+                    writer.writerow([tid, src, dst, tx_type])
         logger.info("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))
 
     def write_alert_account_list(self):
@@ -1333,6 +1341,7 @@ if __name__ == "__main__":
     txg.build_normal_models()
     txg.set_main_acct_candidates()
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
+    txg.mark_active_edges()
 
     if degree_threshold > 0:
         logger.info("Added alert transaction patterns")

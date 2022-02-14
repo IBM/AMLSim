@@ -7,7 +7,6 @@ package amlsim.model.aml;
 import amlsim.AMLSim;
 import amlsim.Account;
 import amlsim.TargetedTransactionAmount;
-import amlsim.TargetedTransactionAmount;
 
 import java.util.*;
 

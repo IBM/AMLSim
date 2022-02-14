@@ -1,8 +1,16 @@
 package amlsim;
 
+import amlsim.model.AbstractTransactionModel;
 import amlsim.model.ModelParameters;
 import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
+import amlsim.model.normal.EmptyModel;
+import amlsim.model.normal.FanInTransactionModel;
+import amlsim.model.normal.FanOutTransactionModel;
+import amlsim.model.normal.ForwardTransactionModel;
+import amlsim.model.normal.MutualTransactionModel;
+import amlsim.model.normal.PeriodicalTransactionModel;
+import amlsim.model.normal.SingleTransactionModel;
 import amlsim.model.aml.AMLTypology;
 import amlsim.stat.Diameter;
 import sim.engine.SimState;
@@ -26,6 +34,7 @@ public class AMLSim extends SimState {
 
 	private Map<String, Integer> idMap = new HashMap<>();  // Account ID --> Index
 	private Map<Long, Alert> alerts = new HashMap<>();  // Alert ID --> Alert (AML typology) object
+	private Map<Long, AccountGroup> accountGroupsMap = new HashMap<>();
 	private int numBranches = 0;
 	private ArrayList<Branch> branches = new ArrayList<>();
 	private int normalTxInterval = 30;  // Default transaction interval for normal accounts
@@ -43,6 +52,7 @@ public class AMLSim extends SimState {
 
 	private String accountFile = "";
 	private String transactionFile = "";
+	private String normalModelsFile = "";
 	private String alertMemberFile = "";
 	private String counterFile = "";
 	private String diameterFile = "";
@@ -120,6 +130,14 @@ public class AMLSim extends SimState {
 		}
 
 		try {
+			loadNormalModelsFile(this.normalModelsFile);
+		} catch (IOException e) {
+			System.err.println("Cannot load normal model file: " + this.normalModelsFile);
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		try {
 			loadAlertMemberFile(this.alertMemberFile);
 		} catch (IOException e) {
 			System.err.println("Cannot load alert file: " + this.alertMemberFile);
@@ -168,6 +186,7 @@ public class AMLSim extends SimState {
 
         this.accountFile = simProp.getInputAcctFile();
         this.transactionFile = simProp.getInputTxFile();
+		this.normalModelsFile = simProp.getNormalModelsFile();
         this.alertMemberFile = simProp.getInputAlertMemberFile();
         this.counterFile = simProp.getCounterLogFile();
         this.diameterFile = simProp.getDiameterLogFile();
@@ -198,8 +217,7 @@ public class AMLSim extends SimState {
 		}
 		return columnIndex;
 	}
-
-//	private final Set<String> baseColumns = new HashSet<>(Arrays.asList("ACCOUNT_ID", "IS_SAR", "TX_BEHAVIOR_ID", "INIT_BALANCE", "START_DATE", "END_DATE"));
+	
 
 	private void loadAccountFile(String accountFile) throws IOException{
 		BufferedReader reader = new BufferedReader(new FileReader(accountFile));
@@ -211,19 +229,16 @@ public class AMLSim extends SimState {
 			String[] elements = line.split(",");
             String accountID = elements[columnIndex.get("ACCOUNT_ID")];
 			boolean isSAR = elements[columnIndex.get("IS_SAR")].toLowerCase().equals("true");
-			int modelID = Integer.parseInt(elements[columnIndex.get("TX_BEHAVIOR_ID")]);
 			float initBalance = Float.parseFloat(elements[columnIndex.get("INIT_BALANCE")]);
-			int start = Integer.parseInt(elements[columnIndex.get("START_DATE")]);
-			int end = Integer.parseInt(elements[columnIndex.get("END_DATE")]);
 			String bankID = elements[columnIndex.get("BANK_ID")];
 
 
 			Account account;
 			if (isSAR) {
-				account = new SARAccount(accountID, modelID, normalTxInterval, initBalance, start, end, bankID,
+				account = new SARAccount(accountID, normalTxInterval, initBalance, bankID,
 						getRandom());
 			} else {
-				account = new Account(accountID, modelID, normalTxInterval, initBalance, start, end, bankID,
+				account = new Account(accountID, normalTxInterval, initBalance, bankID,
 						getRandom());
 			}
 
@@ -257,6 +272,58 @@ public class AMLSim extends SimState {
 			src.addTxType(dst, ttype);
 		}
 		reader.close();
+	}
+
+	private void loadNormalModelsFile(String filename) throws IOException {
+		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+			String line;
+			line = reader.readLine();
+			Map<String, Integer> columnIndexMap = getColumnIndices(line);
+
+			while((line = reader.readLine()) != null) {
+				String[] elements = line.split(",");
+
+				String type = elements[columnIndexMap.get("type")];
+				String accountID = elements[columnIndexMap.get("accountID")];
+				long accountGroupId = Long.parseLong(elements[columnIndexMap.get("modelID")]);
+				boolean isMain = elements[columnIndexMap.get("isMain")].toLowerCase().equals("true");
+				
+
+				AccountGroup accountGroup;
+				if (this.accountGroupsMap.containsKey(accountGroupId)) {
+					accountGroup = this.accountGroupsMap.get(accountGroupId);
+				}
+				else {
+					accountGroup = new AccountGroup(accountGroupId, this);
+					accountGroupsMap.put(accountGroupId, accountGroup);
+				}
+
+				Account account = getAccountFromID(accountID);
+				
+				accountGroup.addMember(account);
+				if (isMain) {
+					accountGroup.setMainAccount(account);
+				}
+
+				account.addAccountGroup(accountGroup);
+
+				AbstractTransactionModel model;
+
+				switch (type) {
+					case AbstractTransactionModel.SINGLE: model = new SingleTransactionModel(accountGroup, rand); break;
+					case AbstractTransactionModel.FAN_OUT: model= new FanOutTransactionModel(accountGroup, rand); break;
+					case AbstractTransactionModel.FAN_IN: model = new FanInTransactionModel(accountGroup, rand); break;
+					case AbstractTransactionModel.MUTUAL: model = new MutualTransactionModel(accountGroup, rand); break;
+					case AbstractTransactionModel.FORWARD: model = new ForwardTransactionModel(accountGroup, rand); break;
+					case AbstractTransactionModel.PERIODICAL: model = new PeriodicalTransactionModel(accountGroup, rand); break;
+					default: System.err.println("Unknown model type: " + type); model = new EmptyModel(accountGroup, rand); break;
+				}
+
+				accountGroup.setModel(model);
+
+				model.setParameters(this.normalTxInterval, -1, -1);
+			}
+		}
 	}
 
 

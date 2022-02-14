@@ -2,6 +2,7 @@ package amlsim.model.normal;
 
 import amlsim.AMLSim;
 import amlsim.Account;
+import amlsim.AccountGroup;
 import amlsim.TargetedTransactionAmount;
 import amlsim.model.AbstractTransactionModel;
 
@@ -18,14 +19,13 @@ public class SingleTransactionModel extends AbstractTransactionModel {
     private long txStep = -1;
 
     private Random random;
-    private Account account;
 
     public SingleTransactionModel(
-        Account account,
+        AccountGroup accountGroup,
         Random random
     ) {
         this.random = random;
-        this.account = account;
+        this.accountGroup = accountGroup;
     }
     
     public String getModelName(){
@@ -44,17 +44,17 @@ public class SingleTransactionModel extends AbstractTransactionModel {
         this.txStep = this.startStep + this.random.nextInt((int)(endStep - startStep + 1));
     }
     
-    public void makeTransaction(long step){
-        List<Account> beneList = this.account.getBeneList();
+    public void sendTransactions(long step, Account account){
+        List<Account> beneList = account.getBeneList();
         int numBene = beneList.size();
         if(step != this.txStep || numBene == 0){
             return;
         }
 
-        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(this.account.getBalance(), random);
+        TargetedTransactionAmount transactionAmount = new TargetedTransactionAmount(account.getBalance(), random);
 
         int index = this.random.nextInt(numBene);
         Account dest = beneList.get(index);
-        this.makeTransaction(step, transactionAmount.doubleValue(), dest);
+        this.makeTransaction(step, transactionAmount.doubleValue(), account, dest);
     }
 }

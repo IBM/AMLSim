@@ -1,0 +1,5 @@
+count,type,schedule_id,min_accounts,max_accounts,min_period,max_period,bank_id
+5,single,2,1,1,5,20,bank
+5,fan_out,2,5,20,5,20,bank
+5,fan_in,2,5,20,5,20,bank
+5,forward,2,3,3,5,20,bank

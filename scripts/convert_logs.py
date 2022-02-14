@@ -635,7 +635,11 @@ class LogConverter:
                 if 'dataType' in output_item:
                     output_type = output_item['dataType']
                     input_type = lookup.inputType(output_type)
-                    input_index = next(idx for idx, header_type in enumerate(header) if input_type == header_type)
+
+                    try:
+                        input_index = header.index(input_type)
+                    except ValueError:
+                        continue
 
                     if output_type == "start_time":
                         try:

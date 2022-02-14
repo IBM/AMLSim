@@ -183,10 +183,10 @@ public abstract class AMLTypology extends AbstractTransactionModel {
         return "AMLTypology";
     }
 
-    @Override
+    // ???
+    // this is a no-op coming from SAR Account
+    // this eventually should go away.
+    // To Do Jordan D. Nelson
     public final void makeTransaction(long step) {
     }
-
-    public abstract void sendTransactions(long step, Account acct);
-
 }

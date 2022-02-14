@@ -3,6 +3,7 @@ package amlsim.model.normal;
 import java.util.Random;
 
 import amlsim.Account;
+import amlsim.AccountGroup;
 import amlsim.model.AbstractTransactionModel;
 
 /**
@@ -12,7 +13,7 @@ import amlsim.model.AbstractTransactionModel;
 public class EmptyModel extends AbstractTransactionModel {
 
     public EmptyModel(
-        Account account,
+        AccountGroup accountGroup,
         Random random
     ) {
     }
@@ -23,7 +24,7 @@ public class EmptyModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void makeTransaction(long step) {
+    public void sendTransactions(long step, Account origAccount) {
         // Do nothing in default
     }
 }

@@ -13,15 +13,14 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
     private int index = 0;
     
     private Random random;
-    private Account account;
     private TargetedTransactionAmount transactionAmount;
 
     public FanOutTransactionModel(
-        Account account,
+        AccountGroup accountGroup,
         Random random
     ) {
+        this.accountGroup = accountGroup;
         this.random = random;
-        this.account = account;
     }
 
     public void setParameters(int interval, long start, long end){
@@ -41,8 +40,8 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
     }
 
     @Override
-    public void makeTransaction(long step) {
-        List<Account> beneList = this.account.getBeneList();  // Destination accounts
+    public void sendTransactions(long step, Account account) {
+        List<Account> beneList = account.getBeneList();  // Destination accounts
         int numBene = beneList.size();
         if (!isValidStep(step) || numBene == 0) { // No more destination accounts
             return;
@@ -51,13 +50,13 @@ public class FanOutTransactionModel extends AbstractTransactionModel {
             index = 0;
         }
 
-        this.transactionAmount = new TargetedTransactionAmount(this.account.getBalance(), random);
+        this.transactionAmount = new TargetedTransactionAmount(account.getBalance(), random);
         double amount = this.transactionAmount.doubleValue();
 
         Account bene = beneList.get(index);
 
         if (amount > 0) {
-            this.makeTransaction(step, amount, bene);
+            this.makeTransaction(step, amount, account, bene);
         }
         index++;
     }

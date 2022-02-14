@@ -4,12 +4,11 @@ import amlsim.model.*;
 import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
 import amlsim.model.normal.*;
-import paysim.*;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import java.util.*;
 
-public class Account extends Client implements Steppable {
+public class Account implements Steppable {
 
     protected String id;
 
@@ -31,9 +30,9 @@ public class Account extends Client implements Steppable {
 
 	private static List<String> all_tx_types = new ArrayList<>();
 
-	private ArrayList<ActionProbability> probList;
 	private ArrayList<String> paramFile = new ArrayList<>();
-	private CurrentStepHandler stepHandler = null;
+
+	private double balance = 0;
 
 	protected long startStep = 0;
 	protected long endStep = 0;
@@ -99,11 +98,31 @@ public class Account extends Client implements Steppable {
 		this.isSAR = flag;
 	}
 
-	public boolean isSAR(){
+	public boolean isSAR() {
 		return this.isSAR;
 	}
 
-	void setBranch(Branch branch){
+	public double getBalance() {
+		return this.balance;
+	}
+
+	public void setBalance(double balance) {
+		this.balance = balance;
+	}
+
+    public void withdraw(double ammount) {
+        if (this.balance < ammount) {
+            this.balance = 0;
+        } else {
+            this.balance -= ammount;
+        }
+    }
+
+	public void deposit(double ammount){
+		this.balance += ammount;
+	}
+
+	void setBranch(Branch branch) {
 		this.branch = branch;
 	}
 
@@ -257,27 +276,11 @@ public class Account extends Client implements Steppable {
 		return "C" + this.id;
 	}
 
-	public ArrayList<ActionProbability> getProbList() {
-		return probList;
-	}
-
-	public void setProbList(ArrayList<ActionProbability> probList) {
-		this.probList = probList;
-	}
-
 	public ArrayList<String> getParamFile() {
 		return paramFile;
 	}
 
 	public void setParamFile(ArrayList<String> paramFile) {
 		this.paramFile = paramFile;
-	}
-
-	public CurrentStepHandler getStepHandler() {
-		return stepHandler;
-	}
-
-	public void setStepHandler(CurrentStepHandler stepHandler) {
-		this.stepHandler = stepHandler;
 	}
 }

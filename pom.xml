@@ -42,7 +42,7 @@
         <dependency>
             <groupId>mason</groupId>
             <artifactId>mason</artifactId>
-            <version>18</version>
+            <version>20</version>
         </dependency>
         
         <dependency>
@@ -50,13 +50,6 @@
             <artifactId>mockito-inline</artifactId>
             <version>4.0.0</version>
         </dependency>
-
-        <dependency>
-            <groupId>paysim</groupId>
-            <artifactId>paysim</artifactId>
-            <version>1.0</version>
-        </dependency>
-
 
         <dependency>
             <groupId>org.mockito</groupId>

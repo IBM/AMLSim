@@ -1,7 +1,6 @@
 package amlsim;
 
 import amlsim.model.aml.AMLTypology;
-import paysim.PaySim;
 
 import java.util.*;
 
@@ -49,7 +48,7 @@ public class Alert {
      * Get main AMLSim object
      * @return AMLSim object
      */
-    public PaySim getSimulator(){
+    public AMLSim getSimulator(){
         return amlsim;
     }
 

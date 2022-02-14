@@ -5,7 +5,7 @@ import amlsim.model.cash.CashInModel;
 import amlsim.model.cash.CashOutModel;
 import amlsim.model.aml.AMLTypology;
 import amlsim.stat.Diameter;
-import paysim.*;
+import sim.engine.SimState;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -15,7 +15,7 @@ import java.util.logging.*;
 /**
  * AMLSimulator Main class
  */
-public class AMLSim extends ParameterizedPaySim {
+public class AMLSim extends SimState {
 
     private static SimProperties simProp;
 	private static final int TX_SIZE = 10000000;  // Transaction buffer size
@@ -35,6 +35,7 @@ public class AMLSim extends ParameterizedPaySim {
 	private static String simulatorName = null;
 	private ArrayList<String> paramFile = new ArrayList<>();
 	private ArrayList<String> actions = new ArrayList<>();
+	private ArrayList<Account> accounts = new ArrayList<Account>();
 	private BufferedWriter bufWriter;
 	private static long numOfSteps = 1;  // Number of simulation steps
 	private static int currentLoop = 0;  // Simulation iteration counter
@@ -52,19 +53,13 @@ public class AMLSim extends ParameterizedPaySim {
 
 	private AMLSim(long seed) {
 		super(seed);
-//		AMLSim.seed = (int)seed;
 		AMLSim.rand = new Random(seed);
-		super.setTagName("1");
 		Handler handler = new ConsoleHandler();
 		logger.addHandler(handler);
 		java.util.logging.Formatter formatter = new SimpleFormatter();
 		handler.setFormatter(formatter);
         simulatorName = simProp.getSimName();
 	}
-
-//	public static int getSeed(){
-//		return seed;
-//	}
  
 	public static Random getRandom(){
 	    return rand;
@@ -81,31 +76,9 @@ public class AMLSim extends ParameterizedPaySim {
 	public void setCurrentLoop(int currentLoop){
 		AMLSim.currentLoop = currentLoop;
 	}
-    
-    /**
-     * Load properties for PaySim
-     * TODO: to be removed after resolving the PaySim dependency
-     * @param args unused
-     */
-    @Override
-	public void parseArgs(String[] args){
-	    String paysimPropFile = "paramFiles/paysim.properties";
-        super.setPropertiesFile(paysimPropFile);
-        logger.info("PaySim Properties File: " + paysimPropFile);
 
-        numOfSteps = simProp.getSteps();
-        logger.info("Simulation Steps: " + numOfSteps);
-	}
-    
-    /**
-     * Start AMLSim
-     * TODO: to be removed after resolving the PaySim dependency
-     * @param args
-     */
-    @Override
-	public void runSimulation(String[] args){
-		parseArgs(args);
-		executeSimulation();
+	private List<Account> getAccounts() {
+		return this.accounts;
 	}
     
     /**
@@ -123,50 +96,42 @@ public class AMLSim extends ParameterizedPaySim {
      */
     private Account getAccountFromID(String id){
 		int index = this.idMap.get(id);
-		return (Account) this.getClients().get(index);
+		return (Account) this.getAccounts().get(index);
 	}
     
     /**
      * Initialize AMLSim by loading account and transaction list files
      */
-	public void initSimulation(){
-		// Load account file
-		try{
+	public void initSimulation() {
+		try {
 			loadAccountFile(this.accountFile);
-		}catch(IOException e){
+		} catch (IOException e) {
 			System.err.println("Cannot load account file: " + this.accountFile);
 			e.printStackTrace();
 			System.exit(1);
 		}
 
-		// Load transaction file
-		try{
+		try {
 			loadTransactionFile(this.transactionFile);
-		}catch(IOException e){
+		} catch (IOException e) {
 			System.err.println("Cannot load transaction file: " + this.transactionFile);
 			e.printStackTrace();
 			System.exit(1);
 		}
 
-		// Load alert member file
-		try{
+		try {
 			loadAlertMemberFile(this.alertMemberFile);
-		}catch(IOException e){
+		} catch (IOException e) {
 			System.err.println("Cannot load alert file: " + this.alertMemberFile);
 			e.printStackTrace();
 			System.exit(1);
 		}
-
-		super.initSimulation();
 	}
 
-	public void loadParametersFromFile(){
-		super.loadParametersFromFile();
-
-        // Default transaction interval for accounts
-        this.normalTxInterval = simProp.getNormalTransactionInterval();
-//        this.sarTxInterval = simProp.getSarTransactionInterval();
-//        this.sarBalanceRatio = simProp.getSatBalanceRatio();
+	public void loadParametersFromFile() {
+		numOfSteps = simProp.getSteps();
+		// Default transaction interval for accounts
+		this.normalTxInterval = simProp.getNormalTransactionInterval();
 
 		// Number of transactions for logging buffer
         int transactionLimit = simProp.getTransactionLimit();
@@ -262,9 +227,9 @@ public class AMLSim extends ParameterizedPaySim {
 						getRandom());
 			}
 
-			int index = this.getClients().size();
+			int index = this.getAccounts().size();
 			account.setBranch(this.branches.get(index % this.numBranches));
-			this.getClients().add(account);
+			this.getAccounts().add(account);
 			this.idMap.put(accountID, index);
 			this.schedule.scheduleRepeating(account);
 		}
@@ -375,19 +340,6 @@ public class AMLSim extends ParameterizedPaySim {
         }
 	}
 
-	private void loadAggregatedFile() {
-		this.paramFile = new ArrayList<>();
-
-		// TODO: Load actions (transaction types) from the parameter file
-        this.actions.add("TRANSFER");
-//		this.actions.add("CASH_IN");
-//		this.actions.add("CASH_OUT");
-//		this.actions.add("DEBIT");
-//		this.actions.add("DEPOSIT");
-//		this.actions.add("PAYMENT");
-//		this.actions.add("TRANSFER");
-	}
-
 
 	private void initTxLogBufWriter(String logFileName) {
 		try {
@@ -410,31 +362,19 @@ public class AMLSim extends ParameterizedPaySim {
 
 		// increase transfer limit with the current loop
 		initSimulatorName();
-		loadAggregatedFile();
 
 		//Initiate the dumpfile output writer
         txLogFileName = simProp.getOutputTxLogFile();
 		initTxLogBufWriter(txLogFileName);
 		logger.info("Transaction log file: " + txLogFileName);
 
-		//add the param list to the object
-		setParamFileList(this.paramFile);
-
-		//Set all of the possible actions that can be done
-		setActionTypes(this.actions);
-
-		//Add the writer to the simulator
-		setWriter(this.bufWriter);
-
-		// Set total simulation steps
-		setNrOfSteps(numOfSteps);
-
 		// Create account objects
 		super.start();
+		this.initSimulation();
 
 		// Starting the simulation
 		long begin = System.currentTimeMillis();
-		System.out.println("Starting PaySim Running for " + numOfSteps + " steps. Current loop:" + AMLSim.currentLoop);
+		System.out.println("Starting AMLSim Running for " + numOfSteps + " steps. Current loop:" + AMLSim.currentLoop);
 
 		long step;
 		while ((step = super.schedule.getSteps()) < numOfSteps) {
@@ -510,19 +450,6 @@ public class AMLSim extends ParameterizedPaySim {
 	}
 
 
-	public void writeLog() {
-        // TODO: to be removed after resolving the PaySim dependency
-	    // Do nothing (override the method in PaySim)
-        // Use transaction repository instead of transaction object list
-	}
-
-	public void writeSummaryFile() {
-	    // TODO: to be removed after resolving the PaySim dependency
-	    // Do nothing (override the method in PaySim)
-		// Skip writing summary file of PaySim
-	}
-
-
 	public static void main(String[] args){
         if(args.length < 1){
             System.err.println("Usage: java amlsim.AMLSim [ConfFile]");
@@ -547,7 +474,7 @@ public class AMLSim extends ParameterizedPaySim {
         int seed = simProp.getSeed();
         AMLSim sim = new AMLSim(seed);
         sim.setCurrentLoop(0);
-        sim.runSimulation(args);
+        sim.executeSimulation();
 	}
 }
 

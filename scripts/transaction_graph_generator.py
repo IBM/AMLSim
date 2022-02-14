@@ -302,29 +302,6 @@ class TransactionGenerator:
         return nodes
 
 
-    def add_normal_sar_edges(self, ratio=1.0):
-        """Add extra edges from normal accounts to SAR accounts to adjust transaction graph features
-        :param ratio: Ratio of the number of edges to be added from normal accounts to SAR accounts
-        compared to the number of total SAR accounts
-        """
-        sar_flags = nx.get_node_attributes(self.g, IS_SAR_KEY)
-        orig_candidates = [n for n in self.hubs if not sar_flags.get(n, False)]  # Normal
-        bene_candidates = [n for n, sar in sar_flags.items() if sar]  # SAR
-        num = int(len(bene_candidates) * ratio)
-        if num <= 0:
-            return
-
-        num_origs = len(orig_candidates)
-        print("Number of orig/bene candidates: %d/%d" % (num_origs, len(bene_candidates)))
-        orig_list = random.choices(orig_candidates, k=num)
-        bene_list = random.choices(bene_candidates, k=num)
-        for i in range(num):
-            _orig = orig_list[i]
-            _bene = bene_list[i]
-            self.g.add_edge(_orig, _bene)
-            self.add_edge_info(_orig, _bene)
-        logger.info("Added %d edges from normal accounts to sar accounts" % num)
-
     def check_account_exist(self, aid):
         """Validate an existence of a specified account. If absent, it raises KeyError.
         :param aid: Account ID
@@ -610,6 +587,13 @@ class TransactionGenerator:
         topology = nx.DiGraph()
         topology = nx.read_edgelist(csv_name, delimiter=",", create_using=topology)
         self.add_subgraph(members, topology)
+
+
+    def mark_active_edges(self):
+        nx.set_edge_attributes(self.g, 'active', False)
+        for normal_model in self.normal_models:
+            subgraph = self.g.subgraph(normal_model.node_ids)
+            nx.set_edge_attributes(subgraph, 'active', True)
 
 
     def load_normal_models(self):
@@ -1247,7 +1231,8 @@ class TransactionGenerator:
                 attr = e[2]
                 tid = attr['edge_id']
                 tx_type = random.choice(self.tx_types)
-                writer.writerow([tid, src, dst, tx_type])
+                if attr['active']:
+                    writer.writerow([tid, src, dst, tx_type])
         logger.info("Exported %d transactions to %s" % (self.g.number_of_edges(), tx_file))
 
     def write_alert_account_list(self):
@@ -1334,16 +1319,8 @@ if __name__ == "__main__":
 
     _conf_file = argv[1]
     _sim_name = argv[2] if argc >= 3 else None
-    _ratio = float(argv[3]) if argc >= 4 else 0.0
 
-    # if len(argv) >= 3:
-    #     _sim_name = argv[2]
-    # else:
-    #     _sim_name = None
-    # if len(argv) >= 4:
-    #     _ratio = float(argv[3])
-    # else:
-    #     _ratio = 0.0
+
 
     # Validation option for graph contractions
     deg_param = os.getenv("DEGREE")
@@ -1364,7 +1341,7 @@ if __name__ == "__main__":
     txg.build_normal_models()
     txg.set_main_acct_candidates()
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
-    txg.add_normal_sar_edges(_ratio)
+    txg.mark_active_edges()
 
     if degree_threshold > 0:
         logger.info("Added alert transaction patterns")

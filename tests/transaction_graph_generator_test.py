@@ -1,8 +1,11 @@
 import unittest
 
-from transaction_graph_generator import get_degrees
+from transaction_graph_generator import TransactionGenerator, get_degrees
 from transaction_graph_generator import get_in_and_out_degrees
 from transaction_graph_generator import directed_configuration_model
+import networkx as nx
+from fixtures.conf import CONFIG
+from amlsim.normal_model import NormalModel
 
 
 class TransactionGraphGeneratorTests(unittest.TestCase):
@@ -113,7 +116,33 @@ class TransactionGraphGeneratorTests(unittest.TestCase):
         self.assertEqual(G.selfloop_edges(), [])
 
 
-        
+    def test_mark_active_edges_marks_default_as_false(self):
+        G = nx.DiGraph()
+        G.add_nodes_from([1, 2, 3])
+        G.add_edge(2, 3)
+
+        txg = TransactionGenerator(CONFIG)
+        txg.g = G
+        txg.mark_active_edges()
+        self.assertEqual(txg.g[2][3]['active'], False)
+
+
+    def test_mark_active_edges_marks_real_path_as_active(self):
+        G = nx.DiGraph()
+        G.add_nodes_from([1, 2, 3])
+        G.add_edge(2, 3)
+        G.add_edge(1, 2)
+
+        txg = TransactionGenerator(CONFIG)
+        txg.g = G
+        txg.normal_models = [
+            NormalModel(
+                1, 'single', {2,3}, 2
+            )
+        ]
+        txg.mark_active_edges()
+        self.assertEqual(txg.g[2][3]['active'], True)
+        self.assertEqual(txg.g[1][2]['active'], False)
 
 
 if __name__ == ' main ':

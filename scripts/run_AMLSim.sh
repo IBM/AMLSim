@@ -10,6 +10,8 @@ MAX_HEAP=4g
 
 CONF_JSON=$1
 
+export MAVEN_OPTS=" -Xms${MIN_HEAP} -Xmx${MAX_HEAP}"
+
 if ! command -v mvn &> /dev/null
 then
     echo 'maven not installed. proceeding.'

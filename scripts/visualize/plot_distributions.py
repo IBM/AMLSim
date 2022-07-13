@@ -15,11 +15,13 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import warnings
+import matplotlib.cbook
 
-category = matplotlib.cbook.deprecation.MatplotlibDeprecationWarning
-warnings.filterwarnings('ignore', category=category)
-warnings.filterwarnings('ignore', category=UserWarning)
-warnings.filterwarnings('ignore', category=RuntimeWarning)
+# category = matplotlib.cbook.deprecation.MatplotlibDeprecationWarning
+warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
+# warnings.filterwarnings('ignore', category=category)
+# warnings.filterwarnings('ignore', category=UserWarning)
+# warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 
 def get_date_list(_g):

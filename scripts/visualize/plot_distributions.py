@@ -2,26 +2,25 @@
 Plot statistical distributions from the transaction graph.
 """
 
-import os
-import sys
 import csv
 import json
-from collections import Counter, defaultdict
-import networkx as nx
-import powerlaw
-from datetime import datetime, timedelta
-import numpy as np
-
-import matplotlib
-import matplotlib.pyplot as plt
+import os
+import sys
 import warnings
-import matplotlib.cbook
+from collections import Counter, defaultdict
+from datetime import datetime, timedelta
 
-# category = matplotlib.cbook.deprecation.MatplotlibDeprecationWarning
-warnings.filterwarnings("ignore",category=matplotlib.cbook.mplDeprecation)
-# warnings.filterwarnings('ignore', category=category)
-# warnings.filterwarnings('ignore', category=UserWarning)
-# warnings.filterwarnings('ignore', category=RuntimeWarning)
+import matplotlib.cbook
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import powerlaw
+from matplotlib import MatplotlibDeprecationWarning
+
+warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
+warnings.filterwarnings('ignore', category=MatplotlibDeprecationWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 
 def get_date_list(_g):

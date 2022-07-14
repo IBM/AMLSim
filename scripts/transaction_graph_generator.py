@@ -891,7 +891,7 @@ class TransactionGenerator:
             :return: main account ID and bank ID
             """
             self.check_hub_exists()
-            _main_acct = random.sample(self.hubs, 1)[0]
+            _main_acct = random.sample(list(self.hubs), 1)[0]
             _main_bank_id = self.acct_to_bank[_main_acct]
             self.remove_typology_candidate(_main_acct)
             add_node(_main_acct, _main_bank_id)
@@ -939,7 +939,7 @@ class TransactionGenerator:
                 sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
+            sub_accts = random.sample(list(self.bank_to_accts[sub_bank_id]), num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -962,7 +962,7 @@ class TransactionGenerator:
                 sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
+            sub_accts = random.sample(list(self.bank_to_accts[sub_bank_id]), num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -1091,7 +1091,7 @@ class TransactionGenerator:
                 main_acct = all_accts[0]
             else:
                 main_acct, main_bank_id = add_main_acct()
-                sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
+                sub_accts = random.sample(list(self.bank_to_accts[main_bank_id]), num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
                     add_node(n, main_bank_id)

@@ -16,7 +16,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import warnings
 
-category = matplotlib.cbook.deprecation.MatplotlibDeprecationWarning
+from matplotlib import MatplotlibDeprecationWarning
+
+category = MatplotlibDeprecationWarning
 warnings.filterwarnings('ignore', category=category)
 warnings.filterwarnings('ignore', category=UserWarning)
 warnings.filterwarnings('ignore', category=RuntimeWarning)

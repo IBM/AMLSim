@@ -1,5 +1,5 @@
 numpy
-networkx==1.11
+networkx
 matplotlib>=3.1.2
 pygraphviz
 powerlaw

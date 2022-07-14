@@ -366,20 +366,20 @@ class Nominator:
 
     def is_in_type_relationship(self, type, main_id, node_ids=set()):
         node_ids = set(node_ids)
-        normal_models = self.g.node[main_id]['normal_models']
+        normal_models = self.g.nodes[main_id]['normal_models']
         filtereds = (nm for nm in normal_models if nm.type == type and nm.main_id == main_id)
         return any(node_ids.issubset(filtered.node_ids) for filtered in filtereds)
 
 
     def normal_models_in_type_relationship(self, type, main_id, node_ids=set()):
         node_ids = set(node_ids)
-        normal_models = self.g.node[main_id]['normal_models']
+        normal_models = self.g.nodes[main_id]['normal_models']
         filtereds = (nm for nm in normal_models if nm.type == type and nm.main_id == main_id)
         return [filtered for filtered in filtereds if node_ids.issubset(filtered.node_ids)]
 
 
     def fan_clumps(self, type, node_id):
-        normal_models = self.g.node[node_id]['normal_models']
+        normal_models = self.g.nodes[node_id]['normal_models']
         filtereds = (nm for nm in normal_models if nm.type == type and nm.main_id == node_id)
         return (filtered.node_ids_without_main() for filtered in filtereds)
 

@@ -389,8 +389,6 @@ class TransactionGenerator:
         end_range = get_positive_or_none(self.default_end_range)
         default_model = self.default_model if self.default_model is not None else 1
 
-        # self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
-        #                         "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
         self.attr_names.extend(["first_name", "last_name", "city", "gender",  "birth_date"])
 
         with open(self.acct_file, "r") as rf:

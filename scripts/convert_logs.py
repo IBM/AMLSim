@@ -17,6 +17,7 @@ def days_to_date(days):
     date = datetime.datetime(2017, 1, 1) + datetime.timedelta(days=days)
     return date.strftime("%Y%m%d")
 
+
 def get_simulator_name(csv_file):
     """Convert log file name to the simulator name
     :param csv_file: Transaction log file name
@@ -57,7 +58,6 @@ class AMLTypology:
             self.is_sar = True
             self.main_acct = member
 
-        # add safe members
     def add_safe_member(self, member, is_sar):
         self.members.add(member)
         if not is_sar:
@@ -301,7 +301,7 @@ class Schema:
                 self.alert_tx_amount_idx = idx
             elif d_type == "timestamp":
                 self.alert_tx_time_idx = idx
-    
+
         # Individual party list
         for idx, col in enumerate(party_ind_data):
             name = col["name"]
@@ -401,7 +401,6 @@ class Schema:
         row[self.tx_dest_idx] = _dest
         row[self.tx_sar_idx] = _is_sar
         row[self.tx_alert_idx] = _alert_id
-        # row[self.tx_alert_type_idx] = _alert_type
 
         for name, value in attr.items():
             if name in self.tx_name2idx:
@@ -412,7 +411,7 @@ class Schema:
             if v_type == "date":
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
-        
+
     def get_alert_acct_row(self, _alert_id, _reason, _acct_id, _acct_name, _is_sar,
                            _model_id, _schedule_id, _bank_id, **attr):
         row = list(self.alert_acct_defaults)
@@ -438,14 +437,12 @@ class Schema:
     def get_non_alert_acct_row(self, _reason, _acct_id, _acct_name, _is_sar,
                            _model_id, _schedule_id, **attr):
         row = list(self.alert_acct_defaults)
-        # row[self.alert_acct_alert_idx] = _alert_id
         row[self.alert_acct_reason_idx] = _reason
         row[self.alert_acct_id_idx] = _acct_id
         row[self.alert_acct_name_idx] = _acct_name
         row[self.alert_acct_sar_idx] = _is_sar
         row[self.alert_acct_model_idx] = _model_id
         row[self.alert_acct_schedule_idx] = _schedule_id
-        # row[self.alert_acct_bank_idx] = _bank_id
 
         for name, value in attr.items():
             if name in self.alert_acct_name2idx:
@@ -585,10 +582,8 @@ class LogConverter:
         self.tx_file = output_conf["transactions"]  # All transaction list file
         self.cash_tx_file = output_conf["cash_transactions"]  # Cash transaction list file
         self.sar_acct_file = output_conf["sar_accounts"]  # SAR account list file
-        # self.non_sar_acct_file = output_conf["non_sar_accounts"]  # SAR account list file
         self.alert_tx_file = output_conf["alert_transactions"]  # Alert transaction list file
         self.alert_acct_file = output_conf["alert_members"]  # Alert account list file
-        self.non_alert_acct_file = output_conf["normal_models"] # non-alert account list file
 
         self.party_individual_file = output_conf["party_individuals"]
         self.party_organization_file = output_conf["party_organizations"]
@@ -795,7 +790,6 @@ class LogConverter:
         sar_idx = indices["isSAR"]
         alert_idx = indices["alertID"]
         type_idx = indices["type"]
-        # alert_type_idx = indices["alert_type"]
 
         tx_id = 1
         for row in reader:
@@ -897,7 +891,7 @@ class LogConverter:
                                                         model_id, schedule_id, bank_id, **attr)
             writer.writerow(output_row)
     
-    #convert normal members
+
     def convert_non_alert_members(self):
         input_file = self.group_file_1
         output_file = self.non_alert_acct_file
@@ -947,7 +941,8 @@ class LogConverter:
         with open(output_file, "w") as wf:
             writer = csv.writer(wf)
             self.write_sar_accounts(writer, alerts)
-    
+
+
     def sar_accounts(self, reader):
         header = next(reader)
         indices = {name: index for index, name in enumerate(header)}

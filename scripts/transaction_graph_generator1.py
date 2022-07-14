@@ -389,9 +389,8 @@ class TransactionGenerator:
         end_range = get_positive_or_none(self.default_end_range)
         default_model = self.default_model if self.default_model is not None else 1
 
-        # self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
-        #                         "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
-        self.attr_names.extend(["first_name", "last_name", "city", "gender",  "birth_date"])
+        self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
+                                "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
 
         with open(self.acct_file, "r") as rf:
             reader = csv.reader(rf)
@@ -400,16 +399,16 @@ class TransactionGenerator:
             idx_aid = name2idx["uuid"]
             idx_first_name = name2idx["first_name"]
             idx_last_name = name2idx["last_name"]
-            # idx_street_addr = name2idx["street_addr"]
+            idx_street_addr = name2idx["street_addr"]
             idx_city = name2idx["city"]
-            # idx_state = name2idx["state"]
-            # idx_zip = name2idx["zip"]
+            idx_state = name2idx["state"]
+            idx_zip = name2idx["zip"]
             idx_gender = name2idx["gender"]
-            # idx_phone_number = name2idx["phone_number"]
+            idx_phone_number = name2idx["phone_number"]
             idx_birth_date = name2idx["birth_date"]
-            # idx_ssn = name2idx["ssn"]
-            # idx_lon = name2idx["lon"]
-            # idx_lat = name2idx["lat"]
+            idx_ssn = name2idx["ssn"]
+            idx_lon = name2idx["lon"]
+            idx_lat = name2idx["lat"]
 
             default_country = "US"
             default_acct_type = "I"
@@ -419,19 +418,18 @@ class TransactionGenerator:
                 if row[0].startswith("#"):  # Comment line
                     continue
                 aid = row[idx_aid]
-                # first_name = row[idx_first_name]
-                # last_name = row[idx_last_name]
-                name = row[idx_name]
-                # street_addr = row[idx_street_addr]
+                first_name = row[idx_first_name]
+                last_name = row[idx_last_name]
+                street_addr = row[idx_street_addr]
                 city = row[idx_city]
-                # state = row[idx_state]
-                # zip_code = row[idx_zip]
+                state = row[idx_state]
+                zip_code = row[idx_zip]
                 gender = row[idx_gender]
-                # phone_number = row[idx_phone_number]
+                phone_number = row[idx_phone_number]
                 birth_date = row[idx_birth_date]
-                # ssn = row[idx_ssn]
-                # lon = row[idx_lon]
-                # lat = row[idx_lat]
+                ssn = row[idx_ssn]
+                lon = row[idx_lon]
+                lat = row[idx_lat]
                 model = default_model
 
                 if start_day is not None and start_range is not None:
@@ -444,7 +442,9 @@ class TransactionGenerator:
                 else:
                     end = -1
 
-                attr = {"first_name": first_name, "last_name": last_name, "city": city, "gender": gender, "birth_date": birth_date}
+                attr = {"first_name": first_name, "last_name": last_name, "street_addr": street_addr,
+                        "city": city, "state": state, "zip": zip_code, "gender": gender,
+                        "phone_number": phone_number, "birth_date": birth_date, "ssn": ssn, "lon": lon, "lat": lat}
 
                 init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
                 self.add_account(aid, init_balance=init_balance, country=default_country, business=default_acct_type, is_sar=False, **attr)
@@ -510,7 +510,7 @@ class TransactionGenerator:
         self.g = G
 
         logger.info("Add %d base transactions" % self.g.number_of_edges())
-        nodes = list(self.g.nodes())
+        nodes = self.g.nodes()
         for src_i, dst_i in self.g.edges():
             src = nodes[src_i]
             dst = nodes[dst_i]
@@ -532,7 +532,7 @@ class TransactionGenerator:
         if attr['bank_id'] is None:
             attr['bank_id'] = self.default_bank_id
 
-        self.g.nodes[acct_id].update(attr)
+        self.g.node[acct_id] = attr
 
         self.bank_to_accts[attr['bank_id']].add(acct_id)
         self.acct_to_bank[acct_id] = attr['bank_id']
@@ -558,7 +558,7 @@ class TransactionGenerator:
         self.check_account_exist(bene)
         if orig == bene:
             raise ValueError("Self loop from/to %s is not allowed for transaction networks" % str(orig))
-        self.g[orig][bene]['edge_id'] = self.edge_id
+        self.g.edge[orig][bene]['edge_id'] = self.edge_id
         self.edge_id += 1
 
     # Load Custom Topology Files
@@ -590,10 +590,10 @@ class TransactionGenerator:
 
 
     def mark_active_edges(self):
-        nx.set_edge_attributes(self.g, False, name='active')
+        nx.set_edge_attributes(self.g, 'active', False)
         for normal_model in self.normal_models:
             subgraph = self.g.subgraph(normal_model.node_ids)
-            nx.set_edge_attributes(subgraph, True, name='active')
+            nx.set_edge_attributes(subgraph, 'active', True)
 
 
     def load_normal_models(self):
@@ -672,7 +672,7 @@ class TransactionGenerator:
         normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
 
         for result_id in result_ids:
-            self.g.nodes[result_id]['normal_models'].append(normal_model)
+            self.g.node[result_id]['normal_models'].append(normal_model)
 
         self.normal_models.append(normal_model)
         
@@ -697,7 +697,7 @@ class TransactionGenerator:
         result_ids = candidates | { node_id }
         normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
         for id in result_ids:
-            self.g.nodes[id]['normal_models'].append(normal_model)
+            self.g.node[id]['normal_models'].append(normal_model)
 
         self.normal_models.append(normal_model)
 
@@ -720,7 +720,7 @@ class TransactionGenerator:
         )
         normal_model = NormalModel(self.normal_model_id, type, list(set), node_id)
         for id in set:
-            self.g.nodes[id]['normal_models'].append(normal_model)
+            self.g.node[id]['normal_models'].append(normal_model)
 
         self.normal_models.append(normal_model)
 
@@ -739,7 +739,7 @@ class TransactionGenerator:
         result_ids = { node_id, succ_id }
         normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
         for id in result_ids:
-            self.g.nodes[id]['normal_models'].append(normal_model)
+            self.g.node[id]['normal_models'].append(normal_model)
 
         self.normal_models.append(normal_model)
 
@@ -758,7 +758,7 @@ class TransactionGenerator:
         result_ids = { node_id, succ_id }
         normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
         for id in result_ids:
-            self.g.nodes[id]['normal_models'].append(normal_model)
+            self.g.node[id]['normal_models'].append(normal_model)
 
         self.normal_models.append(normal_model)
 
@@ -777,7 +777,7 @@ class TransactionGenerator:
         result_ids = { node_id, succ_id }
         normal_model = NormalModel(self.normal_model_id, type, result_ids, node_id)
         for id in result_ids:
-            self.g.nodes[id]['normal_models'].append(normal_model)
+            self.g.node[id]['normal_models'].append(normal_model)
 
         self.normal_models.append(normal_model)
 
@@ -880,10 +880,10 @@ class TransactionGenerator:
             :param _acct: Account ID
             :param _bank_id: Bank ID
             """
-            attr_dict = self.g.nodes[_acct]
+            attr_dict = self.g.node[_acct]
             attr_dict[IS_SAR_KEY] = True
 
-            sub_g.add_node(_acct, **attr_dict)
+            sub_g.add_node(_acct, attr_dict)
 
 
         def add_main_acct():
@@ -891,7 +891,7 @@ class TransactionGenerator:
             :return: main account ID and bank ID
             """
             self.check_hub_exists()
-            _main_acct = random.sample(list(self.hubs), 1)[0]
+            _main_acct = random.sample(self.hubs, 1)[0]
             _main_bank_id = self.acct_to_bank[_main_acct]
             self.remove_typology_candidate(_main_acct)
             add_node(_main_acct, _main_bank_id)
@@ -939,7 +939,7 @@ class TransactionGenerator:
                 sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(list(self.bank_to_accts[sub_bank_id]), num_neighbors)
+            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -962,7 +962,7 @@ class TransactionGenerator:
                 sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(list(self.bank_to_accts[sub_bank_id]), num_neighbors)
+            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -1091,7 +1091,7 @@ class TransactionGenerator:
                 main_acct = all_accts[0]
             else:
                 main_acct, main_bank_id = add_main_acct()
-                sub_accts = random.sample(list(self.bank_to_accts[main_bank_id]), num_accounts - 1)
+                sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
                     add_node(n, main_bank_id)
@@ -1261,10 +1261,10 @@ class TransactionGenerator:
                     max_amt = '{:.2f}'.format(max(get_out_edge_attrs(sub_g, n, "amount")))
                     min_step = start
                     max_step = end
-                    bank_id = sub_g.nodes[n]["bank_id"]
+                    bank_id = sub_g.node[n]["bank_id"]
                     values = [gid, reason, n, is_main, is_sar, model_id, min_amt, max_amt,
                               min_step, max_step, schedule_id, bank_id]
-                    prop = self.g.nodes[n]
+                    prop = self.g.node[n]
                     for attr_name in self.attr_names:
                         values.append(prop[attr_name])
                     writer.writerow(values)
@@ -1277,12 +1277,12 @@ class TransactionGenerator:
         output_file = os.path.join(self.output_dir, self.out_normal_models_file)
         with open(output_file, "w") as wf:
             writer = csv.writer(wf)
-            column_headers = ["alertID", "modelID", "type", "accountID", "isMain", "isSAR", "scheduleID"]
+            column_headers = ["modelID", "type", "accountID", "isMain", "isSAR", "scheduleID"]
             writer.writerow(column_headers)
             
             for normal_model in self.normal_models:
                 for account_id in normal_model.node_ids:
-                    values = [-1, normal_model.id, normal_model.type, account_id, normal_model.is_main(account_id), False, 2]
+                    values = [normal_model.id, normal_model.type, account_id, normal_model.is_main(account_id), False, 2]
                     writer.writerow(values)
 
 

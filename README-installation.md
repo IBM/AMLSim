@@ -13,3 +13,7 @@ python -m pip install \
     pygraphviz
 pip install -r requirements.txt
 ```
+Download Mason jar file:
+```shell
+ wget -N "https://cs.gmu.edu/~eclab/projects/mason/mason.20.jar" -P jars/
+```

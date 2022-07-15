@@ -10,14 +10,13 @@ import warnings
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 
-import matplotlib.cbook
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import powerlaw
-from matplotlib import MatplotlibDeprecationWarning
+from matplotlib import MatplotlibDeprecationWarning, mplDeprecation
 
-warnings.filterwarnings("ignore", category=matplotlib.cbook.mplDeprecation)
+warnings.filterwarnings("ignore", category=mplDeprecation)
 warnings.filterwarnings('ignore', category=MatplotlibDeprecationWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 warnings.filterwarnings('ignore', category=RuntimeWarning)

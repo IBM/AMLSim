@@ -584,6 +584,7 @@ class LogConverter:
         self.sar_acct_file = output_conf["sar_accounts"]  # SAR account list file
         self.alert_tx_file = output_conf["alert_transactions"]  # Alert transaction list file
         self.alert_acct_file = output_conf["alert_members"]  # Alert account list file
+        self.non_alert_acct_file = output_conf["normal_models"]  # non-alert account list file
 
         self.party_individual_file = output_conf["party_individuals"]
         self.party_organization_file = output_conf["party_organizations"]

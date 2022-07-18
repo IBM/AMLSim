@@ -550,7 +550,6 @@ class LogConverter:
         self.log_file = os.path.join(self.work_dir, output_conf["transaction_log"])
         self.in_acct_file = input_conf["accounts"]  # Account list file from the transaction graph generator
         self.group_file = input_conf["alert_members"]  # Alert account list file from the transaction graph generator
-        self.group_file_1 = input_conf["normal_models"]
 
         # Output files
         self.out_acct_file = output_conf["accounts"]  # All account list file

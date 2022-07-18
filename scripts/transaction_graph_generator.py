@@ -1277,12 +1277,12 @@ class TransactionGenerator:
         output_file = os.path.join(self.output_dir, self.out_normal_models_file)
         with open(output_file, "w") as wf:
             writer = csv.writer(wf)
-            column_headers = ["alertID", "modelID", "type", "accountID", "isMain", "isSAR", "scheduleID"]
+            column_headers = ["modelID", "type", "accountID", "isMain", "isSAR", "scheduleID"]
             writer.writerow(column_headers)
             
             for normal_model in self.normal_models:
                 for account_id in normal_model.node_ids:
-                    values = [-1, normal_model.id, normal_model.type, account_id, normal_model.is_main(account_id), False, 2]
+                    values = [normal_model.id, normal_model.type, account_id, normal_model.is_main(account_id), False, 2]
                     writer.writerow(values)
 
 

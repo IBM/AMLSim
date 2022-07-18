@@ -151,7 +151,7 @@ def is_cycle(alert_sub_g: nx.DiGraph, is_ordered: bool = True):
         logging.info("Alert %s is not a cycle pattern" % alert_id)
         return False
     if is_ordered:
-        edges.sort(key=lambda e: e[2]["date"])
+        edges = sorted(edges, key=lambda e: e[2]["date"])
         next_orig = None
         next_amt = sys.float_info.max
         next_date = datetime.strptime("1970-01-01", "%Y-%m-%d")

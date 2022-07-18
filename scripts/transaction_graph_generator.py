@@ -389,7 +389,8 @@ class TransactionGenerator:
         end_range = get_positive_or_none(self.default_end_range)
         default_model = self.default_model if self.default_model is not None else 1
 
-        self.attr_names.extend(["first_name", "last_name", "city", "gender",  "birth_date"])
+        self.attr_names.extend(["first_name", "last_name", "street_addr", "city", "state", "zip",
+                                "gender", "phone_number", "birth_date", "ssn", "lon", "lat"])
 
         with open(self.acct_file, "r") as rf:
             reader = csv.reader(rf)
@@ -398,16 +399,16 @@ class TransactionGenerator:
             idx_aid = name2idx["uuid"]
             idx_first_name = name2idx["first_name"]
             idx_last_name = name2idx["last_name"]
-            # idx_street_addr = name2idx["street_addr"]
+            idx_street_addr = name2idx["street_addr"]
             idx_city = name2idx["city"]
-            # idx_state = name2idx["state"]
-            # idx_zip = name2idx["zip"]
+            idx_state = name2idx["state"]
+            idx_zip = name2idx["zip"]
             idx_gender = name2idx["gender"]
-            # idx_phone_number = name2idx["phone_number"]
+            idx_phone_number = name2idx["phone_number"]
             idx_birth_date = name2idx["birth_date"]
-            # idx_ssn = name2idx["ssn"]
-            # idx_lon = name2idx["lon"]
-            # idx_lat = name2idx["lat"]
+            idx_ssn = name2idx["ssn"]
+            idx_lon = name2idx["lon"]
+            idx_lat = name2idx["lat"]
 
             default_country = "US"
             default_acct_type = "I"
@@ -417,19 +418,18 @@ class TransactionGenerator:
                 if row[0].startswith("#"):  # Comment line
                     continue
                 aid = row[idx_aid]
-                # first_name = row[idx_first_name]
-                # last_name = row[idx_last_name]
-                name = row[idx_name]
-                # street_addr = row[idx_street_addr]
+                first_name = row[idx_first_name]
+                last_name = row[idx_last_name]
+                street_addr = row[idx_street_addr]
                 city = row[idx_city]
-                # state = row[idx_state]
-                # zip_code = row[idx_zip]
+                state = row[idx_state]
+                zip_code = row[idx_zip]
                 gender = row[idx_gender]
-                # phone_number = row[idx_phone_number]
+                phone_number = row[idx_phone_number]
                 birth_date = row[idx_birth_date]
-                # ssn = row[idx_ssn]
-                # lon = row[idx_lon]
-                # lat = row[idx_lat]
+                ssn = row[idx_ssn]
+                lon = row[idx_lon]
+                lat = row[idx_lat]
                 model = default_model
 
                 if start_day is not None and start_range is not None:
@@ -442,7 +442,9 @@ class TransactionGenerator:
                 else:
                     end = -1
 
-                attr = {"first_name": first_name, "last_name": last_name, "city": city, "gender": gender, "birth_date": birth_date}
+                attr = {"first_name": first_name, "last_name": last_name, "street_addr": street_addr,
+                        "city": city, "state": state, "zip": zip_code, "gender": gender,
+                        "phone_number": phone_number, "birth_date": birth_date, "ssn": ssn, "lon": lon, "lat": lat}
 
                 init_balance = random.uniform(min_balance, max_balance)  # Generate the initial balance
                 self.add_account(aid, init_balance=init_balance, country=default_country, business=default_acct_type, is_sar=False, **attr)

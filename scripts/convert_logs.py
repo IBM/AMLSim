@@ -57,12 +57,10 @@ class AMLTypology:
         if is_sar:
             self.is_sar = True
             self.main_acct = member
-
-    def add_safe_member(self, member, is_sar):
-        self.members.add(member)
-        if not is_sar:
+        elif not is_sar:
             self.is_sar = False
             self.main_acct = member
+
 
     def add_tx(self, tx_id, amount, days, orig_acct, dest_acct, orig_name, dest_name, attr):
         self.transactions[tx_id] = (amount, days, orig_acct, dest_acct, orig_name, dest_name, attr)
@@ -434,25 +432,26 @@ class Schema:
                 row[idx] = self.days2date(row[idx])  # convert days to date
         return row
 
-    def get_non_alert_acct_row(self, _reason, _acct_id, _acct_name, _is_sar,
-                           _model_id, _schedule_id, **attr):
-        row = list(self.alert_acct_defaults)
-        row[self.alert_acct_reason_idx] = _reason
-        row[self.alert_acct_id_idx] = _acct_id
-        row[self.alert_acct_name_idx] = _acct_name
-        row[self.alert_acct_sar_idx] = _is_sar
-        row[self.alert_acct_model_idx] = _model_id
-        row[self.alert_acct_schedule_idx] = _schedule_id
-
-        for name, value in attr.items():
-            if name in self.alert_acct_name2idx:
-                idx = self.alert_acct_name2idx[name]
-                row[idx] = value
-
-        for idx, v_type in enumerate(self.alert_acct_types):
-            if v_type == "date":
-                row[idx] = self.days2date(row[idx])  # convert days to date
-        return row
+    # def get_non_alert_acct_row(self, _reason, _acct_id, _acct_name, _is_sar,
+    #                        _model_id, _schedule_id, _bank_id,  **attr):
+    #     row = list(self.alert_acct_defaults)
+    #     row[self.alert_acct_reason_idx] = _reason
+    #     row[self.alert_acct_id_idx] = _acct_id
+    #     row[self.alert_acct_name_idx] = _acct_name
+    #     row[self.alert_acct_sar_idx] = _is_sar
+    #     row[self.alert_acct_model_idx] = _model_id
+    #     row[self.alert_acct_schedule_idx] = _schedule_id
+    #     # row[self.alert_acct_bank_idx] = _bank_id
+    #
+    #     for name, value in attr.items():
+    #         if name in self.alert_acct_name2idx:
+    #             idx = self.alert_acct_name2idx[name]
+    #             row[idx] = value
+    #
+    #     for idx, v_type in enumerate(self.alert_acct_types):
+    #         if v_type == "date":
+    #             row[idx] = self.days2date(row[idx])  # convert days to date
+    #     return row
 
     def get_alert_tx_row(self, _alert_id, _alert_type, _is_sar, _tx_id, _orig, _dest,
                          _tx_type, _amount, _timestamp, **attr):
@@ -923,8 +922,8 @@ class LogConverter:
             self.reports[reason].add_safe_member(account_id, is_sar)
 
             attr = {name: row[index] for name, index in indices.items()}
-            output_row = self.schema.get_non_alert_acct_row(reason, account_id, account_id, is_sar,
-                                                        model_id, schedule_id, **attr)
+            output_row = self.schema.get_non_alert_acct_row(alert_id, reason, account_id, account_id, is_sar,
+                                                        model_id, schedule_id, bank_id, **attr)
             writer.writerow(output_row)
 
 

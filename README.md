@@ -16,8 +16,9 @@ This project aims at building a multi-agent simulator of anti-money laundering -
 
 
 # Dependencies
-- Java 8 (Download and copy all jar files to `jars/` directory: See also `jars/README.md`)
-    - [MASON](https://cs.gmu.edu/~eclab/projects/mason/) version 20
+- Java 8 
+  - Option 1: (Download and copy all jar files to `jars/` directory: See also `jars/README.md`)
+    - [MASON](https://people.cs.gmu.edu/~eclab/projects/mason/) version 20
     - [Commons-Math](http://commons.apache.org/proper/commons-math/download_math.cgi) version 3.6.1
     - [JSON in Java](https://jar-download.com/artifacts/org.json/json/20180813) version 20180813
     - [WebGraph](http://webgraph.di.unimi.it/) version 3.6.1
@@ -33,11 +34,21 @@ This project aims at building a multi-agent simulator of anti-money laundering -
     - [Byte Buddy Agent](https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-agent/1.11.19) version 1.11.19
     - [Objenesis](https://mvnrepository.com/artifact/org.objenesis/objenesis/3.2) version 3.2
     - [Mockito Inline](https://mvnrepository.com/artifact/org.mockito/mockito-inline/4.0.0) version 4.0.0
-- Python 3.7 (The following packages can be installed with `pip3 install -r requirements.txt`)
+  - Option 2: Maven + MASON JAR
+    - [MASON](https://people.cs.gmu.edu/~eclab/projects/mason/) version 20.  If you choose to use Maven, you only manually need to fetch and place this 1 jar file (MASON) in your `jars/` folder and then install it using the following command.  The command installs the MASON dependency to your local Maven repository.
+    ```
+    mvn install:install-file \
+    -Dfile=jars/mason.20.jar \
+    -DgroupId=mason \
+    -DartifactId=mason \
+    -Dversion=20 \
+    -Dpackaging=jar \
+    -DgeneratePom=true
+    ```
+- Python 3.8 (The following packages can be installed with `pip3 install -r requirements.txt`)
     - numpy
     - networkx==1.11 (We do not support version 2.* due to performance issues when creating a large graph)
     - matplotlib==2.2.3 (The latest version is not compatible)
-    - pygraphviz
     - powerlaw
     - python-dateutil
 
@@ -45,8 +56,6 @@ This project aims at building a multi-agent simulator of anti-money laundering -
 # Directory Structure
 See Wiki page [Directory Structure](https://github.com/IBM/AMLSim/wiki/Directory-Structure) for details.  
 NOTE: (October 2021): `bin/` folder has been renamed to `target/classes/`
-
-
 
 # Introduction for Running AMLSim
 See Wiki page [Quick Introduction to AMLSim](https://github.com/IBM/AMLSim/wiki/Quick-Introduction-to-AMLSim) for details.
@@ -91,29 +100,6 @@ Parameters for the simulator are defined at the "general" section of `conf.json`
 ```
 
 Please compile Java files (if not yet) and launch the simulator.
-```bash
-sh scripts/build_AMLSim.sh
-sh scripts/run_AMLSim.sh conf.json
-```
-
-## 2.b. Optional: Install and Use Maven as build system.  
-On Mac: `brew install maven`
-If you already have a java installed, you can run `brew uninstall --ignore-dependencies openjdk` because brew installs that along with maven as a dependency.
-
-If you choose to use Maven, you only manually need to fetch and place 1 jar file (MASON) in your `jars/` folder and then install it using the command shown below.  If you do not use Maven, you will have to place all the dependency jar files listed above as dependencies in the `jars/` folder.   
-If using Maven, use the following commands to install the MASON dependency to your local Maven repository.  
-
-```
-mvn install:install-file \
--Dfile=jars/mason.20.jar \
--DgroupId=mason \
--DartifactId=mason \
--Dversion=20 \
--Dpackaging=jar \
--DgeneratePom=true
-```
-
-Please compile Java files (if not yet) (will detect and use Maven) and launch the simulator.
 ```bash
 sh scripts/build_AMLSim.sh
 sh scripts/run_AMLSim.sh conf.json

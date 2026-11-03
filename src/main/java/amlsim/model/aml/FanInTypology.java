@@ -1,6 +1,9 @@
 //
 // Note: No specific bank models are used for this AML typology model class.
 //
+// Modified by EarlyMule-TG (2026-10-27): keep the alert window planned by the generator
+// instead of moving its start step close to step 0. See the "EarlyMule-TG:" comment below.
+//
 
 package amlsim.model.aml;
 
@@ -44,9 +47,10 @@ public class FanInTypology extends AMLTypology {
 
         // Set transaction schedule
         int numOrigs = origList.size();
-        int totalStep = (int)(endStep - startStep + 1);
-        int defaultInterval = Math.max(totalStep / numOrigs, 1);
-        this.startStep = generateStartStep(defaultInterval);  //  decentralize the first transaction step
+        // EarlyMule-TG: removed `this.startStep = generateStartStep(defaultInterval)`.
+        // It replaced startStep with a random step in [0, defaultInterval) while keeping endStep,
+        // so every fan-in alert started near step 0 and was stretched over hundreds of days.
+        // The generator already places [startStep, endStep] randomly with a 5-20 step period.
 
         steps = new long[numOrigs];
         if(schedulingID == SIMULTANEOUS){

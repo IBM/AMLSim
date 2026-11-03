@@ -1,0 +1,90 @@
+{
+  "general": {
+    "random_seed": 0,
+    "simulation_name": "10K",
+    "total_steps": 720,
+    "base_date": "2017-01-01"
+  },
+  "default": {
+    "min_amount": 100,
+    "max_amount": 1000,
+    "min_balance": 50000,
+    "max_balance": 100000,
+    "start_step": -1,
+    "end_step": -1,
+    "start_range": -1,
+    "end_range": -1,
+    "transaction_model": 1,
+    "margin_ratio": 0.1,
+    "bank_id": "default",
+
+    "cash_in": {
+      "normal_interval": 100,
+      "fraud_interval": 50,
+      "normal_min_amount": 50,
+      "normal_max_amount": 100,
+      "fraud_min_amount": 500,
+      "fraud_max_amount": 1000
+    },
+    "cash_out": {
+      "normal_interval": 10,
+      "fraud_interval": 100,
+      "normal_min_amount": 10,
+      "normal_max_amount": 100,
+      "fraud_min_amount": 1000,
+      "fraud_max_amount": 2000
+    }
+  },
+  "input": {
+    "directory": "paramFiles/10K",
+    "schema": "schema.json",
+    "accounts": "accounts.csv",
+    "alert_patterns": "alertPatterns.csv",
+    "degree": "degree.csv",
+    "transaction_type": "transactionType.csv",
+    "is_aggregated_accounts": true
+  },
+  "temporal": {
+    "directory": "tmp",
+    "transactions": "transactions.csv",
+    "accounts": "accounts.csv",
+    "alert_members": "alert_members.csv",
+    "normal_models": "normal_models.csv"
+  },
+  "output": {
+    "directory": "outputs",
+    "accounts": "accounts.csv",
+    "transactions": "transactions.csv",
+    "cash_transactions": "cash_tx.csv",
+    "alert_members": "alert_accounts.csv",
+    "alert_transactions": "alert_transactions.csv",
+    "sar_accounts": "sar_accounts.csv",
+    "party_individuals": "individuals-bulkload.csv",
+    "party_organizations": "organizations-bulkload.csv",
+    "account_mapping": "accountMapping.csv",
+    "resolved_entities": "resolvedentities.csv",
+    "transaction_log": "tx_log.csv",
+    "counter_log": "tx_count.csv",
+    "diameter_log": "diameter.csv"
+  },
+  "graph_generator": {
+    "degree_threshold": 10,
+    "high_risk_countries": "",
+    "high_risk_business": ""
+  },
+  "simulator": {
+    "compute_diameter": false,
+    "transaction_limit": 0,
+    "transaction_interval": 7,
+    "numBranches": 1000
+  },
+  "visualizer": {
+    "degree": "deg.png",
+    "wcc": "wcc.png",
+    "alert": "alert.png",
+    "count": "count.png",
+    "clustering": "cc.png",
+    "diameter": "diameter.png"
+  }
+}
+

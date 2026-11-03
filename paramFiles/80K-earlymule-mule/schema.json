@@ -1,0 +1,305 @@
+{
+  "account": [
+    {
+      "name": "acct_id",
+      "valueType": "string",
+      "dataType": "account_id"
+    },
+    {
+      "name": "dsply_nm",
+      "valueType": "string",
+      "dataType": "account_name"
+    }, 
+    {
+      "name": "type",
+      "valueType": "string",
+      "dataType": "account_type",
+      "defaultValue": "SAV"
+    },
+    {
+      "name": "acct_stat",
+      "valueType": "string",
+      "defaultValue": "A"
+    },
+    {
+      "name": "acct_rptng_crncy",
+      "valueType": "string",
+      "defaultValue": "USD"
+    },
+    {
+      "name": "prior_sar_count",
+      "valueType": "boolean",
+      "dataType": "sar_flag"
+    },
+    {
+      "name": "branch_id",
+      "valueType": "int",
+      "defaultValue": 1
+    },
+    {
+      "name": "open_dt",
+      "valueType": "date",
+      "dataType": "start_time",
+      "defaultValue": 0
+    },
+    {
+      "name": "close_dt",
+      "valueType": "date",
+      "dataType": "end_time",
+      "defaultValue": 1000000
+    },
+    {
+      "name": "initial_deposit",
+      "valueType": "float",
+      "dataType": "initial_balance"
+    },
+    {
+      "name": "tx_behavior_id",
+      "valueType": "int",
+      "dataType": "model_id"
+    },
+    {
+      "name": "bank_id",
+      "valueType": "int",
+      "dataType": "bank_id"
+    },
+    {
+      "name": "first_name",
+      "valueType": "string"
+    },
+    {
+      "name": "last_name",
+      "valueType": "string"
+    },
+    {
+      "name": "street_addr",
+      "valueType": "string"
+    },
+    {
+      "name": "city",
+      "valueType": "string"
+    },
+    {
+      "name": "state",
+      "valueType": "string"
+    },
+    {
+      "name": "country",
+      "valueType": "string",
+      "defaultValue": "US",
+      "dataType": "country"
+    },
+    {
+      "name": "zip",
+      "valueType": "string"
+    },
+    {
+      "name": "gender",
+      "valueType": "string"
+    },
+    {
+      "name": "birth_date",
+      "valueType": "date"
+    },
+    {
+      "name": "ssn",
+      "valueType": "string"
+    },
+    {
+      "name": "lon",
+      "valueType": "float"
+    },
+    {
+      "name": "lat",
+      "valueType": "float"
+    }
+  ], 
+  "transaction": [
+    {
+      "name": "tran_id",
+      "valueType": "string",
+      "dataType": "transaction_id"
+    },
+    {
+      "name": "orig_acct",
+      "valueType": "string",
+      "dataType": "orig_id"
+    },
+    {
+      "name": "bene_acct",
+      "valueType": "string",
+      "dataType": "dest_id"
+    },
+    {
+      "name": "tx_type",
+      "valueType": "string",
+      "dataType": "transaction_type"
+    },
+    {
+      "name": "base_amt",
+      "valueType": "string",
+      "dataType": "amount"
+    },
+    {
+      "name": "tran_timestamp",
+      "valueType": "date",
+      "dataType": "timestamp"
+    },
+    {
+      "name": "is_sar",
+      "valueType": "boolean",
+      "dataType": "sar_flag"
+    },
+    {
+      "name": "alert_id",
+      "valueType": "string",
+      "dataType": "alert_id"
+    }
+  ],
+  "alert_tx": [
+    {
+      "name": "alert_id",
+      "valueType": "string",
+      "dataType": "alert_id"
+    },
+    {
+      "name": "alert_type",
+      "valueType": "string",
+      "dataType": "alert_type"
+    },
+    {
+      "name": "is_sar",
+      "valueType": "boolean",
+      "dataType": "sar_flag"
+    },
+    {
+      "name": "tran_id",
+      "valueType": "string",
+      "dataType": "transaction_id"
+    },
+    {
+      "name": "orig_acct",
+      "valueType": "string",
+      "dataType": "orig_id"
+    },
+    {
+      "name": "bene_acct",
+      "valueType": "string",
+      "dataType": "dest_id"
+    },
+    {
+      "name": "tx_type",
+      "valueType": "string",
+      "dataType": "transaction_type"
+    },
+    {
+      "name": "base_amt",
+      "valueType": "float",
+      "dataType": "amount"
+    },
+    {
+      "name": "tran_timestamp",
+      "valueType": "date",
+      "dataType": "timestamp"
+    }
+  ],
+  "alert_member": [
+    {"name": "alert_id", "dataType": "alert_id"},
+    {"name": "alert_type", "dataType": "alert_type"},
+    {"name": "acct_id", "dataType": "account_id"},
+    {"name": "acct_name", "dataType": "account_name"},
+    {"name": "is_sar", "dataType": "sar_flag"},
+    {"name": "model_id", "dataType": "model_id"},
+    {"name": "start", "dataType": "date", "defaultValue": 0},
+    {"name": "end", "dataType": "date", "defaultValue": 1000000},
+    {"name": "schedule_id", "dataType": "schedule_id"},
+    {"name": "bank_id", "dataType": "bank_id"}
+  ],
+  "party_individual": [
+    {"name": "birthPlaceCountry", "valueType": "string", "defaultValue": "US"},
+    {"name": "countryofResidency", "valueType": "string", "defaultValue": "US"},
+    {"name": "deathTime"},
+    {"name": "firstName"},
+    {"name": "isActive", "valueType": "int", "defaultValue": 1},
+    {"name": "lastName"},
+    {"name": "legalName"},
+    {"name": "listedCompany"},
+    {"name": "maritalStatus"},
+    {"name": "middleName"},
+    {"name": "name"},
+    {"name": "nameAlias"},
+    {"name": "nationality", "valueType": "string", "defaultValue": "US"},
+    {"name": "occupation"},
+    {"name": "organizationSymbol"},
+    {"name": "partyId", "valueType": "int", "dataType": "party_id"},
+    {"name": "partyType", "valueType": "string", "defaultValue": "Individual"},
+    {"name": "sourceOfIncome"},
+    {"name": "title"},
+    {"name": "website"},
+    {"name": "gender"},
+    {"name": "homePhone"},
+    {"name": "alternatePhone"},
+    {"name": "cellPhone"},
+    {"name": "primaryPhone"},
+    {"name": "workPhone"},
+    {"name": "alternateEmail"},
+    {"name": "companyEmail"},
+    {"name": "personalEmail"},
+    {"name": "workEmail"},
+    {"name": "isIndividual"}
+  ],
+  "party_organization": [
+    {"name": "birthPlaceCountry", "valueType": "string", "defaultValue": "US"},
+    {"name": "countryOfIncorporation", "valueType": "string", "defaultValue": "US"},
+    {"name": "countryOfResidency", "valueType": "string", "defaultValue": "US"},
+    {"name": "deathTime"},
+    {"name": "firstName"},
+    {"name": "isActive"},
+    {"name": "lastName"},
+    {"name": "legalName"},
+    {"name": "listedCompany"},
+    {"name": "maritalStatus"},
+    {"name": "middleName"},
+    {"name": "name"},
+    {"name": "nameAlias"},
+    {"name": "nationality", "valueType": "string", "defaultValue": "US"},
+    {"name": "occupation"},
+    {"name": "organizationSymbol"},
+    {"name": "partyId", "valueType": "int", "dataType": "party_id"},
+    {"name": "partyType", "valueType": "string", "defaultValue": "Organization"},
+    {"name": "sourceOfIncome"},
+    {"name": "title"},
+    {"name": "website"},
+    {"name": "gender"},
+    {"name": "homePhone"},
+    {"name": "alternatePhone"},
+    {"name": "cellPhone"},
+    {"name": "primaryPhone"},
+    {"name": "workPhone"},
+    {"name": "alternateEmail"},
+    {"name": "companyEmail"},
+    {"name": "personalEmail"},
+    {"name": "workEmail"},
+    {"name": "isIndividual", "valueType": "boolean", "defaultValue": false}
+  ],
+  "account_mapping": [
+    {"name": "cust_acct_mapping_id", "valueType": "int", "dataType": "mapping_id"},
+    {"name": "acct_id", "valueType": "int", "dataType": "account_id"},
+    {"name": "cust_id", "valueType": "int", "dataType": "party_id"},
+    {"name": "cust_acct_role", "valueType": "string", "defaultValue": "Primary"},
+    {"name": "src_sys", "valueType": "string", "defaultValue": "1"},
+    {"name": "data_dump_dt", "valueType": "date", "defaultValue": 1}
+  ],
+  "resolved_entities": [
+    {"name": "entityrefid", "valueType": "int", "dataType": "ref_id"},
+    {"name": "entityreference"},
+    {"name": "partyid1", "valueType": "int", "dataType": "first_id"},
+    {"name": "partyid2", "valueType": "int", "dataType": "second_id"},
+    {"name": "partyid1entitytype"},
+    {"name": "partyid2entitytype"},
+    {"name": "score", "valueType": "int", "defaultValue": 180},
+    {"name": "reason", "defaultValue": "same"}
+  ]
+}
+
+

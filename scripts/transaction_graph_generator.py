@@ -1,5 +1,17 @@
 """
 Generate a base transaction graph used in the simulator
+
+Modified by EarlyMule-TG (2026-10-27): non-main members of AML typologies are drawn only from
+accounts expected to make normal transactions, so that alert accounts have a normal phase.
+Every `random.sample(self.bank_to_accts[...], k)` in add_aml_typology() was replaced by
+`self._sample_active_members(self.bank_to_accts[...], k)`; see _sample_active_members() and
+_has_reliable_normal_activity().
+
+Modified by EarlyMule-TG (2026-11-03): four layered mule typologies (mule_fan_in_out,
+mule_relay_chain, mule_collect_exit, mule_collect_disperse) simulated by LayeredMuleTypology.java.
+alertPatterns.csv may carry min_dwell / max_dwell; alert_members.csv gains layer, minDwell, maxDwell.
+Optional conf key graph_generator.boost_balance_min_main_models raises the initial balance of accounts
+that send on several normal models, so they do not run out of money mid-simulation.
 """
 
 import networkx as nx
@@ -32,6 +44,16 @@ MAIN_ACCT_KEY = "main_acct"  # Main account ID (SAR typology subgraph attribute)
 IS_SAR_KEY = "is_sar"  # SAR flag (account vertex attribute)
 
 DEFAULT_MARGIN_RATIO = 0.1  # Each member will keep this ratio of the received amount
+
+# EarlyMule-TG: layer sizes (sources, mule layers..., exits) of the layered mule typologies for n accounts
+LAYER_SIZES = {
+    "mule_fan_in_out": lambda n: [(n - 1) // 2, 1, n - 1 - (n - 1) // 2],  # M1
+    "mule_relay_chain": lambda n: [1] * n,  # M2: n - 2 mules in a chain
+    "mule_collect_exit": lambda n: [n - 2, 1, 1],  # M3
+    # M4: collector splits to k relays, each relay pays one exit
+    "mule_collect_disperse": lambda n: [n - 1 - 2 * max(2, (n - 1) // 3), 1,
+                                        max(2, (n - 1) // 3), max(2, (n - 1) // 3)],
+}
 
 
 # Utility functions parsing values
@@ -248,6 +270,8 @@ class TransactionGenerator:
         # Other properties for the transaction graph generator
         other_conf = self.conf["graph_generator"]
         self.degree_threshold = parse_int(other_conf["degree_threshold"])  # Degree for candidates of main accounts
+        # EarlyMule-TG: accounts main of at least this many normal models get a larger initial balance (None = off)
+        self.boost_balance_min_main_models = parse_int(other_conf.get("boost_balance_min_main_models"))
         high_risk_countries_str = other_conf.get("high_risk_countries", "")
         high_risk_business_str = other_conf.get("high_risk_business", "")
         self.high_risk_countries = set(high_risk_countries_str.split(","))  # List of high-risk country codes
@@ -259,6 +283,9 @@ class TransactionGenerator:
         # TODO: Move the mapping of AML pattern to configuration JSON file
         self.alert_types = {"fan_out": 1, "fan_in": 2, "cycle": 3, "bipartite": 4, "stack": 5,
                             "random": 6, "scatter_gather": 7, "gather_scatter": 8}  # Pattern name and model ID
+        # EarlyMule-TG: layered mule typologies share one Java model; LAYER_SIZES gives their shape
+        for name in LAYER_SIZES:
+            self.alert_types[name] = 9
 
         self.acct_file = os.path.join(self.input_dir, self.account_file)
 
@@ -361,6 +388,58 @@ class TransactionGenerator:
 
         else:
             raise KeyError("No such bank ID: %s" % bank_id)
+
+    def _sample_active_members(self, candidates, num):
+        """EarlyMule-TG: draw `num` typology members, preferring accounts with reliable normal activity.
+
+        In the original code about half of the alert members never made a normal transaction, so a mule
+        had no "normal" phase before laundering and "no normal activity" alone revealed the label.
+        :param candidates: account IDs still available as typology members
+        :param num: number of members to draw
+        :return: list of account IDs
+        """
+        # 1. Sort for a deterministic order under the configured random seed
+        pool = sorted(candidates)
+        active = [a for a in pool if self._has_reliable_normal_activity(a)]
+        # 2. Normal case: enough accounts with a normal model
+        if len(active) >= num:
+            return random.sample(active, num)
+        # 3. Fallback when the pool runs out: take all of them and fill up from the remaining accounts
+        logger.warning("Only %d accounts with normal models left for %d typology members", len(active), num)
+        rest = [a for a in pool if not self._has_reliable_normal_activity(a)]
+        return active + random.sample(rest, num - len(active))
+
+    def boost_drain_prone_balances(self):
+        """EarlyMule-TG: multiply the initial balance by (n_main + 1) for accounts main of many normal models.
+
+        Every normal model sends from its main account, so an account that is main of several models runs out
+        of money. Measured on conf_10K_earlymule.json: 62-99% of accounts main of 2+ models fall below 100,
+        from about day 350 on, against 4% of accounts main of one model. A drained account cannot pass on
+        illicit money. The boost applies to every account, alert member or not, so it carries no label.
+        """
+        if self.boost_balance_min_main_models is None:
+            return
+        boosted = 0
+        for acct, prop in self.g.nodes(data=True):
+            n_main = sum(1 for nm in prop.get('normal_models', []) if nm.is_main(acct))
+            if n_main >= self.boost_balance_min_main_models:
+                prop["init_balance"] *= n_main + 1
+                boosted += 1
+        logger.info("Boosted the initial balance of %d accounts", boosted)
+
+    def _has_reliable_normal_activity(self, acct):
+        """EarlyMule-TG: True if the account is expected to make normal transactions during the simulation.
+
+        Measured on the original 10K run: the main account of any normal model, and every member of a
+        single / forward / mutual / periodical model, transact in about 99% of cases; an account that is
+        only a non-main member of fan_in / fan_out normal models transacts in only about 39% of cases.
+        :param acct: account ID
+        :return: bool
+        """
+        for nm in self.g.node[acct].get('normal_models', []):
+            if nm.is_main(acct) or nm.type not in ("fan_in", "fan_out"):
+                return True
+        return False
 
     def load_account_list(self):
         """Load and add account vertices from a CSV file
@@ -801,6 +880,8 @@ class TransactionGenerator:
         idx_max_period = None
         idx_bank = None
         idx_sar = None
+        idx_min_dwell = None  # EarlyMule-TG: optional dwell range of layered mule typologies
+        idx_max_dwell = None
 
         with open(alert_file, "r") as rf:
             reader = csv.reader(rf)
@@ -829,6 +910,10 @@ class TransactionGenerator:
                     idx_bank = i
                 elif k == "is_sar":  # SAR flag
                     idx_sar = i
+                elif k == "min_dwell":  # EarlyMule-TG: min days a mule holds money before forwarding
+                    idx_min_dwell = i
+                elif k == "max_dwell":  # EarlyMule-TG: max days a mule holds money before forwarding
+                    idx_max_dwell = i
                 else:
                     logger.warning("Unknown column name in %s: %s" % (alert_file, k))
 
@@ -848,6 +933,10 @@ class TransactionGenerator:
                 max_period = parse_int(row[idx_max_period])
                 bank_id = row[idx_bank] if idx_bank is not None else ""  # If empty, it has inter-bank transactions
                 is_sar = parse_flag(row[idx_sar])
+                # EarlyMule-TG: dwell defaults to 0 when the columns or cells are absent
+                min_dwell = parse_int(row[idx_min_dwell]) if idx_min_dwell is not None else 0
+                max_dwell = parse_int(row[idx_max_dwell]) if idx_max_dwell is not None else 0
+                min_dwell, max_dwell = min_dwell or 0, max_dwell or 0
 
                 if typology_name not in self.alert_types:
                     logger.warning("Pattern type name (%s) must be one of %s"
@@ -857,12 +946,14 @@ class TransactionGenerator:
                 for i in range(num_patterns):
                     num_accts = random.randrange(min_accts, max_accts + 1)
                     period = random.randrange(min_period, max_period + 1)
-                    self.add_aml_typology(is_sar, typology_name, num_accts, min_amount, max_amount, period, bank_id, schedule)
+                    self.add_aml_typology(is_sar, typology_name, num_accts, min_amount, max_amount, period, bank_id, schedule,
+                                          min_dwell, max_dwell)  # EarlyMule-TG: dwell range
                     count += 1
                     if count % 1000 == 0:
                         logger.info("Created %d alerts" % count)
 
-    def add_aml_typology(self, is_sar, typology_name, num_accounts, min_amount, max_amount, period, bank_id="", schedule=1):
+    def add_aml_typology(self, is_sar, typology_name, num_accounts, min_amount, max_amount, period, bank_id="", schedule=1,
+                         min_dwell=0, max_dwell=0):
         """Add an AML typology transaction set
         :param is_sar: Whether the alerted transaction set is SAR (True) or false-alert (False)
         :param typology_name: Name of pattern type
@@ -873,6 +964,10 @@ class TransactionGenerator:
         :param period: Period (number of days) for all transactions
         :param bank_id: Bank ID which it chooses members from. If empty, it chooses members from all banks.
         :param schedule: AML pattern transaction schedule model ID
+
+        EarlyMule-TG: member accounts are drawn with self._sample_active_members() instead of random.sample(),
+        so that alert members are accounts that also make normal transactions. Main accounts of fan_in /
+        fan_out / random / cycle still come from self.hubs as in the original code.
         """
 
         def add_node(_acct, _bank_id):
@@ -939,7 +1034,7 @@ class TransactionGenerator:
                 sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
+            sub_accts = self._sample_active_members(self.bank_to_accts[sub_bank_id], num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -962,7 +1057,7 @@ class TransactionGenerator:
                 sub_bank_id = random.choice(sub_bank_candidates)
             else:
                 sub_bank_id = main_bank_id
-            sub_accts = random.sample(self.bank_to_accts[sub_bank_id], num_neighbors)
+            sub_accts = self._sample_active_members(self.bank_to_accts[sub_bank_id], num_neighbors)
             for n in sub_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, sub_bank_id)
@@ -981,13 +1076,13 @@ class TransactionGenerator:
             num_orig_accts = num_accounts // 2  # The former half members are originator accounts
             num_bene_accts = num_accounts - num_orig_accts  # The latter half members are beneficiary accounts
 
-            orig_accts = random.sample(self.bank_to_accts[orig_bank_id], num_orig_accts)
+            orig_accts = self._sample_active_members(self.bank_to_accts[orig_bank_id], num_orig_accts)
             for n in orig_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, orig_bank_id)
             main_acct = orig_accts[0]
 
-            bene_accts = random.sample(self.bank_to_accts[bene_bank_id], num_bene_accts)
+            bene_accts = self._sample_active_members(self.bank_to_accts[bene_bank_id], num_bene_accts)
             for n in bene_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, bene_bank_id)
@@ -1012,17 +1107,17 @@ class TransactionGenerator:
             # Last 1/3 of members: beneficiary accounts
             num_bene_accts = num_accounts - num_orig_accts * 2
 
-            orig_accts = random.sample(self.bank_to_accts[orig_bank_id], num_orig_accts)
+            orig_accts = self._sample_active_members(self.bank_to_accts[orig_bank_id], num_orig_accts)
             for n in orig_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, orig_bank_id)
             main_acct = orig_accts[0]
 
-            mid_accts = random.sample(self.bank_to_accts[mid_bank_id], num_mid_accts)
+            mid_accts = self._sample_active_members(self.bank_to_accts[mid_bank_id], num_mid_accts)
             for n in mid_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, mid_bank_id)
-            bene_accts = random.sample(self.bank_to_accts[bene_bank_id], num_bene_accts)
+            bene_accts = self._sample_active_members(self.bank_to_accts[bene_bank_id], num_bene_accts)
             for n in bene_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, bene_bank_id)
@@ -1048,7 +1143,7 @@ class TransactionGenerator:
                 main_acct = None
                 for _ in range(num_accounts):
                     bank_id = next(bank_id_iter)
-                    next_acct = random.sample(self.bank_to_accts[bank_id], 1)[0]
+                    next_acct = self._sample_active_members(self.bank_to_accts[bank_id], 1)[0]
                     if prev_acct is None:
                         main_acct = next_acct
                     else:
@@ -1059,7 +1154,7 @@ class TransactionGenerator:
 
             else:
                 main_acct, main_bank_id = add_main_acct()
-                sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
+                sub_accts = self._sample_active_members(self.bank_to_accts[main_bank_id], num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
                     add_node(n, main_bank_id)
@@ -1081,7 +1176,7 @@ class TransactionGenerator:
                 while all_bank_ids:
                     num_accts_per_bank = remain_num // len(all_bank_ids)
                     bank_id = all_bank_ids.pop()
-                    new_members = random.sample(self.bank_to_accts[bank_id], num_accts_per_bank)
+                    new_members = self._sample_active_members(self.bank_to_accts[bank_id], num_accts_per_bank)
                     all_accts.extend(new_members)
 
                     remain_num -= len(new_members)
@@ -1091,7 +1186,7 @@ class TransactionGenerator:
                 main_acct = all_accts[0]
             else:
                 main_acct, main_bank_id = add_main_acct()
-                sub_accts = random.sample(self.bank_to_accts[main_bank_id], num_accounts - 1)
+                sub_accts = self._sample_active_members(self.bank_to_accts[main_bank_id], num_accounts - 1)
                 for n in sub_accts:
                     self.remove_typology_candidate(n)
                     add_node(n, main_bank_id)
@@ -1118,14 +1213,14 @@ class TransactionGenerator:
             else:
                 orig_bank_id = mid_bank_id = bene_bank_id = random.sample(self.get_all_bank_ids(), 1)[0]
 
-            main_acct = orig_acct = random.sample(self.bank_to_accts[orig_bank_id], 1)[0]
+            main_acct = orig_acct = self._sample_active_members(self.bank_to_accts[orig_bank_id], 1)[0]
             self.remove_typology_candidate(orig_acct)
             add_node(orig_acct, orig_bank_id)
-            mid_accts = random.sample(self.bank_to_accts[mid_bank_id], num_accounts - 2)
+            mid_accts = self._sample_active_members(self.bank_to_accts[mid_bank_id], num_accounts - 2)
             for n in mid_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, mid_bank_id)
-            bene_acct = random.sample(self.bank_to_accts[bene_bank_id], 1)[0]
+            bene_acct = self._sample_active_members(self.bank_to_accts[bene_bank_id], 1)[0]
             self.remove_typology_candidate(bene_acct)
             add_node(bene_acct, bene_bank_id)
 
@@ -1155,14 +1250,14 @@ class TransactionGenerator:
 
             num_orig_accts = num_bene_accts = (num_accounts - 1) // 2
 
-            orig_accts = random.sample(self.bank_to_accts[orig_bank_id], num_orig_accts)
+            orig_accts = self._sample_active_members(self.bank_to_accts[orig_bank_id], num_orig_accts)
             for n in orig_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, orig_bank_id)
-            main_acct = mid_acct = random.sample(self.bank_to_accts[mid_bank_id], 1)[0]
+            main_acct = mid_acct = self._sample_active_members(self.bank_to_accts[mid_bank_id], 1)[0]
             self.remove_typology_candidate(mid_acct)
             add_node(mid_acct, mid_bank_id)
-            bene_accts = random.sample(self.bank_to_accts[bene_bank_id], num_bene_accts)
+            bene_accts = self._sample_active_members(self.bank_to_accts[bene_bank_id], num_bene_accts)
             for n in bene_accts:
                 self.remove_typology_candidate(n)
                 add_node(n, bene_bank_id)
@@ -1184,6 +1279,44 @@ class TransactionGenerator:
                 add_edge(mid_acct, bene_acct, amount, date)
                 # print(mid_acct, "->", date, "->", bene_acct)
             # print(orig_accts, mid_acct, bene_accts)
+
+        elif typology_name in LAYER_SIZES:  # EarlyMule-TG: sources -> mule layers -> exits
+            sizes = LAYER_SIZES[typology_name](num_accounts)
+            if min(sizes) < 1 or len(sizes) < 3:
+                raise ValueError("%s cannot be built from %d accounts" % (typology_name, num_accounts))
+            # 1. Window: `period` days for source transfers plus max_dwell days per mule layer
+            extra = (len(sizes) - 2) * max_dwell
+            if period + extra > self.total_steps:
+                raise ValueError("%s window of %d days exceeds the simulation" % (typology_name, period + extra))
+            start_date = random.randrange(0, self.total_steps - period - extra + 1)
+            end_date = start_date + period + extra - 1
+            sub_g.graph["start"], sub_g.graph["end"] = start_date, end_date
+            sub_g.graph["min_dwell"], sub_g.graph["max_dwell"] = min_dwell, max_dwell
+
+            # 2. Members per layer, all from active accounts; one bank unless external
+            bank_ids = self.get_all_bank_ids()
+            internal_bank = random.choice(bank_ids)
+            layers = []
+            for size in sizes:
+                layer_bank = random.choice(bank_ids) if is_external else internal_bank
+                accts = self._sample_active_members(self.bank_to_accts[layer_bank], size)
+                for n in accts:
+                    self.remove_typology_candidate(n)
+                    add_node(n, layer_bank)
+                layers.append(accts)
+            sub_g.graph["layers"] = {n: i for i, accts in enumerate(layers) for n in accts}
+            main_acct = layers[1][0]  # First mule; the Java model runs from the main account
+
+            # 3. Planned edges, same rule as LayeredMuleTypology.java: all-to-all next to a
+            #    single-account layer, otherwise one-to-one by position
+            for orig_layer, bene_layer in zip(layers, layers[1:]):
+                if len(orig_layer) == 1 or len(bene_layer) == 1:
+                    pairs = itertools.product(orig_layer, bene_layer)
+                else:
+                    pairs = zip(orig_layer, bene_layer)
+                for orig, bene in pairs:
+                    amount = RandomAmount(min_amount, max_amount).getAmount()
+                    add_edge(orig, bene, amount, random.randrange(start_date, end_date + 1))
 
         # TODO: Please add user-defined typology implementations here
 
@@ -1245,7 +1378,8 @@ class TransactionGenerator:
         with open(alert_member_file, "w") as wf:
             writer = csv.writer(wf)
             base_attrs = ["alertID", "reason", "accountID", "isMain", "isSAR", "modelID",
-                          "minAmount", "maxAmount", "startStep", "endStep", "scheduleID", "bankID"]
+                          "minAmount", "maxAmount", "startStep", "endStep", "scheduleID", "bankID",
+                          "layer", "minDwell", "maxDwell"]  # EarlyMule-TG: read by LayeredMuleTypology
             writer.writerow(base_attrs + self.attr_names)
             for gid, sub_g in self.alert_groups.items():
                 main_id = sub_g.graph[MAIN_ACCT_KEY]
@@ -1263,7 +1397,10 @@ class TransactionGenerator:
                     max_step = end
                     bank_id = sub_g.node[n]["bank_id"]
                     values = [gid, reason, n, is_main, is_sar, model_id, min_amt, max_amt,
-                              min_step, max_step, schedule_id, bank_id]
+                              min_step, max_step, schedule_id, bank_id,
+                              # EarlyMule-TG: layer is -1 and dwell 0 for the original typologies
+                              sub_g.graph.get("layers", {}).get(n, -1),
+                              sub_g.graph.get("min_dwell", 0), sub_g.graph.get("max_dwell", 0)]
                     prop = self.g.node[n]
                     for attr_name in self.attr_names:
                         values.append(prop[attr_name])
@@ -1339,6 +1476,7 @@ if __name__ == "__main__":
     txg.load_normal_models() # Load a parameter CSV file for Normal Models
     #cProfile.run('txg.build_normal_models()')
     txg.build_normal_models()
+    txg.boost_drain_prone_balances()  # EarlyMule-TG: no-op unless enabled in conf.json
     txg.set_main_acct_candidates()
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
     txg.mark_active_edges()

@@ -1,3 +1,6 @@
+> **EarlyMule-TG fork.** Branch `earlymule-fixes` changes the fan-in/fan-out schedule, alert member sampling and cycle ordering for the EarlyMule-TG thesis. See [EARLYMULE-TG.md](EARLYMULE-TG.md) for what was changed and why.
+<!-- EarlyMule-TG: notice above added; the rest of this README is upstream text. -->
+
 Please cite our following papers if you use the data set for your publications. 
 
 BibTeX 

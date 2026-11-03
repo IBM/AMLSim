@@ -1,3 +1,4 @@
+// Modified by EarlyMule-TG (2026-11-03): register LayeredMuleTypology as model ID 9.
 
 // Source: http://files.acams.org/pdfs/English_Study_Guide/Chapter_5.pdf
 // Suspicious transactions which may lead to money laundering
@@ -31,6 +32,7 @@ public abstract class AMLTypology extends AbstractTransactionModel {
     private static final int RANDOM = 6;
     private static final int SCATTER_GATHER = 7;  // fan-out -> fan-in
     private static final int GATHER_SCATTER = 8;  // fan-in -> fan-out
+    private static final int LAYERED_MULE = 9;  // EarlyMule-TG: sources -> mule layers -> exits (M1-M4)
 
     // Transaction scheduling ID
     static final int FIXED_INTERVAL = 0;  // All accounts send money in order with the same interval
@@ -61,6 +63,8 @@ public abstract class AMLTypology extends AbstractTransactionModel {
             case RANDOM: model = new RandomTypology(minAmount, maxAmount, startStep, endStep); break;
             case SCATTER_GATHER: model = new ScatterGatherTypology(minAmount, maxAmount, startStep, endStep); break;
             case GATHER_SCATTER: model = new GatherScatterTypology(minAmount, maxAmount, startStep, endStep); break;
+            // EarlyMule-TG: register the layered mule typology
+            case LAYERED_MULE: model = new LayeredMuleTypology(minAmount, maxAmount, startStep, endStep); break;
             default: throw new IllegalArgumentException("Unknown typology model ID: " + modelID);
         }
         model.setParameters(startStep, endStep);

@@ -6,6 +6,10 @@ accounts expected to make normal transactions, so that alert accounts have a nor
 Every `random.sample(self.bank_to_accts[...], k)` in add_aml_typology() was replaced by
 `self._sample_active_members(self.bank_to_accts[...], k)`; see _sample_active_members() and
 _has_reliable_normal_activity().
+
+Modified by EarlyMule-TG (2026-11-03): four layered mule typologies (mule_fan_in_out,
+mule_relay_chain, mule_collect_exit, mule_collect_disperse) simulated by LayeredMuleTypology.java.
+alertPatterns.csv may carry min_dwell / max_dwell; alert_members.csv gains layer, minDwell, maxDwell.
 """
 
 import networkx as nx
@@ -38,6 +42,16 @@ MAIN_ACCT_KEY = "main_acct"  # Main account ID (SAR typology subgraph attribute)
 IS_SAR_KEY = "is_sar"  # SAR flag (account vertex attribute)
 
 DEFAULT_MARGIN_RATIO = 0.1  # Each member will keep this ratio of the received amount
+
+# EarlyMule-TG: layer sizes (sources, mule layers..., exits) of the layered mule typologies for n accounts
+LAYER_SIZES = {
+    "mule_fan_in_out": lambda n: [(n - 1) // 2, 1, n - 1 - (n - 1) // 2],  # M1
+    "mule_relay_chain": lambda n: [1] * n,  # M2: n - 2 mules in a chain
+    "mule_collect_exit": lambda n: [n - 2, 1, 1],  # M3
+    # M4: collector splits to k relays, each relay pays one exit
+    "mule_collect_disperse": lambda n: [n - 1 - 2 * max(2, (n - 1) // 3), 1,
+                                        max(2, (n - 1) // 3), max(2, (n - 1) // 3)],
+}
 
 
 # Utility functions parsing values
@@ -265,6 +279,9 @@ class TransactionGenerator:
         # TODO: Move the mapping of AML pattern to configuration JSON file
         self.alert_types = {"fan_out": 1, "fan_in": 2, "cycle": 3, "bipartite": 4, "stack": 5,
                             "random": 6, "scatter_gather": 7, "gather_scatter": 8}  # Pattern name and model ID
+        # EarlyMule-TG: layered mule typologies share one Java model; LAYER_SIZES gives their shape
+        for name in LAYER_SIZES:
+            self.alert_types[name] = 9
 
         self.acct_file = os.path.join(self.input_dir, self.account_file)
 
@@ -841,6 +858,8 @@ class TransactionGenerator:
         idx_max_period = None
         idx_bank = None
         idx_sar = None
+        idx_min_dwell = None  # EarlyMule-TG: optional dwell range of layered mule typologies
+        idx_max_dwell = None
 
         with open(alert_file, "r") as rf:
             reader = csv.reader(rf)
@@ -869,6 +888,10 @@ class TransactionGenerator:
                     idx_bank = i
                 elif k == "is_sar":  # SAR flag
                     idx_sar = i
+                elif k == "min_dwell":  # EarlyMule-TG: min days a mule holds money before forwarding
+                    idx_min_dwell = i
+                elif k == "max_dwell":  # EarlyMule-TG: max days a mule holds money before forwarding
+                    idx_max_dwell = i
                 else:
                     logger.warning("Unknown column name in %s: %s" % (alert_file, k))
 
@@ -888,6 +911,10 @@ class TransactionGenerator:
                 max_period = parse_int(row[idx_max_period])
                 bank_id = row[idx_bank] if idx_bank is not None else ""  # If empty, it has inter-bank transactions
                 is_sar = parse_flag(row[idx_sar])
+                # EarlyMule-TG: dwell defaults to 0 when the columns or cells are absent
+                min_dwell = parse_int(row[idx_min_dwell]) if idx_min_dwell is not None else 0
+                max_dwell = parse_int(row[idx_max_dwell]) if idx_max_dwell is not None else 0
+                min_dwell, max_dwell = min_dwell or 0, max_dwell or 0
 
                 if typology_name not in self.alert_types:
                     logger.warning("Pattern type name (%s) must be one of %s"
@@ -897,12 +924,14 @@ class TransactionGenerator:
                 for i in range(num_patterns):
                     num_accts = random.randrange(min_accts, max_accts + 1)
                     period = random.randrange(min_period, max_period + 1)
-                    self.add_aml_typology(is_sar, typology_name, num_accts, min_amount, max_amount, period, bank_id, schedule)
+                    self.add_aml_typology(is_sar, typology_name, num_accts, min_amount, max_amount, period, bank_id, schedule,
+                                          min_dwell, max_dwell)  # EarlyMule-TG: dwell range
                     count += 1
                     if count % 1000 == 0:
                         logger.info("Created %d alerts" % count)
 
-    def add_aml_typology(self, is_sar, typology_name, num_accounts, min_amount, max_amount, period, bank_id="", schedule=1):
+    def add_aml_typology(self, is_sar, typology_name, num_accounts, min_amount, max_amount, period, bank_id="", schedule=1,
+                         min_dwell=0, max_dwell=0):
         """Add an AML typology transaction set
         :param is_sar: Whether the alerted transaction set is SAR (True) or false-alert (False)
         :param typology_name: Name of pattern type
@@ -1229,6 +1258,44 @@ class TransactionGenerator:
                 # print(mid_acct, "->", date, "->", bene_acct)
             # print(orig_accts, mid_acct, bene_accts)
 
+        elif typology_name in LAYER_SIZES:  # EarlyMule-TG: sources -> mule layers -> exits
+            sizes = LAYER_SIZES[typology_name](num_accounts)
+            if min(sizes) < 1 or len(sizes) < 3:
+                raise ValueError("%s cannot be built from %d accounts" % (typology_name, num_accounts))
+            # 1. Window: `period` days for source transfers plus max_dwell days per mule layer
+            extra = (len(sizes) - 2) * max_dwell
+            if period + extra > self.total_steps:
+                raise ValueError("%s window of %d days exceeds the simulation" % (typology_name, period + extra))
+            start_date = random.randrange(0, self.total_steps - period - extra + 1)
+            end_date = start_date + period + extra - 1
+            sub_g.graph["start"], sub_g.graph["end"] = start_date, end_date
+            sub_g.graph["min_dwell"], sub_g.graph["max_dwell"] = min_dwell, max_dwell
+
+            # 2. Members per layer, all from active accounts; one bank unless external
+            bank_ids = self.get_all_bank_ids()
+            internal_bank = random.choice(bank_ids)
+            layers = []
+            for size in sizes:
+                layer_bank = random.choice(bank_ids) if is_external else internal_bank
+                accts = self._sample_active_members(self.bank_to_accts[layer_bank], size)
+                for n in accts:
+                    self.remove_typology_candidate(n)
+                    add_node(n, layer_bank)
+                layers.append(accts)
+            sub_g.graph["layers"] = {n: i for i, accts in enumerate(layers) for n in accts}
+            main_acct = layers[1][0]  # First mule; the Java model runs from the main account
+
+            # 3. Planned edges, same rule as LayeredMuleTypology.java: all-to-all next to a
+            #    single-account layer, otherwise one-to-one by position
+            for orig_layer, bene_layer in zip(layers, layers[1:]):
+                if len(orig_layer) == 1 or len(bene_layer) == 1:
+                    pairs = itertools.product(orig_layer, bene_layer)
+                else:
+                    pairs = zip(orig_layer, bene_layer)
+                for orig, bene in pairs:
+                    amount = RandomAmount(min_amount, max_amount).getAmount()
+                    add_edge(orig, bene, amount, random.randrange(start_date, end_date + 1))
+
         # TODO: Please add user-defined typology implementations here
 
         else:
@@ -1289,7 +1356,8 @@ class TransactionGenerator:
         with open(alert_member_file, "w") as wf:
             writer = csv.writer(wf)
             base_attrs = ["alertID", "reason", "accountID", "isMain", "isSAR", "modelID",
-                          "minAmount", "maxAmount", "startStep", "endStep", "scheduleID", "bankID"]
+                          "minAmount", "maxAmount", "startStep", "endStep", "scheduleID", "bankID",
+                          "layer", "minDwell", "maxDwell"]  # EarlyMule-TG: read by LayeredMuleTypology
             writer.writerow(base_attrs + self.attr_names)
             for gid, sub_g in self.alert_groups.items():
                 main_id = sub_g.graph[MAIN_ACCT_KEY]
@@ -1307,7 +1375,10 @@ class TransactionGenerator:
                     max_step = end
                     bank_id = sub_g.node[n]["bank_id"]
                     values = [gid, reason, n, is_main, is_sar, model_id, min_amt, max_amt,
-                              min_step, max_step, schedule_id, bank_id]
+                              min_step, max_step, schedule_id, bank_id,
+                              # EarlyMule-TG: layer is -1 and dwell 0 for the original typologies
+                              sub_g.graph.get("layers", {}).get(n, -1),
+                              sub_g.graph.get("min_dwell", 0), sub_g.graph.get("max_dwell", 0)]
                     prop = self.g.node[n]
                     for attr_name in self.attr_names:
                         values.append(prop[attr_name])

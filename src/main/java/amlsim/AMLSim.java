@@ -1,3 +1,5 @@
+// Modified by EarlyMule-TG (2026-11-03): the alert loader passes layer and dwell columns to
+// LayeredMuleTypology. See the "EarlyMule-TG:" comment in loadAlertMemberFile.
 package amlsim;
 
 import amlsim.model.AbstractTransactionModel;
@@ -12,6 +14,7 @@ import amlsim.model.normal.MutualTransactionModel;
 import amlsim.model.normal.PeriodicalTransactionModel;
 import amlsim.model.normal.SingleTransactionModel;
 import amlsim.model.aml.AMLTypology;
+import amlsim.model.aml.LayeredMuleTypology;  // EarlyMule-TG
 import amlsim.stat.Diameter;
 import sim.engine.SimState;
 
@@ -370,6 +373,14 @@ public class AMLSim extends SimState {
 			}
 			Account account = getAccountFromID(accountID);
 			alert.addMember(account);
+			// EarlyMule-TG: layered mule typologies need each member's layer and the dwell range.
+			// Older alert member files have no such columns and are read as before.
+			if(alert.getModel() instanceof LayeredMuleTypology){
+				LayeredMuleTypology layered = (LayeredMuleTypology) alert.getModel();
+				layered.setMemberLayer(account, Integer.parseInt(elements[columnIndex.get("layer")]));
+				layered.setDwell(Integer.parseInt(elements[columnIndex.get("minDwell")]),
+						Integer.parseInt(elements[columnIndex.get("maxDwell")]));
+			}
 			if(isMain){
 				alert.setMainAccount(account);
 			}

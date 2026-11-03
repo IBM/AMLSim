@@ -1,6 +1,6 @@
 # EarlyMule-TG changes to AMLSim
 
-This fork of [IBM/AMLSim](https://github.com/IBM/AMLSim) generates the synthetic dataset for the EarlyMule-TG thesis (early money-mule detection on temporal transaction graphs). The thesis needs three things from the simulator: a laundering flow that spans several days, mule accounts that behave normally before they launder, and money that moves through a cycle in time order. The original code broke all three, so it was changed as described below.
+This fork of [IBM/AMLSim](https://github.com/IBM/AMLSim) generates the synthetic dataset for the EarlyMule-TG thesis (early money-mule detection on temporal transaction graphs). The thesis needs four things from the simulator: a laundering flow that spans several days, mule accounts that behave normally before they launder, money that moves through a cycle in time order, and mule typologies in which an intermediary both receives and forwards illicit money. The original code broke the first three and lacks the fourth, so it was changed as described below.
 
 - **Base:** upstream commit `7338a4b` (2022-02-14, last upstream commit)
 - **Branch:** `earlymule-fixes`
@@ -14,6 +14,7 @@ This fork of [IBM/AMLSim](https://github.com/IBM/AMLSim) generates the synthetic
 | 1 | Fan-in/fan-out alerts stretched over most of the simulation | Two lines removed in `FanInTypology.java`, `FanOutTypology.java` | median span 363 / 195 days | 9 / 8 days |
 | 2 | Alert members often had no normal transactions at all | Member sampling in `scripts/transaction_graph_generator.py` | 41.2% of mule-like accounts had normal activity before the alert | 98.1% |
 | 3 | Cycle relays sent money before receiving it | Parameter only: `schedule_id` 2 → 1 for cycle rows | 112 of 249 relays out of order | 0 of 266 |
+| 4 | No typology where a hub both receives and forwards; fan-in/fan-out hubs are one-sided | New `LayeredMuleTypology.java` and four generator typologies (M1–M4) | 0 two-sided hubs outside cycles | 148 of 163 planned mules two-sided, 0 out of order (10K smoke run) |
 
 Numbers come from the 10K configuration (12,043 accounts, 100 alerts), original vs. patched, same random seed.
 
@@ -68,6 +69,32 @@ def _has_reliable_normal_activity(self, acct):
 
 **Change.** No code change. In `paramFiles/*-earlymule*/alertPatterns.csv` the cycle rows use `schedule_id = 1` (`RANDOM_INTERVAL`). `CycleTypology.setParameters` uses the same code path for both values but sorts the steps only for `1`.
 
+## 4. Layered mule typologies (M1–M4)
+
+**Problem.** The thesis plan needs four mule typologies: fan-in then fan-out (M1), a relay chain (M2), collection to a single exit (M3) and collection, relay and dispersal (M4). The original fan-in and fan-out models only generate one side at the hub, `stack` never sends from its middle layer (only the main account triggers transactions) and its transfers are not marked as SAR, and `gather_scatter` holds the money until the window midpoint.
+
+**Change.** One generic Java model, `LayeredMuleTypology` (model ID 9), and four generator typology names that only differ in layer sizes (`LAYER_SIZES` in the generator):
+
+| Name | Layers for n accounts | Plan |
+|---|---|---|
+| `mule_fan_in_out` | ⌊(n−1)/2⌋ sources → 1 mule → the rest as exits | M1 |
+| `mule_relay_chain` | 1 source → n−2 mules in a chain → 1 exit | M2 |
+| `mule_collect_exit` | n−2 sources → 1 collector → 1 exit | M3 |
+| `mule_collect_disperse` | s sources → 1 collector → k relays → k exits, k = max(2, ⌊(n−1)/3⌋) | M4 |
+
+Consecutive layers are linked all-to-all when either has one account, otherwise one-to-one by position. The generator writes three new columns to `alert_members.csv`: `layer` (−1 for the original typologies), `minDwell`, `maxDwell`. `alertPatterns.csv` may carry `min_dwell` / `max_dwell`; the original typologies ignore them.
+
+**Simulation rules.**
+- Sources send `[min_amount, max_amount]` on a random day of the source window (`period`). A source with less than `min_amount` waits a day until the window closes.
+- A mule forwards only after all its planned inflows have fired, so no mule sends before it receives. Each outgoing transfer waits a dwell drawn from `[min_dwell, max_dwell]` days; 0 means the same day.
+- A mule forwards the illicit amount it received minus `margin_ratio`, split with random weights, never more than its balance. Unlike `CycleTypology`, which sizes each hop from the sender's balance, the mule does not pass on its own normal funds, and no transfer exceeds the sender's balance, so the balance columns of `tx_log.csv` do not reveal illicit transfers.
+- The generator reserves `max_dwell` days per mule layer after the source window, so every hop stays inside `[startStep, endStep]`.
+
+**Checks.** `conf_10K-earlymule-mule.json` (20 alerts per new typology, plus 20 cycle, 10 fan_in, 10 fan_out):
+- 0 illicit transfers outside the planned edges; 0 mules with an outflow before their first inflow; 36 of 148 forward on the day they receive.
+- 148 of 163 planned mules have both an illicit inflow and an outflow. The 15 others sit on accounts that normal activity has drained: 499 of 4,265 transacting accounts end below a balance of 100, mostly accounts that are the main sender of several normal models, from about day 350 on. 19 of 229 sources never reach `min_amount` in their window.
+- Re-running `conf_10K_earlymule.json` gives byte-identical `tx_log.csv`, `transactions.csv` and `alert_transactions.csv`; `alert_members.csv` only gains the three columns.
+
 ## Configurations added
 
 | File | Accounts | Alerts | Notes |
@@ -76,8 +103,9 @@ def _has_reliable_normal_activity(self, acct):
 | `conf_10K_earlymule.json` | 12,043 | 100 | `paramFiles/10K-earlymule`, cycle `schedule_id = 1` |
 | `conf_80K-earlymule-a100.json` | 96,344 | 100 | 10K-earlymule accounts and normal models ×8 |
 | `conf_80K-earlymule-a200.json` | 96,344 | 200 | Same, 200 alerts; the configuration used in the thesis |
+| `conf_10K-earlymule-mule.json` | 12,043 | 120 | 10K-earlymule accounts; smoke test of the layered mule typologies |
 
-Alert mix in all EarlyMule-TG sets: 30% fan_in, 30% fan_out, 40% cycle.
+Alert mix in the 10K-earlymule and 80K sets: 30% fan_in, 30% fan_out, 40% cycle.
 
 ## Run
 

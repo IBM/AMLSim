@@ -1,0 +1,8 @@
+count,type,schedule_id,min_accounts,max_accounts,min_amount,max_amount,min_period,max_period,bank_id,is_sar,min_dwell,max_dwell
+50,mule_fan_in_out,1,5,10,100.0,200.0,3,10,bank,True,0,2
+50,mule_relay_chain,1,4,6,100.0,200.0,1,3,bank,True,0,2
+50,mule_collect_exit,1,4,8,100.0,200.0,3,10,bank,True,0,2
+50,mule_collect_disperse,1,7,12,100.0,200.0,3,10,bank,True,0,2
+40,cycle,1,5,10,100.0,200.0,5,20,bank,True,,
+30,fan_in,2,5,10,100.0,200.0,5,20,bank,True,,
+30,fan_out,2,5,10,100.0,200.0,5,20,bank,True,,

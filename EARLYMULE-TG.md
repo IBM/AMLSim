@@ -117,8 +117,11 @@ Consecutive layers are linked all-to-all when either has one account, otherwise 
 | `conf_80K-earlymule-a100.json` | 96,344 | 100 | 10K-earlymule accounts and normal models ×8 |
 | `conf_80K-earlymule-a200.json` | 96,344 | 200 | Same, 200 alerts; the configuration used in the thesis |
 | `conf_10K-earlymule-mule.json` | 12,043 | 120 | 10K-earlymule accounts; smoke test of the layered mule typologies, balance boost on (`k = 2`) |
+| `conf_80K-earlymule-mule.json` | 96,344 | 300 | 80K-earlymule-a200 accounts and normal models; 50 alerts per layered typology (M1–M4), 40 cycle, 30 fan_in, 30 fan_out; balance boost on (`k = 2`) |
 
-Alert mix in the 10K-earlymule and 80K sets: 30% fan_in, 30% fan_out, 40% cycle.
+Alert mix in the 10K-earlymule and 80K-earlymule-a100/a200 sets: 30% fan_in, 30% fan_out, 40% cycle.
+
+**`80K-earlymule-mule` checks** (2026-11-03, seed 0): 443 of 443 planned layered mules have both an illicit inflow and an outflow; 1,251 of 1,256 planned edges occur (the rest belong to sources that never had `min_amount`); 0 unplanned illicit edges; 0 layered mules send before they receive, 106 forward on the day they receive; every mule passes on 90% of what it received. 750 mule candidates in total (307 cycle, 175 M4, 168 M2, 50 M1, 50 M3). Output files have the same columns as `80K-earlymule-a200`. No illicit transfer exceeds the sender's balance; the `tx_log.csv` balance columns differ from `old − amount` by float32 rounding (p99 0.03) equally for illicit and normal rows. 5,072 accounts got the balance boost. Run time on the WSL laptop: generator 2 min 21 s, simulator 50 s, converter 59 s.
 
 ## Run
 

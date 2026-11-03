@@ -69,6 +69,7 @@
   },
   "graph_generator": {
     "degree_threshold": 10,
+    "boost_balance_min_main_models": 2,
     "high_risk_countries": "",
     "high_risk_business": ""
   },

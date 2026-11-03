@@ -14,7 +14,8 @@ This fork of [IBM/AMLSim](https://github.com/IBM/AMLSim) generates the synthetic
 | 1 | Fan-in/fan-out alerts stretched over most of the simulation | Two lines removed in `FanInTypology.java`, `FanOutTypology.java` | median span 363 / 195 days | 9 / 8 days |
 | 2 | Alert members often had no normal transactions at all | Member sampling in `scripts/transaction_graph_generator.py` | 41.2% of mule-like accounts had normal activity before the alert | 98.1% |
 | 3 | Cycle relays sent money before receiving it | Parameter only: `schedule_id` 2 → 1 for cycle rows | 112 of 249 relays out of order | 0 of 266 |
-| 4 | No typology where a hub both receives and forwards; fan-in/fan-out hubs are one-sided | New `LayeredMuleTypology.java` and four generator typologies (M1–M4) | 0 two-sided hubs outside cycles | 148 of 163 planned mules two-sided, 0 out of order (10K smoke run) |
+| 4 | No typology where a hub both receives and forwards; fan-in/fan-out hubs are one-sided | New `LayeredMuleTypology.java` and four generator typologies (M1–M4) | 0 two-sided hubs outside cycles | 163 of 163 planned mules two-sided, 0 out of order (10K smoke run, with #5) |
+| 5 | Accounts that send on several normal models run out of money mid-simulation and cannot take part in an alert | Optional initial-balance boost in the generator | 62–99% of accounts main of 2+ models drained | 0% |
 
 Numbers come from the 10K configuration (12,043 accounts, 100 alerts), original vs. patched, same random seed.
 
@@ -90,10 +91,22 @@ Consecutive layers are linked all-to-all when either has one account, otherwise 
 - A mule forwards the illicit amount it received minus `margin_ratio`, split with random weights, never more than its balance. Unlike `CycleTypology`, which sizes each hop from the sender's balance, the mule does not pass on its own normal funds, and no transfer exceeds the sender's balance, so the balance columns of `tx_log.csv` do not reveal illicit transfers.
 - The generator reserves `max_dwell` days per mule layer after the source window, so every hop stays inside `[startStep, endStep]`.
 
-**Checks.** `conf_10K-earlymule-mule.json` (20 alerts per new typology, plus 20 cycle, 10 fan_in, 10 fan_out):
-- 0 illicit transfers outside the planned edges; 0 mules with an outflow before their first inflow; 36 of 148 forward on the day they receive.
-- 148 of 163 planned mules have both an illicit inflow and an outflow. The 15 others sit on accounts that normal activity has drained: 499 of 4,265 transacting accounts end below a balance of 100, mostly accounts that are the main sender of several normal models, from about day 350 on. 19 of 229 sources never reach `min_amount` in their window.
+**Checks.** `conf_10K-earlymule-mule.json` (20 alerts per new typology, plus 20 cycle, 10 fan_in, 10 fan_out; balance boost of section 5 on):
+- 0 illicit transfers outside the planned edges; 0 mules with an outflow before their first inflow; 38 of 163 forward on the day they receive.
+- 163 of 163 planned mules have both an illicit inflow and an outflow, each passing on exactly 90% of what it received. 1 of 229 sources never reaches `min_amount` in its window.
+- Without the boost, 148 of 163: the other 15 sat on drained accounts (section 5).
+- Two runs with the same seed give byte-identical outputs. No account belongs to two alerts.
 - Re-running `conf_10K_earlymule.json` gives byte-identical `tx_log.csv`, `transactions.csv` and `alert_transactions.csv`; `alert_members.csv` only gains the three columns.
+
+## 5. Initial balance of accounts with several normal models
+
+**Problem.** Every normal model sends from its main account, sized from the balance. An account that is main of several models sends on several schedules and runs out of money. In `conf_10K_earlymule.json`, accounts main of 2, 3 and 4 models fall below a balance of 100 in 85%, 62% and 99% of cases, at a median of day 527, 494 and 321; accounts main of one model do so in 4% of cases, mostly after day 600. An alert member on a drained account cannot pass on money (the 3 silent fan_out alerts of the 80K run, and 15 of 163 layered mules before this change).
+
+**Change.** Optional `graph_generator.boost_balance_min_main_models` in `conf.json`. When set to `k`, every account that is main of at least `k` normal models gets its initial balance multiplied by `n_main + 1` (`boost_drain_prone_balances()`, called after the normal models are built). The multiplier covers the 90th percentile of the measured burn rate over 720 days with a 25% margin.
+
+**Why not exclude these accounts from alerts instead.** That was tried first. It completes every alert, but mules then never come from accounts that send a lot, and among accounts with at least 20 normal transactions the normal outgoing count separates mules with ROC-AUC 0.67 (0.53 before). The boost applies to every account, alert member or not, and leaves those scores at 0.47–0.55.
+
+**Side effect.** The initial balance now tracks how many normal models an account sends on, so it correlates with activity: over all accounts its ROC-AUC against mule candidates rises from 0.51 to 0.64. Among accounts with at least 20 normal transactions it stays at 0.49. Activity counts alone already reach 0.92 over all accounts, so the evaluation population has to be restricted either way.
 
 ## Configurations added
 
@@ -103,7 +116,7 @@ Consecutive layers are linked all-to-all when either has one account, otherwise 
 | `conf_10K_earlymule.json` | 12,043 | 100 | `paramFiles/10K-earlymule`, cycle `schedule_id = 1` |
 | `conf_80K-earlymule-a100.json` | 96,344 | 100 | 10K-earlymule accounts and normal models ×8 |
 | `conf_80K-earlymule-a200.json` | 96,344 | 200 | Same, 200 alerts; the configuration used in the thesis |
-| `conf_10K-earlymule-mule.json` | 12,043 | 120 | 10K-earlymule accounts; smoke test of the layered mule typologies |
+| `conf_10K-earlymule-mule.json` | 12,043 | 120 | 10K-earlymule accounts; smoke test of the layered mule typologies, balance boost on (`k = 2`) |
 
 Alert mix in the 10K-earlymule and 80K sets: 30% fan_in, 30% fan_out, 40% cycle.
 

@@ -10,6 +10,8 @@ _has_reliable_normal_activity().
 Modified by EarlyMule-TG (2026-11-03): four layered mule typologies (mule_fan_in_out,
 mule_relay_chain, mule_collect_exit, mule_collect_disperse) simulated by LayeredMuleTypology.java.
 alertPatterns.csv may carry min_dwell / max_dwell; alert_members.csv gains layer, minDwell, maxDwell.
+Optional conf key graph_generator.boost_balance_min_main_models raises the initial balance of accounts
+that send on several normal models, so they do not run out of money mid-simulation.
 """
 
 import networkx as nx
@@ -268,6 +270,8 @@ class TransactionGenerator:
         # Other properties for the transaction graph generator
         other_conf = self.conf["graph_generator"]
         self.degree_threshold = parse_int(other_conf["degree_threshold"])  # Degree for candidates of main accounts
+        # EarlyMule-TG: accounts main of at least this many normal models get a larger initial balance (None = off)
+        self.boost_balance_min_main_models = parse_int(other_conf.get("boost_balance_min_main_models"))
         high_risk_countries_str = other_conf.get("high_risk_countries", "")
         high_risk_business_str = other_conf.get("high_risk_business", "")
         self.high_risk_countries = set(high_risk_countries_str.split(","))  # List of high-risk country codes
@@ -404,6 +408,24 @@ class TransactionGenerator:
         logger.warning("Only %d accounts with normal models left for %d typology members", len(active), num)
         rest = [a for a in pool if not self._has_reliable_normal_activity(a)]
         return active + random.sample(rest, num - len(active))
+
+    def boost_drain_prone_balances(self):
+        """EarlyMule-TG: multiply the initial balance by (n_main + 1) for accounts main of many normal models.
+
+        Every normal model sends from its main account, so an account that is main of several models runs out
+        of money. Measured on conf_10K_earlymule.json: 62-99% of accounts main of 2+ models fall below 100,
+        from about day 350 on, against 4% of accounts main of one model. A drained account cannot pass on
+        illicit money. The boost applies to every account, alert member or not, so it carries no label.
+        """
+        if self.boost_balance_min_main_models is None:
+            return
+        boosted = 0
+        for acct, prop in self.g.nodes(data=True):
+            n_main = sum(1 for nm in prop.get('normal_models', []) if nm.is_main(acct))
+            if n_main >= self.boost_balance_min_main_models:
+                prop["init_balance"] *= n_main + 1
+                boosted += 1
+        logger.info("Boosted the initial balance of %d accounts", boosted)
 
     def _has_reliable_normal_activity(self, acct):
         """EarlyMule-TG: True if the account is expected to make normal transactions during the simulation.
@@ -1454,6 +1476,7 @@ if __name__ == "__main__":
     txg.load_normal_models() # Load a parameter CSV file for Normal Models
     #cProfile.run('txg.build_normal_models()')
     txg.build_normal_models()
+    txg.boost_drain_prone_balances()  # EarlyMule-TG: no-op unless enabled in conf.json
     txg.set_main_acct_candidates()
     txg.load_alert_patterns()  # Load a parameter CSV file for AML typology subgraphs
     txg.mark_active_edges()

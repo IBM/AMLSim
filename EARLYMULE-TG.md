@@ -115,20 +115,21 @@ Consecutive layers are linked all-to-all when either has one account, otherwise 
 | `conf_10K.json` | 12,043 | 100 | Original `paramFiles/10K`; the copy inside that folder lacks `normal_models`, `sar_interval`, `sar_balance_ratio` |
 | `conf_10K_earlymule.json` | 12,043 | 100 | `paramFiles/10K-earlymule`, cycle `schedule_id = 1` |
 | `conf_80K-earlymule-a100.json` | 96,344 | 100 | 10K-earlymule accounts and normal models ×8 |
-| `conf_80K-earlymule-a200.json` | 96,344 | 200 | Same, 200 alerts; the configuration used in the thesis |
+| `conf_80K-earlymule-a200.json` | 96,344 | 200 | Same, 200 alerts; the thesis dataset until 2026-11-03 |
 | `conf_10K-earlymule-mule.json` | 12,043 | 120 | 10K-earlymule accounts; smoke test of the layered mule typologies, balance boost on (`k = 2`) |
-| `conf_80K-earlymule-mule.json` | 96,344 | 300 | 80K-earlymule-a200 accounts and normal models; 50 alerts per layered typology (M1–M4), 40 cycle, 30 fan_in, 30 fan_out; balance boost on (`k = 2`) |
+| `conf_80K-earlymule-mule.json` | 96,344 | 500 | 80K-earlymule-a200 accounts and normal models; 150 M1, 50 M2, 150 M3, 50 M4 alerts (about 150 mules each), 40 cycle, 30 fan_in, 30 fan_out; balance boost on (`k = 2`); the thesis dataset from 2026-11-03 |
 
 Alert mix in the 10K-earlymule and 80K-earlymule-a100/a200 sets: 30% fan_in, 30% fan_out, 40% cycle.
 
-**`80K-earlymule-mule` checks** (2026-11-03, seed 0): 443 of 443 planned layered mules have both an illicit inflow and an outflow; 1,251 of 1,256 planned edges occur (the rest belong to sources that never had `min_amount`); 0 unplanned illicit edges; 0 layered mules send before they receive, 106 forward on the day they receive; every mule passes on 90% of what it received. 750 mule candidates in total (307 cycle, 175 M4, 168 M2, 50 M1, 50 M3). Output files have the same columns as `80K-earlymule-a200`. No illicit transfer exceeds the sender's balance; the `tx_log.csv` balance columns differ from `old − amount` by float32 rounding (p99 0.03) equally for illicit and normal rows. 5,072 accounts got the balance boost. Run time on the WSL laptop: generator 2 min 21 s, simulator 50 s, converter 59 s.
+**`80K-earlymule-mule` checks** (2026-11-03, seed 0): 621 of 621 planned layered mules have both an illicit inflow and an outflow; 2,373 of 2,377 planned edges occur (the rest belong to sources that never had `min_amount`); 0 unplanned illicit edges; 0 layered mules send before they receive, 96 forward on the day they receive. 619 mules pass on 90% of what they received; 2 pass on 22% and 50%, because they held under 150 before the illicit inflow and a normal transfer the next day took most of it. 942 mule candidates in total (321 cycle, 170 M4, 151 M2, 150 M1, 150 M3; 0.98% of accounts). Output files have the same columns as `80K-earlymule-a200`. No illicit transfer exceeds the sender's balance; the `tx_log.csv` balance columns differ from `old − amount` by float32 rounding (p99 0.03) equally for illicit and normal rows. 5,072 accounts got the balance boost. Run time on the WSL laptop: generator 3 min 13 s, simulator 53 s, converter 61 s.
 
 ## Run
 
 Environment and build steps are in the EarlyMule-TG repository (`docs/setup.md`). With the environment ready:
 
 ```bash
-python scripts/transaction_graph_generator.py conf_80K-earlymule-a200.json
-bash scripts/run_AMLSim.sh conf_80K-earlymule-a200.json
-python scripts/convert_logs.py conf_80K-earlymule-a200.json
+mvn -q compile   # after changing Java code
+python scripts/transaction_graph_generator.py conf_80K-earlymule-mule.json
+bash scripts/run_AMLSim.sh conf_80K-earlymule-mule.json
+python scripts/convert_logs.py conf_80K-earlymule-mule.json
 ```
